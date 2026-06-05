@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button"
 import { Copy } from "lucide-react"
+import { brutalAlert } from "@/store/alertStore"
 
 export default function CopyInviteButton({ code }: { code: string }) {
   const handleCopy = () => {
@@ -16,7 +17,7 @@ export default function CopyInviteButton({ code }: { code: string }) {
       }).catch(console.error)
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(shareText + "\n" + shareUrl)
-      alert("Link copiato negli appunti!")
+      brutalAlert("Link copiato negli appunti!")
     }
   }
 

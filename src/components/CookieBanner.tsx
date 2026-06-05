@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
+import { brutalAlert } from "@/store/alertStore"
 
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false)
@@ -38,7 +39,7 @@ export default function CookieBanner() {
 
   const handleDecline = () => {
     // Decline action as requested: refuse by closing or redirecting
-    alert(lang === "it" ? "Per rifiutare i cookie, chiudi l'applicazione." : "To refuse cookies, please close the app.")
+    brutalAlert(lang === "it" ? "Per rifiutare i cookie, chiudi l'applicazione." : "To refuse cookies, please close the app.")
     // We can also clear storage or redirect
     window.location.href = "about:blank"
   }

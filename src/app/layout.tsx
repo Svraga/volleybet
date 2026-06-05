@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import CookieBanner from "@/components/CookieBanner";
 import GlobalFooter from "@/components/GlobalFooter";
+import BrutalAlertProvider from "@/components/BrutalAlertProvider";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,6 +30,7 @@ export default function RootLayout({
         <Providers>{children}</Providers>
         <GlobalFooter />
         <CookieBanner />
+        <BrutalAlertProvider />
       </body>
     </html>
   );

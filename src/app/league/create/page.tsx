@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input"
 import { createLeague } from "@/actions/league"
 import Link from "next/link"
 import { useState, useRef } from "react"
+import { brutalAlert } from "@/store/alertStore"
 
 export default function CreateLeaguePage() {
   const [step, setStep] = useState(1)
@@ -36,14 +37,14 @@ export default function CreateLeaguePage() {
   }
 
   const nextStep = () => {
-    if (step === 1 && !leagueName.trim()) return alert("Inserisci un nome per il campionato.")
+    if (step === 1 && !leagueName.trim()) return brutalAlert("Inserisci un nome per il campionato.")
     if (step === 2) {
       // Nessuna validazione necessaria, select ha sempre un valore
     }
     if (step === 3) {
-      if (teams.some(t => !t.trim())) return alert("Compila tutti i nomi delle squadre.")
-      if (!homeTeam.trim()) return alert("Devi selezionare la tua squadra dal menu a tendina.")
-      if (!teams.includes(homeTeam)) return alert("La tua squadra non è presente nella lista (errore di selezione).")
+      if (teams.some(t => !t.trim())) return brutalAlert("Compila tutti i nomi delle squadre.")
+      if (!homeTeam.trim()) return brutalAlert("Devi selezionare la tua squadra dal menu a tendina.")
+      if (!teams.includes(homeTeam)) return brutalAlert("La tua squadra non è presente nella lista (errore di selezione).")
     }
     setStep(s => s + 1)
   }
@@ -52,7 +53,7 @@ export default function CreateLeaguePage() {
   const handleSubmit = (e: React.FormEvent) => {
     if (!coinName.trim()) {
       e.preventDefault()
-      alert("Inserisci un nome per la valuta.")
+      brutalAlert("Inserisci un nome per la valuta.")
       return
     }
     // Submit handled natively by action attribute on form
