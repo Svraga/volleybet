@@ -40,8 +40,6 @@ export default function CookieBanner() {
   const handleDecline = () => {
     // Decline action as requested: refuse by closing or redirecting
     brutalAlert(lang === "it" ? "Per rifiutare i cookie, chiudi l'applicazione." : "To refuse cookies, please close the app.")
-    // We can also clear storage or redirect
-    window.location.href = "about:blank"
   }
 
   if (!showBanner) return null
