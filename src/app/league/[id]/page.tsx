@@ -8,6 +8,8 @@ import Link from "next/link"
 import { Medal, TriangleAlert } from "lucide-react"
 import { leaveLeague } from "@/actions/league"
 import GuidedTour from "@/components/GuidedTour"
+import AdminButtonClient from "@/components/AdminButtonClient"
+import CopyInviteButton from "@/components/CopyInviteButton"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -65,9 +67,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
         
         <div className="flex gap-4">
           {isAdmin && (
-            <Link href={`/league/${league.id}/admin`}>
-              <Button id="tour-admin-button" variant="secondary">Pannello Admin</Button>
-            </Link>
+            <AdminButtonClient leagueId={league.id} />
           )}
         </div>
       </div>
@@ -151,6 +151,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
           <div id="tour-invite" className="bg-white border-[3px] border-black shadow-brutal px-4 py-4 flex flex-col items-center justify-center text-center">
             <span className="font-bold text-gray-500 uppercase text-xs mb-1">Codice Invito Lega</span>
             <span className="text-3xl font-black tracking-widest">{league.inviteCode}</span>
+            <CopyInviteButton code={league.inviteCode} />
           </div>
         </div>
       </div>

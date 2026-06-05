@@ -8,15 +8,16 @@ import { setMatches } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 
-export default function AdminMatchdayPanel({ 
   leagueId, 
   matchDay, 
   teams,
+  hasOddTeams,
   users
 }: { 
   leagueId: string, 
   matchDay: any, 
   teams: any[],
+  hasOddTeams: boolean,
   users: any[] // Users with their bets for this matchday
 }) {
   const [activeTab, setActiveTab] = useState<"matches" | "results" | "proxy">("matches")
@@ -29,9 +30,10 @@ export default function AdminMatchdayPanel({
 
 
   // SECTION 1: Match Management
-  const initialRows = Math.max(1, Math.floor(teams.length / 2))
-  const [numFixedRows, setNumFixedRows] = useState(initialRows)
+  const initialRows = Math.floor(teams.length / 2)
+  const numFixedRows = initialRows
   const [selectedTeams, setSelectedTeams] = useState<string[]>(Array(initialRows * 2).fill(""))
+  const [restingTeam, setRestingTeam] = useState<string>(matchDay.restingTeam || "")
   
   const handleTeamChange = (index: number, val: string) => {
     const newSelected = [...selectedTeams]
@@ -39,10 +41,6 @@ export default function AdminMatchdayPanel({
     setSelectedTeams(newSelected)
   }
 
-  const handleAddRow = () => {
-    setNumFixedRows(prev => prev + 1)
-    setSelectedTeams(prev => [...prev, "", ""])
-  }
 
   const handleSaveMatches = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -119,7 +117,7 @@ export default function AdminMatchdayPanel({
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Casa</option>
                     {teams.map(t => (
-                      <option key={`A_${i}_${t.id}`} value={t.name} disabled={selectedTeams.includes(t.name) && selectedTeams[i * 2] !== t.name}>
+                      <option key={`A_${i}_${t.id}`} value={t.name} disabled={selectedTeams.includes(t.name) && selectedTeams[i * 2] !== t.name || t.name === restingTeam}>
                         {t.name}
                       </option>
                     ))}
@@ -136,7 +134,7 @@ export default function AdminMatchdayPanel({
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Ospite</option>
                     {teams.map(t => (
-                      <option key={`B_${i}_${t.id}`} value={t.name} disabled={selectedTeams.includes(t.name) && selectedTeams[i * 2 + 1] !== t.name}>
+                      <option key={`B_${i}_${t.id}`} value={t.name} disabled={selectedTeams.includes(t.name) && selectedTeams[i * 2 + 1] !== t.name || t.name === restingTeam}>
                         {t.name}
                       </option>
                     ))}
@@ -144,9 +142,25 @@ export default function AdminMatchdayPanel({
                 </div>
               </div>
             ))}
-            <div className="flex justify-end mt-2">
-              <Button type="button" variant="outline" className="text-xs" onClick={handleAddRow}>+ Aggiungi Riga</Button>
-            </div>
+            {hasOddTeams && (
+              <div className="flex flex-col gap-2 border-[2px] border-black p-2 bg-gray-100 shadow-brutal-sm mt-4">
+                <label className="text-sm font-bold">Squadra che RIPOSA (nessun match in questa giornata)</label>
+                <select 
+                  name="restingTeam" 
+                  required 
+                  value={restingTeam}
+                  onChange={(e) => setRestingTeam(e.target.value)}
+                  className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold"
+                >
+                  <option value="" disabled className="text-gray-400">Seleziona Squadra che Riposa</option>
+                  {teams.map(t => (
+                    <option key={`R_${t.id}`} value={t.name} disabled={selectedTeams.includes(t.name)}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <input type="hidden" name="numRows" value={numFixedRows} />
             <Button type="submit" variant="primary" className="w-full uppercase font-bold text-sm mt-4">
               Salva Accoppiamenti
@@ -162,6 +176,14 @@ export default function AdminMatchdayPanel({
                 </span>
               </div>
             ))}
+            {hasOddTeams && matchDay.restingTeam && (
+              <div className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm bg-gray-200">
+                <span>{matchDay.restingTeam}</span>
+                <span className="font-bold border-[2px] border-black p-1 bg-white flex-shrink-0 whitespace-nowrap">
+                  RIPOSA
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

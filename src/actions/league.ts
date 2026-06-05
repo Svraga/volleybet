@@ -19,6 +19,7 @@ export async function createLeague(formData: FormData) {
   const name = formData.get("name") as string
   const homeTeam = formData.get("homeTeam") as string
   const coinName = (formData.get("coinName") as string) || "Coin"
+  const hasOddTeams = formData.get("hasOddTeams") === "true"
   
   const teams = formData.getAll("teams[]") as string[]
 
@@ -31,6 +32,7 @@ export async function createLeague(formData: FormData) {
     data: {
       name,
       homeTeam,
+      hasOddTeams,
       coinName,
       inviteCode,
       adminId: session.user.id,

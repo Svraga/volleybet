@@ -111,6 +111,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                     leagueId={league.id} 
                     matchDay={md} 
                     teams={teams}
+                    hasOddTeams={league.hasOddTeams}
                     users={users.map(u => ({ ...u, bets: u.bets.filter(b => md.matches.some(m => m.id === b.matchId)) }))}
                   />
                   <div className="flex justify-center pt-4 border-t-[4px] border-black border-dashed mt-4">

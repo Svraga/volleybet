@@ -3,8 +3,10 @@
 import { useEffect } from "react"
 import { driver } from "driver.js"
 import "driver.js/dist/driver.css"
+import { useTourStore } from "@/store/tour"
 
 export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
+  const { setTourActive } = useTourStore()
   useEffect(() => {
     // Check if we should force tour
     const forceTour = localStorage.getItem("volleybet_force_tour") === "true"
@@ -23,6 +25,7 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
       onDestroyStarted: () => {
         if (!tourDriver.hasNextStep() || confirm("Sei sicuro di voler saltare il tutorial?")) {
           tourDriver.destroy();
+          setTourActive(false);
           localStorage.setItem(isAdmin ? adminKey : playerKey, "true")
           if (forceTour) localStorage.removeItem("volleybet_force_tour")
         }
@@ -47,12 +50,14 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
     
     // Slight delay to ensure elements are mounted
     const timeoutId = setTimeout(() => {
+      setTourActive(true);
       tourDriver.drive();
     }, 500)
 
     return () => {
       clearTimeout(timeoutId)
       tourDriver.destroy()
+      setTourActive(false);
     }
   }, [isAdmin])
 

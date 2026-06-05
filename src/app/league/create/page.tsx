@@ -11,28 +11,52 @@ export default function CreateLeaguePage() {
   const [step, setStep] = useState(1)
   const [leagueName, setLeagueName] = useState("")
   const [homeTeam, setHomeTeam] = useState("")
-  const [teams, setTeams] = useState<string[]>(["", ""])
+  const [numTeams, setNumTeams] = useState(4)
+  const [teams, setTeams] = useState<string[]>(Array(4).fill(""))
   const [coinName, setCoinName] = useState("Coin")
   const formRef = useRef<HTMLFormElement>(null)
 
-  const handleAddTeam = () => setTeams([...teams, ""])
+  const handleNumTeamsChange = (n: number) => {
+    setNumTeams(n)
+    setTeams(prev => {
+      const newTeams = [...prev]
+      if (n > prev.length) {
+        return [...newTeams, ...Array(n - prev.length).fill("")]
+      } else {
+        return newTeams.slice(0, n)
+      }
+    })
+  }
+
   const handleTeamChange = (index: number, value: string) => {
     const newTeams = [...teams]
     newTeams[index] = value
     setTeams(newTeams)
+    // Se la squadra home viene rinominata, aggiorniamo (selezioniamo per index invece che per stringa per essere più robusti, ma per ora teniamo la logica semplice)
   }
-  const handleRemoveTeam = (index: number) => setTeams(teams.filter((_, i) => i !== index))
-
-
 
   const nextStep = () => {
     if (step === 1 && !leagueName.trim()) return alert("Inserisci un nome per il campionato.")
-    if (step === 2 && !homeTeam.trim()) return alert("Inserisci il nome della tua squadra.")
-    if (step === 3 && teams.some(t => !t.trim())) return alert("Compila tutti i campi delle squadre o rimuovi quelli vuoti.")
-    if (step === 3 && !teams.includes(homeTeam)) return alert("Attenzione: la tua squadra deve essere presente nella lista!")
+    if (step === 2) {
+      // Nessuna validazione necessaria, select ha sempre un valore
+    }
+    if (step === 3) {
+      if (teams.some(t => !t.trim())) return alert("Compila tutti i nomi delle squadre.")
+      if (!homeTeam.trim()) return alert("Devi selezionare la tua squadra dal menu a tendina.")
+      if (!teams.includes(homeTeam)) return alert("La tua squadra non è presente nella lista (errore di selezione).")
+    }
     setStep(s => s + 1)
   }
   const prevStep = () => setStep(s => s - 1)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    if (!coinName.trim()) {
+      e.preventDefault()
+      alert("Inserisci un nome per la valuta.")
+      return
+    }
+    // Submit handled natively by action attribute on form
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12 overflow-x-hidden">
@@ -48,11 +72,12 @@ export default function CreateLeaguePage() {
       </div>
 
       <Card className="w-full max-w-2xl bg-white border-[4px] border-black shadow-brutal transition-all">
-        <form ref={formRef} action={createLeague}>
-          <CardHeader className="bg-secondary border-b-[3px] border-black flex flex-row items-center justify-between">
-            <CardTitle>Passo {step} di 4</CardTitle>
-            <div className="font-bold bg-white px-3 py-1 border-[2px] border-black text-sm">
+        <form ref={formRef} action={createLeague} onSubmit={handleSubmit}>
+          <CardHeader className="bg-secondary border-b-[3px] border-black flex flex-row items-center justify-between gap-4">
+            <CardTitle className="whitespace-nowrap">Passo {step} di 4</CardTitle>
+            <div className="font-bold bg-white px-3 py-1 border-[2px] border-black text-sm whitespace-nowrap overflow-hidden text-ellipsis">
               {step === 1 && "Nome Campionato"}
+              {step === 2 && "Numero di Squadre"}
               {step === 3 && "Le Squadre"}
               {step === 4 && "La Valuta"}
             </div>
@@ -64,15 +89,24 @@ export default function CreateLeaguePage() {
             </div>
 
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
-              <p className="text-xl font-bold text-gray-700">Qual è il nome della TUA squadra?</p>
-              <p className="font-bold text-gray-500 text-sm">Nessun membro potrà scommettere sulle partite in cui gioca la propria squadra per evitare gufate pericolose.</p>
-              <Input name="homeTeam" value={homeTeam} onChange={e => setHomeTeam(e.target.value)} required={step === 2} className="text-2xl h-16" />
+              <p className="text-xl font-bold text-gray-700">Da quante squadre è composto il girone?</p>
+              <p className="font-bold text-gray-500 text-sm">Seleziona il numero totale di squadre. {numTeams % 2 !== 0 ? "(Numero dispari: una squadra riposerà ad ogni turno)" : ""}</p>
+              <select 
+                className="flex h-16 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-xl text-black shadow-brutal focus-visible:outline-none focus-visible:ring-0 focus-visible:border-black"
+                value={numTeams}
+                onChange={(e) => handleNumTeamsChange(parseInt(e.target.value))}
+              >
+                {Array.from({ length: 17 }, (_, i) => i + 4).map(n => (
+                  <option key={n} value={n}>{n} Squadre</option>
+                ))}
+              </select>
+              <input type="hidden" name="hasOddTeams" value={numTeams % 2 !== 0 ? "true" : "false"} />
             </div>
 
             <div className={step === 3 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
-              <p className="text-xl font-bold text-gray-700">Quali squadre partecipano al girone?</p>
-              <p className="font-bold text-gray-500 text-sm">Inserisci tutte le squadre avversarie. Ricordati che la TUA squadra deve essere presente in questa lista.</p>
-              <div className="space-y-2 max-h-[40vh] overflow-y-auto p-2 border-[2px] border-black bg-gray-50">
+              <p className="text-xl font-bold text-gray-700">Chi partecipa al girone?</p>
+              <p className="font-bold text-gray-500 text-sm">Inserisci i nomi di tutte le squadre. Poi seleziona la tua squadra reale in basso.</p>
+              <div className="space-y-2 max-h-[30vh] overflow-y-auto p-2 border-[2px] border-black bg-gray-50">
                 {teams.map((t, idx) => (
                   <div key={idx} className="flex gap-2 mb-2">
                     <Input 
@@ -83,14 +117,25 @@ export default function CreateLeaguePage() {
                       required={step === 3} 
                       className="h-12"
                     />
-                    {teams.length > 2 && (
-                      <Button type="button" variant="outline" onClick={() => handleRemoveTeam(idx)} className="h-12 w-12 text-xl font-bold text-red-600">X</Button>
-                    )}
                   </div>
                 ))}
-                <Button type="button" variant="outline" onClick={handleAddTeam} className="w-full mt-2 border-dashed border-[3px] h-12 text-lg">
-                  ➕ Aggiungi Squadra
-                </Button>
+              </div>
+              
+              <div className="mt-6 space-y-2 p-4 bg-yellow-100 border-[3px] border-black">
+                <p className="text-lg font-bold">Qual è la TUA squadra?</p>
+                <p className="text-sm font-bold text-gray-600 mb-2">Non potrai scommettere sulle partite della tua squadra reale.</p>
+                <select 
+                  name="homeTeam"
+                  className="flex h-12 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-md text-black shadow-brutal focus-visible:outline-none"
+                  value={homeTeam}
+                  onChange={(e) => setHomeTeam(e.target.value)}
+                  required={step === 3}
+                >
+                  <option value="" disabled>-- Seleziona la tua squadra --</option>
+                  {teams.filter(t => t.trim() !== "").map((t, idx) => (
+                    <option key={idx} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

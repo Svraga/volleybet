@@ -70,6 +70,7 @@ model League {
   inviteCode    String    @unique
   adminId       String    // User ID of the creator
   homeTeam      String
+  hasOddTeams   Boolean   @default(false)
   coinName      String    @default("Coin")
   
   users         User[]
@@ -88,6 +89,7 @@ model MatchDay {
   number        Int
   deadline      DateTime
   status        String    @default("OPEN") // OPEN, CLOSED, SCORED
+  restingTeam   String?
   
   matches       Match[]
   ledgers       Ledger[]

@@ -20,12 +20,6 @@ export default function AdminHeader({ leagueId, hasEmptyMatchDays }: { leagueId:
   return (
     <>
       <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={handleHomeClick}
-          className="p-2 bg-white border-[3px] border-black shadow-brutal hover:bg-gray-100 transition-colors"
-        >
-          <Home className="w-6 h-6" />
-        </button>
         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
           Pannello Admin
         </h1>

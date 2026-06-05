@@ -62,6 +62,15 @@ export async function setMatches(leagueId: string, matchDayId: string, formData:
   const numRows = parseInt(formData.get("numRows") as string)
   if (!numRows) return;
 
+  const restingTeam = formData.get("restingTeam") as string
+
+  if (restingTeam) {
+    await prisma.matchDay.update({
+      where: { id: matchDayId },
+      data: { restingTeam }
+    })
+  }
+
   const newMatches = []
   for (let i = 0; i < numRows; i++) {
     const teamA = formData.get(`teamA_${i}`) as string
