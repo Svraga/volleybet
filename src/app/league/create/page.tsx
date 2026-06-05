@@ -75,7 +75,7 @@ export default function CreateLeaguePage() {
         <form ref={formRef} action={createLeague} onSubmit={handleSubmit}>
           <CardHeader className="bg-secondary border-b-[3px] border-black flex flex-row items-center justify-between gap-4">
             <CardTitle className="whitespace-nowrap">Passo {step} di 4</CardTitle>
-            <div className="font-bold bg-white px-3 py-1 border-[2px] border-black text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+            <div className="font-bold bg-white px-2 py-1 border-[2px] border-black text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
               {step === 1 && "Nome Campionato"}
               {step === 2 && "Numero di Squadre"}
               {step === 3 && "Le Squadre"}
@@ -145,7 +145,7 @@ export default function CreateLeaguePage() {
               <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} className="text-2xl h-16" />
             </div>
 
-            <div className="pt-6 flex gap-4">
+            <div className="pt-6 flex justify-center items-center gap-4 w-full max-w-sm mx-auto">
               {step > 1 && (
                 <Button type="button" variant="secondary" onClick={prevStep} className="flex-1 h-14 text-xl">
                   Indietro

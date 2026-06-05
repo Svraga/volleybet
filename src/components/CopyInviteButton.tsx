@@ -5,9 +5,18 @@ import { Copy } from "lucide-react"
 
 export default function CopyInviteButton({ code }: { code: string }) {
   const handleCopy = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(code)
-      alert("Codice copiato negli appunti: " + code)
+    const shareUrl = `${window.location.origin}/league/join?code=${code}`
+    const shareText = `Unisciti al mio campionato su VolleyBet! Usa il codice: ${code}`
+
+    if (navigator.share) {
+      navigator.share({
+        title: "VolleyBet - Nuovo Campionato",
+        text: shareText,
+        url: shareUrl
+      }).catch(console.error)
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareText + "\n" + shareUrl)
+      alert("Link copiato negli appunti!")
     }
   }
 

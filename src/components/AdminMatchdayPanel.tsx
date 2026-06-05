@@ -145,7 +145,7 @@ export default function AdminMatchdayPanel({
             ))}
             {hasOddTeams && (
               <div className="flex flex-col gap-2 border-[2px] border-black p-2 bg-gray-100 shadow-brutal-sm mt-4">
-                <label className="text-sm font-bold">Squadra che RIPOSA (nessun match in questa giornata)</label>
+                <label className="text-sm font-bold">Squadra che RIPOSA</label>
                 <select 
                   name="restingTeam" 
                   required 
@@ -248,7 +248,7 @@ export default function AdminMatchdayPanel({
 
           {usersMissing.length > 0 && !isScored && (
             <div className="border-t-[3px] border-black pt-4">
-              <h4 className="font-bold mb-2 uppercase">Proxy Bet (Piazza per altri)</h4>
+              <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
               <form onSubmit={handleProxyBet} className="space-y-4">
                 <select 
                   className="w-full border-[3px] border-black p-2 font-bold" 
@@ -256,7 +256,7 @@ export default function AdminMatchdayPanel({
                   value={selectedProxyUser}
                   onChange={e => setSelectedProxyUser(e.target.value)}
                 >
-                  <option value="" disabled>Seleziona Utente Mancante...</option>
+                  <option value="" disabled>Seleziona Utente</option>
                   {usersMissing.map(u => (
                     <option key={`proxy_${u.id}`} value={u.id}>{u.name}</option>
                   ))}
