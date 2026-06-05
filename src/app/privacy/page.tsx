@@ -53,8 +53,8 @@ export default function PrivacyPage() {
               </section>
 
               <section className="space-y-2">
-                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Dati Raccolti</h2>
-                <p>Nome, Cognome, Email e immagine del profilo trasmessi tramite Google OAuth.</p>
+                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Dati Raccolti e Servizi Terzi</h2>
+                <p>Nome, Cognome, Email e immagine del profilo trasmessi tramite <strong>Google (Google OAuth)</strong>, utilizzato esclusivamente come servizio di registrazione e accesso al sito.</p>
               </section>
 
               <section className="space-y-2">
@@ -77,8 +77,8 @@ export default function PrivacyPage() {
               </section>
 
               <section className="space-y-2">
-                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Data Collected</h2>
-                <p>First name, last name, email, and profile picture from Google OAuth.</p>
+                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Data Collected & Third Parties</h2>
+                <p>First name, last name, email, and profile picture provided by <strong>Google (Google OAuth)</strong>, which is used strictly as a registration and authentication service.</p>
               </section>
 
               <section className="space-y-2">

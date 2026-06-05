@@ -68,10 +68,10 @@ export default function CookieBanner() {
         {t.message} <Link href="/privacy" className="underline decoration-[3px] text-primary hover:text-black transition-colors">{t.link}</Link>.
       </p>
       <div className="flex flex-row w-full md:w-auto gap-4">
-        <Button variant="outline" onClick={handleDecline} className="flex-1 md:flex-none uppercase font-black px-6 border-[3px] shadow-brutal-sm">
+        <Button variant="primary" onClick={handleDecline} className="flex-1 md:flex-none uppercase font-black px-6 border-[3px] shadow-brutal-sm bg-white text-black hover:bg-gray-100">
           {t.decline}
         </Button>
-        <Button variant="primary" onClick={handleAccept} className="flex-1 md:flex-none uppercase font-black px-6 border-[3px] shadow-brutal-sm bg-green-500 text-white hover:bg-green-600">
+        <Button variant="primary" onClick={handleAccept} className="flex-1 md:flex-none uppercase font-black px-6 border-[3px] shadow-brutal-sm bg-white text-black hover:bg-gray-100">
           {t.accept}
         </Button>
       </div>
