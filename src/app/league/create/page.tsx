@@ -23,22 +23,7 @@ export default function CreateLeaguePage() {
   }
   const handleRemoveTeam = (index: number) => setTeams(teams.filter((_, i) => i !== index))
 
-  const autoFillTest = () => {
-    setLeagueName("Lega Test Sandbox")
-    setHomeTeam("TestAdmin Volley")
-    setTeams([
-      "TestAdmin Volley",
-      "Spikers Milano",
-      "Blockers Roma",
-      "Libero Napoli",
-      "Ace Torino",
-      "Dig Firenze",
-      "Setters Venezia",
-      "Jumpers Bologna"
-    ])
-    setCoinName("VolleyCoin")
-    setStep(4)
-  }
+
 
   const nextStep = () => {
     if (step === 1 && !leagueName.trim()) return alert("Inserisci un nome per il campionato.")
@@ -56,9 +41,6 @@ export default function CreateLeaguePage() {
           Crea Campionato
         </h1>
         <div className="flex gap-4">
-          <Button type="button" onClick={autoFillTest} variant="primary" className="bg-yellow-300 hover:bg-yellow-400">
-            🧪 Autocompila
-          </Button>
           <Link href="/">
             <Button variant="outline">Annulla</Button>
           </Link>

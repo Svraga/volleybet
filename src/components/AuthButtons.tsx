@@ -17,7 +17,6 @@ export function LoginButton() {
   return (
     <div className="flex flex-col gap-4 w-full max-w-sm">
       <Input
-        placeholder="Inserisci il tuo nome (es. Mario Rossi)"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleLogin()}
