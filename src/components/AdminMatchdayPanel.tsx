@@ -8,6 +8,7 @@ import { setMatches } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 
+export default function AdminMatchdayPanel({ 
   leagueId, 
   matchDay, 
   teams,
