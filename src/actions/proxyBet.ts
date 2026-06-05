@@ -15,6 +15,9 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
   const targetUserId = formData.get("userId") as string
   if (!targetUserId) throw new Error("Missing target user ID")
 
+  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } })
+  if (!targetUser || targetUser.leagueId !== leagueId) throw new Error("Target user does not belong to this league")
+
   const matchDay = await prisma.matchDay.findUnique({
     where: { id: matchDayId },
     include: { matches: true }
