@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import CookieBanner from "@/components/CookieBanner";
+import GlobalFooter from "@/components/GlobalFooter";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -26,6 +27,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
+        <GlobalFooter />
         <CookieBanner />
       </body>
     </html>
