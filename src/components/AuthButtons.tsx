@@ -16,11 +16,14 @@ export function LoginButton() {
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-sm">
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-      />
+      <div className="space-y-2 text-center">
+        <label className="font-bold text-lg">Inserisci il tuo nome</label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+        />
+      </div>
       <Button variant="primary" onClick={handleLogin} className="w-full text-lg h-14">
         Accedi con Mock Auth
       </Button>
