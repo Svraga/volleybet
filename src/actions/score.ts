@@ -121,10 +121,18 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
                 const secondPlaceUsers = usersWithBets.filter(u => userPoints[u] === secondScore)
                 
                 for (const u2 of secondPlaceUsers) {
-                    const spent = userBetsCount[u2] || 0
-                    const payout = spent + 1
+                    const spent = 1 // Costo fisso di entry per MatchDay
+                    const payout = spent
                     rankDistribution[u2] = payout
                     totalSecondPlacePayout += payout
+                }
+                
+                if (totalSecondPlacePayout > totalPool) {
+                    const splitAmount = totalPool / secondPlaceUsers.length
+                    for (const u2 of secondPlaceUsers) {
+                        rankDistribution[u2] = splitAmount
+                    }
+                    totalSecondPlacePayout = totalPool
                 }
             }
 

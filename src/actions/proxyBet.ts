@@ -25,6 +25,10 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
 
   if (!matchDay || matchDay.status !== "OPEN") throw new Error("Matchday not open")
 
+  if (new Date() > matchDay.deadline) {
+    throw new Error("Deadline passed: Impossibile inserire proxy bets oltre l'orario di scadenza")
+  }
+
   const bets: { userId: string, matchId: string, predictedA: number, predictedB: number }[] = []
   for (const match of matchDay.matches) {
     const betVal = formData.get(`bet_${match.id}`) as string

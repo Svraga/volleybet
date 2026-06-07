@@ -9,6 +9,9 @@ export async function placeBets(leagueId: string, matchDayId: string, formData: 
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
 
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (user?.leagueId !== leagueId) throw new Error("Forbidden: Non appartieni a questa lega (403)")
+
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (!league) throw new Error("League not found")
 

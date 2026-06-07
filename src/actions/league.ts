@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { randomBytes } from "crypto"
 
 export async function createLeague(formData: FormData) {
   const session = await getServerSession(authOptions)
@@ -25,8 +26,8 @@ export async function createLeague(formData: FormData) {
 
   if (!name || !homeTeam || teams.length < 2) throw new Error("Missing required fields or not enough teams")
 
-  // Generate a random 8-character invite code
-  const inviteCode = "VOLLEY-" + Math.random().toString(36).substring(2, 6).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase()
+  // Generate a secure random 8-character invite code
+  const inviteCode = "VOLLEY-" + randomBytes(4).toString("hex").toUpperCase()
 
   const league = await prisma.league.create({
     data: {
