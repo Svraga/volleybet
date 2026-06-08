@@ -23,6 +23,9 @@ export default function DeleteMatchDayButton({ leagueId, matchDayId }: { leagueI
     try {
       await deleteMatchDay(leagueId, matchDayId)
     } catch (e: any) {
+      if (e.message === "NEXT_REDIRECT" || e.message?.includes("NEXT_REDIRECT") || e.digest === "NEXT_REDIRECT") {
+        throw e;
+      }
       showAlert(e.message || "Errore durante l'eliminazione.")
       setIsConfirming(false)
     }

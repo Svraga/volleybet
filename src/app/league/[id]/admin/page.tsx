@@ -10,6 +10,7 @@ import AdminMatchdayPanel from "@/components/AdminMatchdayPanel"
 import DeleteMatchDayButton from "@/components/DeleteMatchDayButton"
 import AdminHeader from "@/components/AdminHeader"
 import AdminPageTour from "@/components/AdminPageTour"
+import SubmitButton from "@/components/SubmitButton"
 
 export default async function AdminPanelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -82,9 +83,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                     <label className="font-bold">Scadenza (Deadline)</label>
                     <Input type="datetime-local" name="deadline" required />
                   </div>
-                  <Button type="submit" variant="primary" className="w-full mt-4">
-                    Crea Giornata
-                  </Button>
+                  <SubmitButton variant="primary" className="w-full mt-4 h-12" defaultText="Crea Giornata" loadingText="CREAZIONE..." />
                 </form>
               </div>
             </details>

@@ -15,8 +15,8 @@ export default function UpdateNicknameForm({ defaultName }: { defaultName: strin
       showAlert("Il nickname deve contenere almeno 2 caratteri.")
       return
     }
-    if (name.length > 20) {
-      showAlert("Il nickname non può superare i 20 caratteri. Sii più conciso!")
+    if (name.length > 15) {
+      showAlert("Il nickname non può superare i 15 caratteri. Sii più conciso!")
       return
     }
     
@@ -24,6 +24,7 @@ export default function UpdateNicknameForm({ defaultName }: { defaultName: strin
       await updateNickname(formData)
       showAlert("Nickname aggiornato con successo!")
     } catch (e: any) {
+      if (e.message === "NEXT_REDIRECT" || e.message?.includes("NEXT_REDIRECT") || e.digest === "NEXT_REDIRECT") throw e;
       showAlert(e.message || "Errore durante l'aggiornamento.")
     }
   }
@@ -33,7 +34,7 @@ export default function UpdateNicknameForm({ defaultName }: { defaultName: strin
       <div className="space-y-2">
         <label className="font-bold">Nickname Visualizzato</label>
         <div className="flex gap-4">
-          <Input name="nickname" defaultValue={defaultName} className="flex-1" />
+          <Input name="nickname" defaultValue={defaultName} maxLength={15} className="flex-1" />
           <SubmitButton variant="primary" defaultText="Salva" loadingText="..." />
         </div>
       </div>

@@ -23,11 +23,18 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
       animate: true,
       popoverClass: 'brutal-tour-popover',
       onDestroyStarted: () => {
-        if (!tourDriver.hasNextStep() || confirm("Sei sicuro di voler saltare il tutorial?")) {
+        if (!tourDriver.hasNextStep()) {
           tourDriver.destroy();
           setTourActive(false);
           localStorage.setItem(isAdmin ? adminKey : playerKey, "true")
           if (forceTour) localStorage.removeItem("volleybet_force_tour")
+        } else {
+          useAlertStore.getState().showConfirm("Sei sicuro di voler saltare il tutorial?", () => {
+            tourDriver.destroy();
+            setTourActive(false);
+            localStorage.setItem(isAdmin ? adminKey : playerKey, "true")
+            if (forceTour) localStorage.removeItem("volleybet_force_tour")
+          })
         }
       }
     });

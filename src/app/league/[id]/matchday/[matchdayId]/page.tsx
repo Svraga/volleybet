@@ -71,10 +71,10 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
               
               return (
                 <div key={m.id} className="p-3 border-[3px] border-black shadow-brutal bg-white transition-all hover:-translate-y-1">
-                  <div className="flex flex-col sm:flex-row justify-between items-center font-bold text-sm sm:text-base mb-3 gap-2">
-                    <span className="text-center sm:text-left flex-1 break-words line-clamp-2 w-full">{m.teamA}</span>
+                  <div className="flex flex-col sm:flex-row justify-between items-center font-bold text-sm sm:text-base mb-3 gap-2 min-w-0">
+                    <span className="text-center sm:text-left flex-1 break-words line-clamp-2 w-full min-w-0">{m.teamA}</span>
                     <span className="flex-none bg-black text-white px-2 py-0.5 text-xs rotate-2">VS</span>
-                    <span className="text-center sm:text-right flex-1 break-words line-clamp-2 w-full">{m.teamB}</span>
+                    <span className="text-center sm:text-right flex-1 break-words line-clamp-2 w-full min-w-0">{m.teamB}</span>
                   </div>
                   
                   <div className="mt-4 flex flex-col md:flex-row md:justify-end md:items-center gap-2">
@@ -132,7 +132,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
               return (
                 <div key={m.id} className="border-[2px] border-black p-3">
-                  <div className="font-bold mb-2 border-b-[2px] border-black pb-1">
+                  <div className="font-bold mb-2 border-b-[2px] border-black pb-1 truncate" title={`${m.teamA} - ${m.teamB}`}>
                     {m.teamA} - {m.teamB}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

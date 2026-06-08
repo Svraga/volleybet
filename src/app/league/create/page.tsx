@@ -61,7 +61,18 @@ export default function CreateLeaguePage() {
       brutalAlert("Inserisci un nome per la valuta.")
       return
     }
+    if (coinName.trim().length > 10) {
+      e.preventDefault()
+      brutalAlert("Il nome della valuta non può superare i 10 caratteri.")
+      return
+    }
     // Submit handled natively by action attribute on form
+  }
+
+  const handleTeamBlur = (t: string) => {
+    if (t.trim().length > 20) {
+      brutalAlert("Il nome di una squadra non può superare i 20 caratteri.")
+    }
   }
 
   return (
@@ -91,7 +102,7 @@ export default function CreateLeaguePage() {
           <CardContent className="p-8 space-y-6">
             <div className={step === 1 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Come vuoi chiamare questo campionato?</p>
-              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} className="text-2xl h-16" />
+              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={25} className="text-2xl h-16" />
             </div>
 
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
@@ -119,6 +130,7 @@ export default function CreateLeaguePage() {
                       name="teams[]" 
                       value={t} 
                       onChange={e => handleTeamChange(idx, e.target.value)} 
+                      onBlur={() => handleTeamBlur(t)}
                       placeholder={`Squadra ${idx + 1}`}
                       required={step === 3} 
                       className="h-12"
@@ -148,7 +160,7 @@ export default function CreateLeaguePage() {
             <div className={step === 4 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Scegli il nome della tua valuta</p>
               <p className="font-bold text-gray-500 text-sm">I giocatori useranno questi gettoni virtuali per scommettere. Puoi chiamarli Coin, Birre, Fich, o come preferisci.</p>
-              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} className="text-2xl h-16" />
+              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} maxLength={10} className="text-2xl h-16" />
             </div>
 
             <div className="pt-6 flex justify-center items-center gap-4 w-full max-w-sm mx-auto">
