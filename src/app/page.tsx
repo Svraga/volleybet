@@ -43,7 +43,7 @@ export default async function Home() {
       </div>
 
       <div className="space-y-4 text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tighter uppercase inline-block bg-white px-4 py-2 border-[4px] border-black shadow-brutal transform -rotate-1">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tighter uppercase inline-block bg-white px-4 py-2 border-[4px] border-black shadow-brutal transform -rotate-1">
           Benvenuto, {user?.name}!
         </h1>
         {(!user?.leagues || user.leagues.length === 0) && (
@@ -70,25 +70,25 @@ export default async function Home() {
 
       <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
         <Card className="bg-secondary flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-2xl sm:text-3xl uppercase">Crea Campionato</CardTitle>
+          <CardHeader className="py-4">
+            <CardTitle className="text-xl sm:text-2xl uppercase">Crea Campionato</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="font-bold text-lg">Crea un nuovo campionato, imposta le regole e invita i tuoi compagni di squadra.</p>
+          <CardContent className="space-y-4 pb-4">
+            <p className="font-bold text-base">Crea un nuovo campionato, imposta le regole e invita i tuoi compagni di squadra.</p>
             <Link href="/league/create" className="block">
-              <Button className="w-full text-xl py-6 bg-white">Crea Ora</Button>
+              <Button className="w-full text-lg py-4 bg-white">Crea Ora</Button>
             </Link>
           </CardContent>
         </Card>
 
         <Card className="bg-white flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-3xl uppercase">Unisciti</CardTitle>
+          <CardHeader className="py-4">
+            <CardTitle className="text-xl sm:text-2xl uppercase">Unisciti</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="font-bold text-lg">Hai un codice invito? Unisciti al campionato della tua squadra.</p>
+          <CardContent className="space-y-4 pb-4">
+            <p className="font-bold text-base">Hai un codice invito? Unisciti al campionato della tua squadra.</p>
             <Link href="/league/join" className="block">
-              <Button variant="primary" className="w-full text-xl py-6">Inserisci Codice</Button>
+              <Button variant="primary" className="w-full text-lg py-4">Inserisci Codice</Button>
             </Link>
           </CardContent>
         </Card>

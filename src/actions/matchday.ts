@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
 export async function createMatchDay(leagueId: string, formData: FormData) {
   const session = await getServerSession(authOptions)
@@ -182,7 +183,7 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
     })
   })
 
-  redirect(`/league/${leagueId}/admin`)
+  revalidatePath(`/league/${leagueId}/admin`)
 }
 
 export async function updateDeadline(leagueId: string, matchDayId: string, formData: FormData) {

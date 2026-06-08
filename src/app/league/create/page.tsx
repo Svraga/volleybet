@@ -8,6 +8,7 @@ import { createLeague } from "@/actions/league"
 import Link from "next/link"
 import { useState, useRef } from "react"
 import { brutalAlert } from "@/store/alertStore"
+import { ArrowLeft } from "lucide-react"
 
 export default function CreateLeaguePage() {
   const [step, setStep] = useState(1)
@@ -31,10 +32,13 @@ export default function CreateLeaguePage() {
   }
 
   const handleTeamChange = (index: number, value: string) => {
+    if (value.length > 20) {
+      brutalAlert("Il nome di una squadra non può superare i 20 caratteri.")
+      return
+    }
     const newTeams = [...teams]
     newTeams[index] = value
     setTeams(newTeams)
-    // Se la squadra home viene rinominata, aggiorniamo (selezioniamo per index invece che per stringa per essere più robusti, ma per ora teniamo la logica semplice)
   }
 
   const nextStep = () => {
@@ -61,9 +65,9 @@ export default function CreateLeaguePage() {
       brutalAlert("Inserisci un nome per la valuta.")
       return
     }
-    if (coinName.trim().length > 10) {
+    if (coinName.trim().length > 15) {
       e.preventDefault()
-      brutalAlert("Il nome della valuta non può superare i 10 caratteri.")
+      brutalAlert("Il nome della valuta non può superare i 15 caratteri.")
       return
     }
     // Submit handled natively by action attribute on form
@@ -78,12 +82,12 @@ export default function CreateLeaguePage() {
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12 overflow-x-hidden">
       <div className="w-full max-w-2xl mb-8 flex justify-between items-center flex-wrap gap-4">
-        <h1 className="text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
           Crea Campionato
         </h1>
         <div className="flex gap-4">
           <Link href="/">
-            <Button variant="outline">Annulla</Button>
+            <Button variant="outline"><ArrowLeft className="w-5 h-5" /></Button>
           </Link>
         </div>
       </div>
@@ -99,17 +103,17 @@ export default function CreateLeaguePage() {
               {step === 4 && "La Valuta"}
             </div>
           </CardHeader>
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-6 space-y-4">
             <div className={step === 1 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Come vuoi chiamare questo campionato?</p>
-              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={25} className="text-2xl h-16" />
+              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={25} className="text-xl h-12" />
             </div>
 
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Da quante squadre è composto il girone?</p>
               <p className="font-bold text-gray-500 text-sm">Seleziona il numero totale di squadre. {numTeams % 2 !== 0 ? "(Numero dispari: una squadra riposerà ad ogni turno)" : ""}</p>
               <select 
-                className="flex h-16 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-xl text-black shadow-brutal focus-visible:outline-none focus-visible:ring-0 focus-visible:border-black"
+                className="flex h-12 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-lg text-black shadow-brutal focus-visible:outline-none focus-visible:ring-0 focus-visible:border-black"
                 value={numTeams}
                 onChange={(e) => handleNumTeamsChange(parseInt(e.target.value))}
               >
@@ -160,7 +164,7 @@ export default function CreateLeaguePage() {
             <div className={step === 4 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Scegli il nome della tua valuta</p>
               <p className="font-bold text-gray-500 text-sm">I giocatori useranno questi gettoni virtuali per scommettere. Puoi chiamarli Coin, Birre, Fich, o come preferisci.</p>
-              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} maxLength={10} className="text-2xl h-16" />
+              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} maxLength={15} className="text-xl h-12" />
             </div>
 
             <div className="pt-6 flex justify-center items-center gap-4 w-full max-w-sm mx-auto">

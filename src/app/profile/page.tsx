@@ -11,6 +11,7 @@ import { CircleDollarSign, Trophy } from "lucide-react"
 import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 import BottomNav from "@/components/BottomNav"
 import UpdateNicknameForm from "@/components/UpdateNicknameForm"
+import UpdateCoinForm from "@/components/UpdateCoinForm"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -79,10 +80,10 @@ export default async function ProfilePage() {
                   {user.leagues.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i).map(league => {
                     const isAdmin = league.adminId === user.id
                     return (
-                      <div key={league.id} className="border-[3px] border-black p-4 bg-gray-50 flex flex-col gap-4">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold uppercase">{league.name}</h3>
-                          {isAdmin && <span className="bg-yellow-300 text-xs font-black px-2 py-1 border-[2px] border-black uppercase">Admin</span>}
+                      <div key={league.id} className="border-[3px] border-black p-4 bg-gray-50 flex flex-col gap-4 min-w-0">
+                        <div className="flex justify-between items-center gap-2 min-w-0">
+                          <h3 className="text-xl font-bold uppercase truncate min-w-0 flex-1">{league.name}</h3>
+                          {isAdmin && <span className="bg-yellow-300 text-xs font-black px-2 py-1 border-[2px] border-black uppercase flex-shrink-0">Admin</span>}
                         </div>
                         
                         <div className="flex flex-col gap-2">
@@ -92,16 +93,7 @@ export default async function ProfilePage() {
                           
                           {isAdmin ? (
                             <div className="space-y-4 mt-4 border-t-[2px] border-dashed border-gray-300 pt-4">
-                              <form action={async (data) => {
-                                "use server"
-                                await updateCoinName(league.id, data)
-                              }} className="space-y-2">
-                                <label className="font-bold text-sm">Nome Coin ({league.coinName})</label>
-                                <div className="flex gap-2">
-                                  <Input name="coinName" defaultValue={league.coinName} maxLength={15} className="flex-1 text-sm h-8" />
-                                  <Button type="submit" variant="primary" className="h-8">Aggiorna</Button>
-                                </div>
-                              </form>
+                              <UpdateCoinForm leagueId={league.id} defaultName={league.coinName} />
                               <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
                             </div>
                           ) : (
