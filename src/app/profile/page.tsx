@@ -26,7 +26,7 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/")
 
-  const adminEmail = "daniele.sarcina@gmail.com"
+  const adminEmail = "svraga.channel.bs@gmail.com"
   let isAdmin = false
   let currentCoinName = "Coin"
   if (user.leagueId) {

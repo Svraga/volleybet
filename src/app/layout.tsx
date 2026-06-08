@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/Providers";
-import CookieBanner from "@/components/CookieBanner";
 import GlobalFooter from "@/components/GlobalFooter";
 import BrutalAlertProvider from "@/components/BrutalAlertProvider";
 import "./globals.css";
@@ -29,7 +28,6 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
         <GlobalFooter />
-        <CookieBanner />
         <BrutalAlertProvider />
       </body>
     </html>

@@ -40,7 +40,7 @@ export default function PrivacyPage() {
 
         <div className="bg-white border-[4px] border-black p-6 md:p-10 shadow-brutal space-y-8">
           <h1 className="text-3xl md:text-5xl font-black uppercase text-center bg-yellow-300 inline-block px-4 py-2 border-[2px] border-black -rotate-1 mb-6">
-            Privacy & Cookie Policy
+            Privacy Policy
           </h1>
 
           {lang === "it" ? (
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
               
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Titolare del Trattamento</h2>
-                <p><strong>Amministratore di VolleyBet</strong> (Email per richieste privacy: daniele.sarcina@gmail.com)</p>
+                <p><strong>Amministratore di VolleyBet</strong> (Email per richieste privacy: svraga.channel.bs@gmail.com)</p>
               </section>
 
               <section className="space-y-2">
@@ -73,10 +73,10 @@ export default function PrivacyPage() {
 
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Cookie e Local Storage</h2>
-                <p>Questo sito non utilizza cookie di profilazione, Google Analytics o altri strumenti di tracciamento terzi.</p>
+                <p>Questo sito non utilizza cookie di profilazione, Google Analytics o altri strumenti di tracciamento terzi. Utilizziamo esclusivamente cookie tecnici strettamente necessari al funzionamento dell'applicazione.</p>
                 <ul className="list-disc pl-6 space-y-1 mt-2">
-                  <li><strong>Cookie tecnici:</strong> Utilizzati esclusivamente da NextAuth per mantenere la sessione di login attiva.</li>
-                  <li><strong>Local Storage:</strong> Utilizzato dal browser per memorizzare le preferenze di interfaccia (es. completamento del tutorial iniziale e chiusura del banner cookie).</li>
+                  <li><strong>Cookie tecnici:</strong> Utilizzati esclusivamente da NextAuth per mantenere la sessione di login attiva e garantire la sicurezza.</li>
+                  <li><strong>Local Storage:</strong> Utilizzato dal browser per memorizzare le preferenze di interfaccia (es. completamento del tutorial iniziale).</li>
                 </ul>
               </section>
 
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
               
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Data Controller</h2>
-                <p><strong>VolleyBet Administrator</strong> (Privacy requests Email: daniele.sarcina@gmail.com)</p>
+                <p><strong>VolleyBet Administrator</strong> (Privacy requests Email: svraga.channel.bs@gmail.com)</p>
               </section>
 
               <section className="space-y-2">
@@ -127,10 +127,10 @@ export default function PrivacyPage() {
 
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Cookies & Local Storage</h2>
-                <p>This site does not use profiling cookies, Google Analytics, or other third-party tracking tools.</p>
+                <p>This site does not use profiling cookies, Google Analytics, or other third-party tracking tools. We only use technical cookies strictly necessary for the application to function.</p>
                 <ul className="list-disc pl-6 space-y-1 mt-2">
-                  <li><strong>Technical cookies:</strong> Exclusively used by NextAuth to maintain the active login session.</li>
-                  <li><strong>Local Storage:</strong> Used by the browser to store interface preferences (e.g., completion of the initial tutorial and cookie banner dismissal).</li>
+                  <li><strong>Technical cookies:</strong> Exclusively used by NextAuth to maintain the active login session and ensure security.</li>
+                  <li><strong>Local Storage:</strong> Used by the browser to store interface preferences (e.g., completion of the initial tutorial).</li>
                 </ul>
               </section>
 
