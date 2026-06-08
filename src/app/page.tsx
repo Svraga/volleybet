@@ -71,7 +71,7 @@ export default async function Home() {
       <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
         <Card className="bg-secondary flex flex-col justify-between">
           <CardHeader>
-            <CardTitle className="text-3xl uppercase">Crea Campionato</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl uppercase">Crea Campionato</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="font-bold text-lg">Crea un nuovo campionato, imposta le regole e invita i tuoi compagni di squadra.</p>

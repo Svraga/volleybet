@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import Link from "next/link"
-import { updateNickname } from "@/actions/user"
 import { leaveLeague, deleteLeague, updateCoinName } from "@/actions/league"
 import { CircleDollarSign, Trophy } from "lucide-react"
 import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 import BottomNav from "@/components/BottomNav"
+import UpdateNicknameForm from "@/components/UpdateNicknameForm"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -63,15 +63,7 @@ export default async function ProfilePage() {
               <CardTitle>Impostazioni Profilo</CardTitle>
             </CardHeader>
             <CardContent>
-              <form action={updateNickname} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="font-bold">Nickname Visualizzato</label>
-                  <div className="flex gap-4">
-                    <Input name="nickname" defaultValue={user.name || ""} className="flex-1" />
-                    <Button type="submit" variant="primary">Salva</Button>
-                  </div>
-                </div>
-              </form>
+              <UpdateNicknameForm defaultName={user.name || ""} />
             </CardContent>
           </Card>
 

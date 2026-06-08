@@ -159,6 +159,14 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
       where: { matchDayId }
     })
 
+    // Delete related notifications
+    await tx.notification.deleteMany({
+      where: {
+        leagueId,
+        message: { startsWith: `È stata aperta la Giornata ${matchDay.number}.` }
+      }
+    })
+
     // Delete the matchday itself
     await tx.matchDay.delete({
       where: { id: matchDayId }

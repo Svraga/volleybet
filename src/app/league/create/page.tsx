@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
+import SubmitButton from "@/components/SubmitButton"
 import { Input } from "@/components/ui/Input"
 import { createLeague } from "@/actions/league"
 import Link from "next/link"
@@ -37,12 +38,16 @@ export default function CreateLeaguePage() {
   }
 
   const nextStep = () => {
-    if (step === 1 && !leagueName.trim()) return brutalAlert("Inserisci un nome per il campionato.")
+    if (step === 1) {
+      if (!leagueName.trim()) return brutalAlert("Inserisci un nome per il campionato.")
+      if (leagueName.trim().length > 25) return brutalAlert("Il nome del campionato non può superare i 25 caratteri.")
+    }
     if (step === 2) {
       // Nessuna validazione necessaria, select ha sempre un valore
     }
     if (step === 3) {
       if (teams.some(t => !t.trim())) return brutalAlert("Compila tutti i nomi delle squadre.")
+      if (teams.some(t => t.trim().length > 20)) return brutalAlert("Il nome di ogni squadra non può superare i 20 caratteri.")
       if (!homeTeam.trim()) return brutalAlert("Devi selezionare la tua squadra dal menu a tendina.")
       if (!teams.includes(homeTeam)) return brutalAlert("La tua squadra non è presente nella lista (errore di selezione).")
     }
@@ -157,9 +162,7 @@ export default function CreateLeaguePage() {
                   Avanti
                 </Button>
               ) : (
-                <Button type="submit" variant="primary" className="flex-1 h-14 text-xl bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal">
-                  Genera
-                </Button>
+                <SubmitButton variant="primary" defaultText="Genera" loadingText="CREAZIONE..." className="flex-1 h-14 text-xl bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal" />
               )}
             </div>
           </CardContent>

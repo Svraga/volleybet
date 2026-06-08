@@ -150,16 +150,16 @@ export default function AdminMatchdayPanel({
         ) : (
           <div className="space-y-2">
             {matchDay.matches.map((m: any) => (
-              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm">
-                <span>{m.teamA} vs {m.teamB}</span>
+              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm gap-2">
+                <span className="truncate flex-1" title={`${m.teamA} vs ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
                 <span className="font-bold border-[2px] border-black p-1 bg-yellow-100 flex-shrink-0 whitespace-nowrap">
                   {m.resultA !== null && m.resultB !== null ? `${m.resultA} - ${m.resultB}` : "Da giocare"}
                 </span>
               </div>
             ))}
             {hasOddTeams && matchDay.restingTeam && (
-              <div className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm bg-gray-200">
-                <span>{matchDay.restingTeam}</span>
+              <div className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm bg-gray-200 gap-2">
+                <span className="truncate flex-1" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
                 <span className="font-bold border-[2px] border-black p-1 bg-white flex-shrink-0 whitespace-nowrap">
                   RIPOSA
                 </span>
@@ -178,8 +178,8 @@ export default function AdminMatchdayPanel({
             {matchDay.matches.map((m: any) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
-                <div key={`res_${m.id}`} className="flex justify-between items-center gap-4">
-                  <span className="font-bold text-sm flex-1">{m.teamA} - {m.teamB}</span>
+                <div key={`res_${m.id}`} className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-sm flex-1 truncate" title={`${m.teamA} - ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
                   <select 
                     name={`result_${m.id}`} 
                     defaultValue={existingValue}
@@ -265,8 +265,8 @@ export default function AdminMatchdayPanel({
                       const isHomeTeam = m.teamA === teams.find(t=>t.isHome)?.name || m.teamB === teams.find(t=>t.isHome)?.name;
                       if (isHomeTeam) return null; // Proxy can't bet on home team either usually? Wait, home team is league level, I don't have it here. Let's pass it.
                       return (
-                        <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold">
-                          <span>{m.teamA} - {m.teamB}</span>
+                        <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-2">
+                          <span className="flex-1 truncate" title={`${m.teamA} - ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
                           <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-1">
                             <option value="" disabled className="text-gray-400">0-0</option>
                             <option value="3-0">3-0</option>
