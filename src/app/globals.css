@@ -73,5 +73,25 @@ body {
   text-shadow: none !important;
 }
 .brutal-tour-popover .driver-popover-footer button:hover {
-  background-color: #fde047 !important; /* yellow-400 */
+}
+
+/* Brutalist Loading Animations */
+@keyframes brutal-pulse {
+  0% { background-color: #e5e7eb; box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); transform: translate(0, 0); }
+  50% { background-color: #d1d5db; box-shadow: 0px 0px 0px 0px rgba(0,0,0,1); transform: translate(2px, 2px); }
+  100% { background-color: #e5e7eb; box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); transform: translate(0, 0); }
+}
+
+.animate-brutal-pulse {
+  animation: brutal-pulse 1s infinite;
+}
+
+@keyframes brutal-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.animate-brutal-spin {
+  animation: brutal-spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
 }

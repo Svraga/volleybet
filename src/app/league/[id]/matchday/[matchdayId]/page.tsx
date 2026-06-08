@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
+import SubmitButton from "@/components/SubmitButton"
 import { placeBets } from "@/actions/bet"
 import { TriangleAlert } from "lucide-react"
 
@@ -98,9 +99,12 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
             {!isDeadlinePassed && (
               <div className="pt-6">
-                <Button type="submit" variant="primary" className="w-full text-xl h-16">
-                  Conferma Scommesse
-                </Button>
+                <SubmitButton 
+                  variant="primary" 
+                  className="w-full text-xl h-16" 
+                  defaultText="Conferma Scommesse"
+                  loadingText="SALVATAGGIO..."
+                />
               </div>
             )}
             {isDeadlinePassed && (

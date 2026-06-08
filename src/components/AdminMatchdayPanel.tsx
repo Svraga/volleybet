@@ -7,6 +7,7 @@ import DeleteMatchDayButton from "./DeleteMatchDayButton"
 import { setMatches, updateDeadline } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
+import SubmitButton from "@/components/SubmitButton"
 
 export default function AdminMatchdayPanel({ 
   leagueId, 
@@ -43,39 +44,14 @@ export default function AdminMatchdayPanel({
   }
 
 
-  const handleSaveMatches = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    await setMatches(leagueId, matchDay.id, formData)
-  }
+  const boundSetMatches = setMatches.bind(null, leagueId, matchDay.id)
+  const boundScoreMatchDay = scoreMatchDay.bind(null, leagueId, matchDay.id)
+  const boundUpdateDeadline = updateDeadline.bind(null, leagueId, matchDay.id)
+  const boundProxyPlaceBets = proxyPlaceBets.bind(null, leagueId, matchDay.id)
 
-  // SECTION 2: Score Form
-  const handleScoreMatches = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    await scoreMatchDay(leagueId, matchDay.id, formData)
-  }
-
-  // SECTION 3: Proxy Bet
   const usersWhoBet = users.filter(u => u.bets && u.bets.length > 0)
   const usersMissing = users.filter(u => !u.bets || u.bets.length === 0)
-  
   const [selectedProxyUser, setSelectedProxyUser] = useState("")
-  
-  const handleProxyBet = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedProxyUser) return
-    const formData = new FormData(e.currentTarget)
-    formData.append("userId", selectedProxyUser)
-    await proxyPlaceBets(leagueId, matchDay.id, formData)
-    setSelectedProxyUser("") // reset after success
-  }
-
-  const handleUpdateDeadline = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    await updateDeadline(leagueId, matchDay.id, formData)
-  }
 
   return (
     <div className="space-y-4">
@@ -110,7 +86,7 @@ export default function AdminMatchdayPanel({
           <h3 className="text-xl font-bold uppercase mb-4 bg-yellow-300 inline-block px-2 border-[2px] border-black -rotate-1">1. Gestione Partite</h3>
           
           {isMatchDayEmpty ? (
-          <form onSubmit={handleSaveMatches} className="space-y-4">
+          <form action={boundSetMatches} className="space-y-4">
             {Array.from({ length: numFixedRows }).map((_, i) => (
               <div key={`row_${i}`} className="flex flex-col md:flex-row gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm">
                 <div className="flex-1">
@@ -169,9 +145,7 @@ export default function AdminMatchdayPanel({
               </div>
             )}
             <input type="hidden" name="numRows" value={numFixedRows} />
-            <Button type="submit" variant="primary" className="w-full uppercase font-bold text-sm mt-4">
-              Salva Accoppiamenti
-            </Button>
+            <SubmitButton variant="primary" className="w-full uppercase font-bold text-sm mt-4" defaultText="Salva Accoppiamenti" loadingText="SALVATAGGIO..." />
           </form>
         ) : (
           <div className="space-y-2">
@@ -200,7 +174,7 @@ export default function AdminMatchdayPanel({
       {activeTab === "results" && !isMatchDayEmpty && (
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-green-400 inline-block px-2 border-[2px] border-black -rotate-1">2. Inserimento Risultati</h3>
-          <form onSubmit={handleScoreMatches} className="space-y-4">
+          <form action={boundScoreMatchDay} className="space-y-4">
             {matchDay.matches.map((m: any) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
@@ -223,9 +197,7 @@ export default function AdminMatchdayPanel({
                 </div>
               )
             })}
-            <Button type="submit" variant="primary" className="w-full mt-4 uppercase">
-              Termina e Calcola
-            </Button>
+            <SubmitButton variant="primary" className="w-full mt-4 uppercase" defaultText="Termina e Calcola" loadingText="CALCOLANDO..." />
           </form>
         </div>
       )}
@@ -237,7 +209,7 @@ export default function AdminMatchdayPanel({
           
           <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
             <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
-            <form onSubmit={handleUpdateDeadline} className="flex gap-2">
+            <form action={boundUpdateDeadline} className="flex gap-2">
               <input 
                 type="datetime-local" 
                 name="deadline" 
@@ -245,7 +217,7 @@ export default function AdminMatchdayPanel({
                 className="flex-1 border-[2px] border-black px-2 py-1 font-bold text-sm" 
                 required 
               />
-              <Button type="submit" variant="primary" className="text-sm">Aggiorna</Button>
+              <SubmitButton variant="primary" className="text-sm" defaultText="Aggiorna" loadingText="IN CORSO..." />
             </form>
           </div>
 
@@ -269,7 +241,12 @@ export default function AdminMatchdayPanel({
           {usersMissing.length > 0 && !isScored && (
             <div className="border-t-[3px] border-black pt-4">
               <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
-              <form onSubmit={handleProxyBet} className="space-y-4">
+              <form action={async (formData) => {
+                if (!selectedProxyUser) return;
+                formData.append("userId", selectedProxyUser);
+                await boundProxyPlaceBets(formData);
+                setSelectedProxyUser("");
+              }} className="space-y-4">
                 <select 
                   className="w-full border-[3px] border-black p-2 font-bold" 
                   required
@@ -302,7 +279,7 @@ export default function AdminMatchdayPanel({
                         </div>
                       )
                     })}
-                    <Button type="submit" variant="secondary" className="w-full text-xs">Salva Proxy-Bet</Button>
+                    <SubmitButton variant="secondary" className="w-full text-xs" defaultText="Salva Proxy-Bet" loadingText="SALVATAGGIO..." />
                   </div>
                 )}
               </form>
