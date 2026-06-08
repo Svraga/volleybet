@@ -10,6 +10,7 @@ import { updateNickname } from "@/actions/user"
 import { leaveLeague, deleteLeague, updateCoinName } from "@/actions/league"
 import { CircleDollarSign, Trophy } from "lucide-react"
 import DeleteLeagueForm from "@/components/DeleteLeagueForm"
+import BottomNav from "@/components/BottomNav"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -38,13 +39,10 @@ export default async function ProfilePage() {
   return (
     <div className="pb-20 md:pb-0 min-h-screen bg-primary">
       <main className="flex flex-col items-center p-6 pt-12">
-        <div className="w-full max-w-2xl mb-8 flex justify-between items-center">
+        <div className="w-full max-w-2xl mb-8 flex justify-center items-center">
           <h1 className="text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
             Il tuo Profilo
           </h1>
-          <Link href="/">
-            <Button variant="primary" className="font-bold">Torna alla Home</Button>
-          </Link>
         </div>
 
         <div className="grid gap-8 w-full max-w-2xl">
@@ -86,7 +84,7 @@ export default async function ProfilePage() {
                 <p className="font-bold">Non sei iscritto a nessun campionato.</p>
               ) : (
                 <div className="space-y-6">
-                  {user.leagues.map(league => {
+                  {user.leagues.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i).map(league => {
                     const isAdmin = league.adminId === user.id
                     return (
                       <div key={league.id} className="border-[3px] border-black p-4 bg-gray-50 flex flex-col gap-4">
@@ -170,6 +168,7 @@ export default async function ProfilePage() {
           </div>
         </div>
       </main>
+      <BottomNav leagueId={user.leagues.length > 0 ? user.leagues[0].id : undefined} />
     </div>
   )
 }

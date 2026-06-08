@@ -4,12 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Trophy, User } from "lucide-react"
 
-export default function BottomNav({ leagueId, adminEmail }: { leagueId: string, adminEmail?: string }) {
+export default function BottomNav({ leagueId, adminEmail }: { leagueId?: string, adminEmail?: string }) {
   const pathname = usePathname()
 
   const navItems = [
-    { name: "Dashboard", path: `/league/${leagueId}`, icon: <Home className="w-6 h-6 mb-1 md:hidden" /> },
-    { name: "Classifica", path: `/league/${leagueId}/stats`, icon: <Trophy className="w-6 h-6 mb-1 md:hidden" /> },
+    { name: "Dashboard", path: leagueId ? `/league/${leagueId}` : "/", icon: <Home className="w-6 h-6 mb-1 md:hidden" /> },
+    ...(leagueId ? [{ name: "Classifica", path: `/league/${leagueId}/stats`, icon: <Trophy className="w-6 h-6 mb-1 md:hidden" /> }] : []),
     { name: "Profilo", path: "/profile", icon: <User className="w-6 h-6 mb-1 md:hidden" /> },
   ]
 
