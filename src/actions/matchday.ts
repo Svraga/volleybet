@@ -82,7 +82,7 @@ export async function setMatches(leagueId: string, matchDayId: string, formData:
     })
   }
 
-  const newMatches = []
+  const newMatches: { matchDayId: string, teamA: string, teamB: string }[] = []
   for (let i = 0; i < numRows; i++) {
     const teamA = formData.get(`teamA_${i}`) as string
     const teamB = formData.get(`teamB_${i}`) as string

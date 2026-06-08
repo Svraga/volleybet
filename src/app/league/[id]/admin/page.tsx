@@ -37,7 +37,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
   const users = await prisma.user.findMany({
     where: {
       OR: [
-        { leagueId: league.id },
+        { leagues: { some: { id: league.id } } },
         { ledgers: { some: { leagueId: league.id } } },
         { bets: { some: { match: { matchDay: { leagueId: league.id } } } } }
       ]

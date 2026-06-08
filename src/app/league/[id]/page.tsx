@@ -47,7 +47,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
   // Fetch top 3 users by points
   const leagueUsers = await prisma.user.findMany({
-    where: { leagueId: league.id },
+    where: { leagues: { some: { id: league.id } } },
     include: {
       bets: {
         where: { match: { matchDay: { status: "SCORED" } } }

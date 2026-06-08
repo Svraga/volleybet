@@ -17,7 +17,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
   const leagueUsers = await prisma.user.findMany({
     where: {
       OR: [
-        { leagueId: id },
+        { leagues: { some: { id } } },
         { ledgers: { some: { leagueId: id } } },
         { bets: { some: { match: { matchDay: { leagueId: id } } } } }
       ]
