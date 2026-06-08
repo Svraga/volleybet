@@ -58,7 +58,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
   })).sort((a, b) => b.points - a.points).slice(0, 3)
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12">
+    <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-primary pt-12">
       <GuidedTour isAdmin={isAdmin} />
       <div id="tour-welcome" className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap">
         <h1 className="text-4xl md:text-5xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">

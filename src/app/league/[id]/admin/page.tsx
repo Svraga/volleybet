@@ -58,7 +58,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
   const hasEmptyMatchDays = matchDays.some(md => md.matches.length === 0)
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-secondary pt-12">
+    <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-secondary pt-12">
       <AdminPageTour hasMatchdays={matchDays.length > 0} />
       <div className="w-full max-w-4xl mb-8">
         <AdminHeader leagueId={league.id} hasEmptyMatchDays={hasEmptyMatchDays} />

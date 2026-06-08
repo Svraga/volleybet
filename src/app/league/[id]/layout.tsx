@@ -26,9 +26,9 @@ export default async function LeagueLayout({
   }
 
   return (
-    <div className="pb-20 md:pb-0 min-h-screen">
+    <>
       <BottomNav leagueId={id} adminEmail={adminEmail} />
       {children}
-    </div>
+    </>
   )
 }

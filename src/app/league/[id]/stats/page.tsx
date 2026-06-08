@@ -68,7 +68,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
   const pointsRanking = [...stats].sort((a, b) => b.totalPoints - a.totalPoints)
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-secondary pt-12">
+    <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-secondary pt-12">
       <div className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap">
         <h1 className="text-4xl md:text-5xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
           Classifica {round ? ` - Giornata ${matchDays.find(m => m.id === round)?.number || ''}` : ''}

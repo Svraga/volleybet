@@ -17,7 +17,7 @@ export default function GlobalFooter() {
   return (
     <footer className="w-full bg-secondary border-t-[4px] border-black p-4 mt-auto">
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-bold text-gray-800">
-        <p>© {new Date().getFullYear()} VolleyBet</p>
+        <p>VolleyBet</p>
         <div className="flex gap-6">
           <Link href="/terms" className="hover:text-primary transition-colors underline decoration-[2px]">
             {lang === "it" ? "Termini e Condizioni" : "Terms & Conditions"}
