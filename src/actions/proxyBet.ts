@@ -15,8 +15,11 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
   const targetUserId = formData.get("userId") as string
   if (!targetUserId) throw new Error("Missing target user ID")
 
-  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } })
-  if (!targetUser || targetUser.leagueId !== leagueId) throw new Error("Target user does not belong to this league")
+  const targetUser = await prisma.user.findUnique({ 
+    where: { id: targetUserId },
+    include: { leagues: true }
+  })
+  if (!targetUser || !targetUser.leagues.some(l => l.id === leagueId)) throw new Error("Target user does not belong to this league")
 
   const matchDay = await prisma.matchDay.findUnique({
     where: { id: matchDayId },
@@ -58,6 +61,16 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
           matchDayId,
           amount: -1,
           reason: `MatchDay ${matchDay.number} Entry Fee (Proxy)`
+        }
+      })
+
+      // Log the proxy bet
+      await tx.auditLog.create({
+        data: {
+          leagueId,
+          userId: session.user.id,
+          action: "Scommessa Proxy",
+          details: `L'admin ha inserito una scommessa per conto di ${targetUser.name}`
         }
       })
     })

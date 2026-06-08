@@ -169,6 +169,16 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       where: { id: matchDay.id },
       data: { status: "SCORED" }
     })
+
+    // Log the action
+    await tx.auditLog.create({
+      data: {
+        leagueId,
+        userId: session.user.id,
+        action: "Risultati Inseriti",
+        details: `Risultati inseriti e premi distribuiti per la Giornata ${matchDay.number}`
+      }
+    })
   })
 
   redirect(`/league/${leagueId}/admin`)

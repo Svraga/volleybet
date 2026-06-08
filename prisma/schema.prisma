@@ -47,12 +47,12 @@ model User {
   image         String?
   
   // Custom app fields
-  leagueId      String?
-  league        League?   @relation(fields: [leagueId], references: [id])
+  leagues       League[]  @relation("LeagueMembers")
   bets          Bet[]
   accounts      Account[]
   sessions      Session[]
   ledgers       Ledger[]
+  auditLogs     AuditLog[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -75,13 +75,25 @@ model League {
   hasOddTeams   Boolean   @default(false)
   coinName      String    @default("Coin")
   
-  users         User[]
+  users         User[]    @relation("LeagueMembers")
   matchDays     MatchDay[]
   ledgers       Ledger[]
   teams         Team[]
+  auditLogs     AuditLog[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  leagueId  String
+  league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
 }
 
 model MatchDay {

@@ -18,12 +18,23 @@ export async function createMatchDay(leagueId: string, formData: FormData) {
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (!league || league.adminId !== session.user.id) throw new Error("Unauthorized")
 
-  await prisma.matchDay.create({
-    data: {
-      leagueId,
-      number,
-      deadline,
-    }
+  await prisma.$transaction(async (tx) => {
+    await tx.matchDay.create({
+      data: {
+        leagueId,
+        number,
+        deadline,
+      }
+    })
+
+    await tx.auditLog.create({
+      data: {
+        leagueId,
+        userId: session.user.id,
+        action: "Creata Giornata",
+        details: `Giornata ${number} creata con scadenza ${deadlineStr}`
+      }
+    })
   })
 
   redirect(`/league/${leagueId}/admin`)
@@ -84,11 +95,22 @@ export async function setMatches(leagueId: string, matchDayId: string, formData:
     }
   }
 
-  if (newMatches.length > 0) {
-    await prisma.match.createMany({
-      data: newMatches
+  await prisma.$transaction(async (tx) => {
+    if (newMatches.length > 0) {
+      await tx.match.createMany({
+        data: newMatches
+      })
+    }
+
+    await tx.auditLog.create({
+      data: {
+        leagueId,
+        userId: session.user.id,
+        action: "Modificate Partite",
+        details: `Giornata aggiornata. ${newMatches.length} partite aggiunte. (Riposa: ${restingTeam || 'Nessuno'})`
+      }
     })
-  }
+  })
 
   redirect(`/league/${leagueId}/admin`)
 }
@@ -99,6 +121,13 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
 
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (!league || league.adminId !== session.user.id) throw new Error("Unauthorized")
+
+  const matchDay = await prisma.matchDay.findUnique({ where: { id: matchDayId } })
+  if (!matchDay) throw new Error("MatchDay not found")
+  
+  if (new Date() > matchDay.deadline) {
+    throw new Error("Non puoi eliminare una giornata già iniziata.")
+  }
 
   await prisma.$transaction(async (tx) => {
     // Get all matches for this matchday
@@ -123,6 +152,15 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
     // Delete the matchday itself
     await tx.matchDay.delete({
       where: { id: matchDayId }
+    })
+
+    await tx.auditLog.create({
+      data: {
+        leagueId,
+        userId: session.user.id,
+        action: "Eliminata Giornata",
+        details: `Giornata ${matchDay.number} eliminata`
+      }
     })
   })
 

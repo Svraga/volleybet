@@ -33,12 +33,8 @@ export default async function Home() {
   // User is logged in
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { league: true }
+    include: { leagues: true }
   })
-
-  if (user?.leagueId) {
-    redirect(`/league/${user.leagueId}`)
-  }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-20">
@@ -50,34 +46,53 @@ export default async function Home() {
         <h1 className="text-4xl font-bold tracking-tighter uppercase inline-block bg-white px-4 py-2 border-[4px] border-black shadow-brutal transform -rotate-1">
           Benvenuto, {user?.name}!
         </h1>
-        <p className="text-xl font-bold mt-4">Non appartieni a nessun campionato al momento.</p>
+        {(!user?.leagues || user.leagues.length === 0) && (
+          <p className="text-xl font-bold mt-4">Non appartieni a nessun campionato al momento.</p>
+        )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
-          <Card className="bg-secondary flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-3xl uppercase">Crea Campionato</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="font-bold text-lg">Crea un nuovo campionato, imposta le regole e invita i tuoi compagni di squadra.</p>
-              <Link href="/league/create" className="block">
-                <Button className="w-full text-xl py-6 bg-white">Crea Ora</Button>
+      {user?.leagues && user.leagues.length > 0 && (
+        <div className="w-full max-w-4xl mb-12">
+          <h2 className="text-2xl font-black uppercase mb-6 bg-yellow-300 px-3 py-1 inline-block border-[3px] border-black -rotate-1 shadow-brutal-sm">
+            I Tuoi Campionati
+          </h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {user.leagues.map(league => (
+              <Link href={`/league/${league.id}`} key={league.id} className="block">
+                <Card className="bg-white border-[3px] border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-brutal-sm transition-all h-full flex flex-col justify-center text-center p-6">
+                  <h3 className="text-xl font-bold uppercase">{league.name}</h3>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white flex flex-col justify-between">
-            <CardHeader>
-              <CardTitle className="text-3xl uppercase">Unisciti</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="font-bold text-lg">Hai un codice invito? Unisciti al campionato della tua squadra.</p>
-              <Link href="/league/join" className="block">
-                <Button variant="primary" className="w-full text-xl py-6">Inserisci Codice</Button>
-              </Link>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
+        <Card className="bg-secondary flex flex-col justify-between">
+          <CardHeader>
+            <CardTitle className="text-3xl uppercase">Crea Campionato</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="font-bold text-lg">Crea un nuovo campionato, imposta le regole e invita i tuoi compagni di squadra.</p>
+            <Link href="/league/create" className="block">
+              <Button className="w-full text-xl py-6 bg-white">Crea Ora</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white flex flex-col justify-between">
+          <CardHeader>
+            <CardTitle className="text-3xl uppercase">Unisciti</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="font-bold text-lg">Hai un codice invito? Unisciti al campionato della tua squadra.</p>
+            <Link href="/league/join" className="block">
+              <Button variant="primary" className="w-full text-xl py-6">Inserisci Codice</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   )
 }

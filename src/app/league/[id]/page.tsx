@@ -5,11 +5,11 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
-import { Medal, TriangleAlert } from "lucide-react"
 import { leaveLeague } from "@/actions/league"
 import GuidedTour from "@/components/GuidedTour"
 import AdminButtonClient from "@/components/AdminButtonClient"
 import CopyInviteButton from "@/components/CopyInviteButton"
+import { ShieldCheck, Medal, TriangleAlert } from "lucide-react"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,16 +19,19 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      league: true,
-      ledgers: true
+      ledgers: { where: { leagueId: id } }
     }
   })
 
-  if (!user?.league || user.league.id !== id) {
+  const league = await prisma.league.findUnique({
+    where: { id },
+    include: { users: { where: { id: session.user.id } } }
+  })
+
+  if (!user || !league || league.users.length === 0) {
     redirect("/")
   }
 
-  const league = user.league
   const isAdmin = league.adminId === user.id
   
   // Calculate total coins from ledger
@@ -66,6 +69,11 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
         </h1>
         
         <div className="flex gap-4">
+          <Link href={`/league/${league.id}/audit`}>
+            <Button variant="outline" className="font-bold border-[2px] border-black shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-blue-100 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" /> Trasparenza
+            </Button>
+          </Link>
           {isAdmin && (
             <AdminButtonClient leagueId={league.id} />
           )}

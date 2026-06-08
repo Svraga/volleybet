@@ -20,7 +20,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
   const matchDay = await prisma.matchDay.findUnique({
     where: { id: matchdayId },
-    include: { matches: { include: { bets: { where: { userId: session.user.id } } } } }
+    include: { matches: { include: { bets: { include: { user: true } } } } }
   })
 
   if (!matchDay || matchDay.status !== "OPEN") {
@@ -65,7 +65,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
               const isHomeTeam = m.teamA === league.homeTeam || m.teamB === league.homeTeam
               if (isHomeTeam) return null;
 
-              const existingBet = m.bets[0]
+              const existingBet = m.bets.find(b => b.userId === session.user.id)
               const existingValue = existingBet ? `${existingBet.predictedA}-${existingBet.predictedB}` : ""
               
               return (
@@ -111,6 +111,44 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
           </CardContent>
         </form>
       </Card>
+
+      {isDeadlinePassed && (
+        <Card className="w-full max-w-3xl bg-white border-[4px] border-black shadow-brutal mt-8">
+          <CardHeader className="border-b-[3px] border-black bg-blue-100">
+            <CardTitle>Scommesse degli altri giocatori (Trasparenza)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <p className="font-bold text-gray-700">
+              Essendo passata la scadenza, tutte le scommesse sono ora pubbliche. 
+              Nessuno, nemmeno l'amministratore, può più modificarle senza lasciare traccia.
+            </p>
+            {matchDay.matches.map(m => {
+              const isHomeTeam = m.teamA === league.homeTeam || m.teamB === league.homeTeam;
+              if (isHomeTeam) return null;
+
+              return (
+                <div key={m.id} className="border-[2px] border-black p-3">
+                  <div className="font-bold mb-2 border-b-[2px] border-black pb-1">
+                    {m.teamA} - {m.teamB}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {m.bets.length === 0 ? (
+                      <p className="text-sm italic text-gray-500">Nessuna scommessa.</p>
+                    ) : (
+                      m.bets.map(b => (
+                        <div key={b.id} className="flex justify-between items-center bg-gray-100 px-2 py-1 text-sm font-bold border border-black">
+                          <span className="truncate mr-2" title={b.user.name || "Utente"}>{b.user.name}</span>
+                          <span className="bg-white px-1 border border-black shrink-0">{b.predictedA}-{b.predictedB}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
     </main>
   )
 }

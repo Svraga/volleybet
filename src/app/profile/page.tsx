@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import Link from "next/link"
 import { updateNickname } from "@/actions/user"
-import { leaveLeague } from "@/actions/league"
-import { CircleDollarSign } from "lucide-react"
-import TourTrigger from "@/components/TourTrigger"
-import BottomNav from "@/components/BottomNav"
+import { leaveLeague, deleteLeague, updateCoinName } from "@/actions/league"
+import { CircleDollarSign, Trophy } from "lucide-react"
+import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -19,6 +18,7 @@ export default async function ProfilePage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
+      leagues: true,
       ledgers: true,
       bets: true
     }
@@ -27,17 +27,6 @@ export default async function ProfilePage() {
   if (!user) redirect("/")
 
   const adminEmail = "svraga.channel.bs@gmail.com"
-  let isAdmin = false
-  let currentCoinName = "Coin"
-  if (user.leagueId) {
-    const league = await prisma.league.findUnique({
-      where: { id: user.leagueId }
-    })
-    if (league) {
-      currentCoinName = league.coinName
-      isAdmin = league.adminId === user.id
-    }
-  }
 
   const totalCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
   const totalPoints = user.bets.reduce((acc, b) => acc + (b.pointsEarned || 0), 0)
@@ -48,28 +37,30 @@ export default async function ProfilePage() {
 
   return (
     <div className="pb-20 md:pb-0 min-h-screen bg-primary">
-      {user.leagueId && <BottomNav leagueId={user.leagueId} />}
       <main className="flex flex-col items-center p-6 pt-12">
-        <div className="w-full max-w-2xl mb-8 flex justify-center">
+        <div className="w-full max-w-2xl mb-8 flex justify-between items-center">
           <h1 className="text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
             Il tuo Profilo
           </h1>
+          <Link href="/">
+            <Button variant="primary" className="font-bold">Torna alla Home</Button>
+          </Link>
         </div>
 
         <div className="grid gap-8 w-full max-w-2xl">
-          <Card className="bg-white">
+          <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
-              <CardTitle>Saldo VolleyCoin</CardTitle>
+              <CardTitle>Saldo Globale</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-center gap-2 text-3xl sm:text-4xl font-bold text-green-600 bg-gray-100 py-4 border-[3px] border-black shadow-brutal-sm rounded-brutal break-all px-2">
                 <CircleDollarSign className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
-                <span>{Math.floor(totalCoins)} {currentCoinName}</span>
+                <span>{Math.floor(totalCoins)} Monete</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white">
+          <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
               <CardTitle>Impostazioni Profilo</CardTitle>
             </CardHeader>
@@ -86,56 +77,63 @@ export default async function ProfilePage() {
             </CardContent>
           </Card>
 
-          {isAdmin && (
-            <Card className="bg-white">
-              <CardHeader>
-                <CardTitle>Impostazioni Campionato (Admin)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form action={async (data) => {
-                  "use server"
-                  const { updateCoinName } = await import("@/actions/league")
-                  await updateCoinName(data)
-                }} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="font-bold">Nome del Coin (max 15 car.)</label>
-                    <div className="flex gap-4">
-                      <Input name="coinName" defaultValue={currentCoinName} maxLength={15} className="flex-1" />
-                      <Button type="submit" variant="primary">Aggiorna</Button>
-                    </div>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
-          {user.leagueId && (
-            <Card className="bg-white">
-              <CardHeader>
-                <CardTitle>Tutorial</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TourTrigger leagueId={user.leagueId} />
-              </CardContent>
-            </Card>
-          )}
-
-          {user.leagueId && (
-            <Card className="bg-white">
-              <CardHeader>
-                <CardTitle className="text-red-600">Zona Pericolosa</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form action={leaveLeague}>
-                  <Button variant="destructive" type="submit" className="w-full font-bold text-lg">Abbandona Campionato</Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="bg-white">
+          <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
-              <CardTitle>Le tue Statistiche</CardTitle>
+              <CardTitle>I Tuoi Campionati</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {user.leagues.length === 0 ? (
+                <p className="font-bold">Non sei iscritto a nessun campionato.</p>
+              ) : (
+                <div className="space-y-6">
+                  {user.leagues.map(league => {
+                    const isAdmin = league.adminId === user.id
+                    return (
+                      <div key={league.id} className="border-[3px] border-black p-4 bg-gray-50 flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-xl font-bold uppercase">{league.name}</h3>
+                          {isAdmin && <span className="bg-yellow-300 text-xs font-black px-2 py-1 border-[2px] border-black uppercase">Admin</span>}
+                        </div>
+                        
+                        <div className="flex flex-col gap-2">
+                          <Link href={`/league/${league.id}`}>
+                            <Button variant="primary" className="w-full">Vai al Campionato</Button>
+                          </Link>
+                          
+                          {isAdmin ? (
+                            <div className="space-y-4 mt-4 border-t-[2px] border-dashed border-gray-300 pt-4">
+                              <form action={async (data) => {
+                                "use server"
+                                await updateCoinName(league.id, data)
+                              }} className="space-y-2">
+                                <label className="font-bold text-sm">Nome Coin ({league.coinName})</label>
+                                <div className="flex gap-2">
+                                  <Input name="coinName" defaultValue={league.coinName} maxLength={15} className="flex-1 text-sm h-8" />
+                                  <Button type="submit" variant="primary" className="h-8">Aggiorna</Button>
+                                </div>
+                              </form>
+                              <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
+                            </div>
+                          ) : (
+                            <form action={async () => {
+                              "use server"
+                              await leaveLeague(league.id)
+                            }}>
+                              <Button variant="destructive" type="submit" className="w-full mt-2">Abbandona Campionato</Button>
+                            </form>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-[3px] border-black shadow-brutal">
+            <CardHeader>
+              <CardTitle>Le tue Statistiche Globali</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-4 text-xl">
@@ -163,15 +161,13 @@ export default async function ProfilePage() {
             </CardContent>
           </Card>
 
-          {user.leagueId && (
-            <div className="bg-white border-[4px] border-black p-6 shadow-[4px_4px_0_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center space-y-4 mt-8">
-              <h2 className="text-2xl font-black uppercase tracking-widest bg-yellow-300 px-2 border-[2px] border-black -rotate-2 inline-block">Assistenza</h2>
-              <p className="font-bold text-gray-700">Hai riscontrato un problema tecnico, un bug o hai un suggerimento per migliorare l'app?</p>
-              <p className="font-bold text-lg">
-                Scrivi un'email: <a href={`mailto:${adminEmail}`} className="underline decoration-[3px] hover:text-primary transition-colors">{adminEmail}</a>
-              </p>
-            </div>
-          )}
+          <div className="bg-white border-[4px] border-black p-6 shadow-[4px_4px_0_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center space-y-4 mt-8">
+            <h2 className="text-2xl font-black uppercase tracking-widest bg-yellow-300 px-2 border-[2px] border-black -rotate-2 inline-block">Assistenza</h2>
+            <p className="font-bold text-gray-700">Hai riscontrato un problema tecnico, un bug o hai un suggerimento per migliorare l'app?</p>
+            <p className="font-bold text-lg">
+              Scrivi un'email: <a href={`mailto:${adminEmail}`} className="underline decoration-[3px] hover:text-primary transition-colors">{adminEmail}</a>
+            </p>
+          </div>
         </div>
       </main>
     </div>

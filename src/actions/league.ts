@@ -65,40 +65,64 @@ export async function joinLeague(prevState: any, formData: FormData) {
 
   if (!league) return { error: "Campionato inesistente o codice errato." }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { leagueId: league.id }
+  await prisma.league.update({
+    where: { id: league.id },
+    data: {
+      users: { connect: { id: session.user.id } }
+    }
   })
 
   revalidatePath("/")
   redirect(`/league/${league.id}`)
 }
 
-export async function leaveLeague() {
+export async function leaveLeague(leagueId: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { leagueId: null }
+    data: { 
+      leagues: { disconnect: { id: leagueId } } 
+    }
   })
 
   revalidatePath("/")
   redirect("/")
 }
 
-export async function updateCoinName(formData: FormData) {
+export async function deleteLeague(leagueId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Not authenticated")
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!league) throw new Error("Campionato non trovato")
+  if (league.adminId !== session.user.id) throw new Error("Solo l'admin può eliminare il campionato")
+
+  await prisma.$transaction(async (tx) => {
+    // Cascade delete manually since schema doesn't have onDelete: Cascade for all
+    await tx.bet.deleteMany({ where: { match: { matchDay: { leagueId } } } })
+    await tx.match.deleteMany({ where: { matchDay: { leagueId } } })
+    await tx.matchDay.deleteMany({ where: { leagueId } })
+    await tx.ledger.deleteMany({ where: { leagueId } })
+    await tx.team.deleteMany({ where: { leagueId } })
+    await tx.auditLog.deleteMany({ where: { leagueId } })
+    await tx.league.delete({ where: { id: leagueId } })
+  })
+
+  revalidatePath("/")
+  redirect("/")
+}
+
+export async function updateCoinName(leagueId: string, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
 
   const coinName = formData.get("coinName") as string
   if (!coinName) return
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
-  if (!user?.leagueId) return
-
-  const league = await prisma.league.findUnique({ where: { id: user.leagueId } })
-  if (league?.adminId !== user.id) throw new Error("Not admin")
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (league?.adminId !== session.user.id) throw new Error("Not admin")
 
   await prisma.league.update({
     where: { id: league.id },
