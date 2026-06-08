@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/Button"
 import { AlertTriangle } from "lucide-react"
 import DeleteMatchDayButton from "./DeleteMatchDayButton"
-import { setMatches } from "@/actions/matchday"
+import { setMatches, updateDeadline } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 
@@ -69,6 +69,12 @@ export default function AdminMatchdayPanel({
     formData.append("userId", selectedProxyUser)
     await proxyPlaceBets(leagueId, matchDay.id, formData)
     setSelectedProxyUser("") // reset after success
+  }
+
+  const handleUpdateDeadline = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    await updateDeadline(leagueId, matchDay.id, formData)
   }
 
   return (
@@ -229,6 +235,20 @@ export default function AdminMatchdayPanel({
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-purple-400 text-white inline-block px-2 border-[2px] border-black -rotate-1">3. Logistica & Proxy-Bet</h3>
           
+          <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
+            <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
+            <form onSubmit={handleUpdateDeadline} className="flex gap-2">
+              <input 
+                type="datetime-local" 
+                name="deadline" 
+                defaultValue={new Date(new Date(matchDay.deadline).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                className="flex-1 border-[2px] border-black px-2 py-1 font-bold text-sm" 
+                required 
+              />
+              <Button type="submit" variant="primary" className="text-sm">Aggiorna</Button>
+            </form>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="border-[2px] border-black p-2 bg-gray-50">
               <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Hanno Scommesso</h4>

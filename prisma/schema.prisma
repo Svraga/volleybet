@@ -53,6 +53,7 @@ model User {
   sessions      Session[]
   ledgers       Ledger[]
   auditLogs     AuditLog[]
+  notifications Notification[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -80,6 +81,7 @@ model League {
   ledgers       Ledger[]
   teams         Team[]
   auditLogs     AuditLog[]
+  notifications Notification[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -156,3 +158,16 @@ model Team {
   league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   name      String
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leagueId  String
+  league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  message   String
+  isRead    Boolean  @default(false)
+  type      String   // e.g. "MATCHDAY_CREATED", "SCORED", "PROXY_BET", "DEADLINE_CHANGED"
+  createdAt DateTime @default(now())
+}
+

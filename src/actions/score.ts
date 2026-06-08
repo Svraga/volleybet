@@ -179,6 +179,16 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
         details: `Risultati inseriti e premi distribuiti per la Giornata ${matchDay.number}`
       }
     })
+
+    const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } } })
+    await tx.notification.createMany({
+      data: users.map(u => ({
+        userId: u.id,
+        leagueId,
+        message: `Sono stati pubblicati i risultati e le classifiche della Giornata ${matchDay.number}!`,
+        type: "SCORED"
+      }))
+    })
   })
 
   redirect(`/league/${leagueId}/admin`)

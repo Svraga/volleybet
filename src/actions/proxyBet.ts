@@ -73,6 +73,16 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
           details: `L'admin ha inserito una scommessa per conto di ${targetUser.name}`
         }
       })
+
+      // Invia notifica all'utente
+      await tx.notification.create({
+        data: {
+          userId: targetUserId,
+          leagueId,
+          message: `L'amministratore ha inserito i pronostici al posto tuo per la Giornata ${matchDay.number}.`,
+          type: "PROXY_BET"
+        }
+      })
     })
   }
 

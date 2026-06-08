@@ -35,6 +35,16 @@ export async function createMatchDay(leagueId: string, formData: FormData) {
         details: `Giornata ${number} creata con scadenza ${deadlineStr}`
       }
     })
+
+    const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } } })
+    await tx.notification.createMany({
+      data: users.map(u => ({
+        userId: u.id,
+        leagueId,
+        message: `È stata aperta la Giornata ${number}. Scadenza: ${new Date(deadline).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}`,
+        type: "MATCHDAY_CREATED"
+      }))
+    })
   })
 
   redirect(`/league/${leagueId}/admin`)
@@ -167,3 +177,45 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
   redirect(`/league/${leagueId}/admin`)
 }
 
+export async function updateDeadline(leagueId: string, matchDayId: string, formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Not authenticated")
+
+  const deadlineStr = formData.get("deadline") as string
+  const deadline = new Date(deadlineStr)
+  if (!deadline) throw new Error("Invalid deadline")
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!league || league.adminId !== session.user.id) throw new Error("Unauthorized")
+
+  const matchDay = await prisma.matchDay.findUnique({ where: { id: matchDayId } })
+  if (!matchDay || matchDay.status !== "OPEN") throw new Error("Giornata non aperta o inesistente")
+
+  await prisma.$transaction(async (tx) => {
+    await tx.matchDay.update({
+      where: { id: matchDayId },
+      data: { deadline }
+    })
+
+    await tx.auditLog.create({
+      data: {
+        leagueId,
+        userId: session.user.id,
+        action: "Modificata Scadenza",
+        details: `Scadenza della Giornata ${matchDay.number} spostata al ${new Date(deadline).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}`
+      }
+    })
+
+    const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } } })
+    await tx.notification.createMany({
+      data: users.map(u => ({
+        userId: u.id,
+        leagueId,
+        message: `Attenzione: La scadenza per la Giornata ${matchDay.number} è stata modificata al ${new Date(deadline).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}`,
+        type: "DEADLINE_CHANGED"
+      }))
+    })
+  })
+
+  redirect(`/league/${leagueId}/admin`)
+}

@@ -9,6 +9,7 @@ import { leaveLeague } from "@/actions/league"
 import GuidedTour from "@/components/GuidedTour"
 import AdminButtonClient from "@/components/AdminButtonClient"
 import CopyInviteButton from "@/components/CopyInviteButton"
+import NotificationBell from "@/components/NotificationBell"
 import { ShieldCheck, Medal, TriangleAlert } from "lucide-react"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,12 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      ledgers: { where: { leagueId: id } }
+      ledgers: { where: { leagueId: id } },
+      notifications: { 
+        where: { leagueId: id },
+        orderBy: { createdAt: "desc" },
+        take: 10
+      }
     }
   })
 
@@ -69,11 +75,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
         </h1>
         
         <div className="flex gap-4">
-          <Link href={`/league/${league.id}/audit`}>
-            <Button variant="outline" className="font-bold border-[2px] border-black shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-blue-100 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5" /> Trasparenza
-            </Button>
-          </Link>
+          <NotificationBell leagueId={league.id} notifications={user.notifications} />
           {isAdmin && (
             <AdminButtonClient leagueId={league.id} />
           )}
