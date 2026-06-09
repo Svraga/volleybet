@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { driver } from "driver.js"
 import "driver.js/dist/driver.css"
 import { useTourStore } from "@/store/tour"
+import { useAlertStore } from "@/store/alertStore"
 
 export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
   const { setTourActive } = useTourStore()
