@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -35,6 +36,18 @@ export default async function Home() {
     where: { id: session.user.id },
     include: { leagues: true }
   })
+
+  if (user?.leagues && user.leagues.length > 0) {
+    const cookieStore = await cookies()
+    const lastLeagueId = cookieStore.get("lastLeagueId")?.value
+    const belongsToLastLeague = lastLeagueId && user.leagues.some(l => l.id === lastLeagueId)
+    
+    if (belongsToLastLeague) {
+      redirect(`/league/${lastLeagueId}`)
+    } else {
+      redirect(`/league/${user.leagues[0].id}`)
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-20">

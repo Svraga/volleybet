@@ -24,10 +24,14 @@ export default function SubmitButton({
       className={`relative ${className || ""}`}
       {...props}
     >
-      {pending && (
-        <Loader2 className="w-5 h-5 animate-brutal-spin mr-2" strokeWidth={3} />
+      {pending ? (
+        <span className="text-sm md:text-base uppercase font-black tracking-wider flex items-center justify-center">
+          <Loader2 className="w-4 h-4 animate-brutal-spin mr-2 shrink-0" strokeWidth={3} />
+          {loadingText}
+        </span>
+      ) : (
+        defaultText
       )}
-      {pending ? loadingText : defaultText}
     </Button>
   )
 }

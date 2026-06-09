@@ -1,5 +1,6 @@
 import BottomNav from "@/components/BottomNav"
 import { prisma } from "@/lib/prisma"
+import LastLeagueTracker from "@/components/LastLeagueTracker"
 
 export default async function LeagueLayout({
   children,
@@ -27,6 +28,7 @@ export default async function LeagueLayout({
 
   return (
     <>
+      <LastLeagueTracker leagueId={id} />
       <BottomNav leagueId={id} adminEmail={adminEmail} />
       {children}
     </>

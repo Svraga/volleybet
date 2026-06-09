@@ -112,6 +112,19 @@ export default async function ProfilePage() {
                   })}
                 </div>
               )}
+
+              <div className="mt-6 flex flex-col sm:flex-row gap-4 border-t-[3px] border-dashed border-black pt-6">
+                <Link href="/league/create" className="flex-1">
+                  <Button className="w-full bg-white hover:bg-gray-100 text-black border-[3px] border-black shadow-brutal-sm font-bold">
+                    ➕ Crea Campionato
+                  </Button>
+                </Link>
+                <Link href="/league/join" className="flex-1">
+                  <Button variant="primary" className="w-full font-bold">
+                    🔑 Unisciti a Campionato
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
