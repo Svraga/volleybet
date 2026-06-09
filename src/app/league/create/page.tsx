@@ -184,6 +184,14 @@ export default function CreateLeaguePage() {
           </CardContent>
         </form>
       </Card>
+
+      <footer className="mt-auto pt-12 pb-4 text-center text-sm font-bold opacity-70 w-full">
+        <div className="flex flex-wrap gap-6 justify-center">
+          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+          <Link href="/terms" className="hover:underline">Terms & Conditions</Link>
+        </div>
+        <p className="mt-2 text-xs">© {new Date().getFullYear()} VolleyBet. Tutti i diritti riservati.</p>
+      </footer>
     </main>
   )
 }

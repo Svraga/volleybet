@@ -6,7 +6,7 @@ import SubmitButton from "@/components/SubmitButton"
 import { updateNickname } from "@/actions/user"
 import { useAlertStore } from "@/store/alertStore"
 
-export default function UpdateNicknameForm({ defaultName }: { defaultName: string }) {
+export default function UpdateNicknameForm({ defaultName, redirectTo }: { defaultName: string, redirectTo?: string }) {
   const showAlert = useAlertStore(s => s.showAlert)
 
   const handleAction = async (formData: FormData) => {
@@ -22,7 +22,11 @@ export default function UpdateNicknameForm({ defaultName }: { defaultName: strin
     
     try {
       await updateNickname(formData)
-      showAlert("Nickname aggiornato con successo!")
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      } else {
+        showAlert("Nickname aggiornato con successo!")
+      }
     } catch (e: any) {
       if (e.message === "NEXT_REDIRECT" || e.message?.includes("NEXT_REDIRECT") || e.digest === "NEXT_REDIRECT") throw e;
       showAlert(e.message || "Errore durante l'aggiornamento.")
