@@ -161,7 +161,7 @@ export default function AdminMatchdayPanel({
                   <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
                   <span className="truncate w-full block text-sm" title={m.teamB}>{m.teamB}</span>
                 </div>
-                <span className="font-bold border-[2px] border-black p-2 bg-yellow-100 flex-shrink-0 whitespace-nowrap text-sm">
+                <span className="font-bold border-[2px] border-black px-2 py-1 bg-yellow-100 flex-shrink-0 whitespace-nowrap text-xs">
                   {m.resultA !== null && m.resultB !== null ? `${m.resultA} - ${m.resultB}` : "Da giocare"}
                 </span>
               </div>
@@ -169,7 +169,7 @@ export default function AdminMatchdayPanel({
             {hasOddTeams && matchDay.restingTeam && (
               <div className="flex justify-between items-center border-[2px] border-black p-3 font-bold shadow-brutal-sm bg-gray-200 gap-4 min-w-0">
                 <span className="truncate flex-1 min-w-0 text-sm text-center" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
-                <span className="font-bold border-[2px] border-black p-2 bg-white flex-shrink-0 whitespace-nowrap text-sm">
+                <span className="font-bold border-[2px] border-black px-2 py-1 bg-white flex-shrink-0 whitespace-nowrap text-xs">
                   RIPOSA
                 </span>
               </div>
@@ -197,9 +197,9 @@ export default function AdminMatchdayPanel({
                     name={`result_${m.id}`} 
                     defaultValue={existingValue}
                     required
-                    className="h-10 border-[3px] border-black bg-white px-2 py-1 font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
+                    className="h-8 border-[2px] border-black bg-white px-1 py-0 text-xs font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
                   >
-                    <option value="" disabled className="text-gray-400">Seleziona</option>
+                    <option value="" disabled className="text-gray-400">Sel.</option>
                     <option value="3-0">3 - 0</option>
                     <option value="3-1">3 - 1</option>
                     <option value="3-2">3 - 2</option>
@@ -284,7 +284,7 @@ export default function AdminMatchdayPanel({
                             <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
                             <span className="truncate w-full block text-xs font-bold" title={m.teamB}>{m.teamB}</span>
                           </div>
-                          <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-2 py-1 flex-shrink-0 h-10 font-bold bg-white focus:outline-none">
+                          <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-1 py-0 text-xs flex-shrink-0 h-8 font-bold bg-white focus:outline-none">
                             <option value="" disabled className="text-gray-400">0-0</option>
                             <option value="3-0">3-0</option>
                             <option value="3-1">3-1</option>

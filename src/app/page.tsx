@@ -51,14 +51,14 @@ export default async function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-6">
-      {/* Header Row: Welcome and Logout button */}
-      <div className="w-full max-w-4xl flex justify-between items-center mb-12 gap-4">
-        <h1 className="text-lg sm:text-2xl font-bold uppercase bg-white border-[3px] border-black shadow-brutal px-3 py-1.5 -rotate-1 truncate max-w-[calc(100%-100px)]">
-          Benvenuto, {user?.name}!
-        </h1>
+      {/* Header Row: Logout and Welcome */}
+      <div className="w-full max-w-4xl flex flex-col items-start mb-12 gap-6">
         <div className="shrink-0">
           <LogoutButton />
         </div>
+        <h1 className="text-xl sm:text-3xl font-bold uppercase bg-white border-[3px] border-black shadow-brutal px-4 py-2 -rotate-1 max-w-full truncate">
+          Benvenuto, {user?.name}!
+        </h1>
       </div>
 
       {(!user?.leagues || user.leagues.length === 0) && (
