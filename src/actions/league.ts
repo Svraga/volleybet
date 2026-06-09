@@ -55,6 +55,9 @@ export async function joinLeague(prevState: any, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
 
+  // ARTIFICIAL DELAY (2s): Mitigazione base contro bot e script di Brute-Forcing del codice invito
+  await new Promise(resolve => setTimeout(resolve, 2000))
+
   const inviteCodeRaw = formData.get("inviteCode") as string
   if (!inviteCodeRaw) return { error: "Codice invito vuoto." }
 

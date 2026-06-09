@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
@@ -34,7 +35,13 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
   }
 
   await prisma.$transaction(async (tx) => {
-    // 0. If already scored, remove old payouts and refunds
+    // 0. Double check status inside isolated transaction to prevent race conditions
+    const currentMatchDay = await tx.matchDay.findUnique({ where: { id: matchDay.id } })
+    if (currentMatchDay?.status === "SCORED") {
+      throw new Error("I risultati di questa giornata sono già stati calcolati. Ricarica la pagina.")
+    }
+
+    // 0.5 If already scored, remove old payouts and refunds (this is for re-scoring, but since we throw above, it's mostly unused unless we want to allow re-scoring later)
     if (matchDay.status === "SCORED") {
       await tx.ledger.deleteMany({
         where: { matchDayId: matchDay.id, amount: { gt: 0 } }
@@ -189,6 +196,8 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
         type: "SCORED"
       }))
     })
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.Serializable
   })
 
   redirect(`/league/${leagueId}/admin`)

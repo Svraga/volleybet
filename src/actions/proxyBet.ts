@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
@@ -32,37 +33,75 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
     throw new Error("Deadline passed: Impossibile inserire proxy bets oltre l'orario di scadenza")
   }
 
-  const bets: { userId: string, matchId: string, predictedA: number, predictedB: number }[] = []
+  const betsToCreate: { matchId: string, predictedA: number, predictedB: number }[] = []
+  
   for (const match of matchDay.matches) {
+    if (match.teamA === league.homeTeam || match.teamB === league.homeTeam) {
+      const betVal = formData.get(`bet_${match.id}`) as string
+      if (betVal) {
+        throw new Error("Forbidden: Non puoi scommettere sulla squadra di casa per conto del giocatore")
+      }
+      continue
+    }
+
     const betVal = formData.get(`bet_${match.id}`) as string
     if (betVal) {
       const [predA, predB] = betVal.split("-").map(Number)
-      bets.push({
-        userId: targetUserId,
-        matchId: match.id,
-        predictedA: predA,
-        predictedB: predB,
-      })
+      if (!isNaN(predA) && !isNaN(predB)) {
+        betsToCreate.push({
+          matchId: match.id,
+          predictedA: predA,
+          predictedB: predB,
+        })
+      }
     }
   }
 
-  if (bets.length > 0) {
+  if (betsToCreate.length > 0) {
     await prisma.$transaction(async (tx) => {
-      // Create bets
-      await tx.bet.createMany({
-        data: bets
-      })
+      // Upsert bets to avoid Unique Constraint 500 errors
+      for (const b of betsToCreate) {
+        await tx.bet.upsert({
+          where: {
+            userId_matchId: {
+              userId: targetUserId,
+              matchId: b.matchId
+            }
+          },
+          update: {
+            predictedA: b.predictedA,
+            predictedB: b.predictedB
+          },
+          create: {
+            userId: targetUserId,
+            matchId: b.matchId,
+            predictedA: b.predictedA,
+            predictedB: b.predictedB
+          }
+        })
+      }
 
-      // Create ledger entry for the target user (-1 coin for matchday entry)
-      await tx.ledger.create({
-        data: {
+      // Handle Ledger: only charge if it doesn't exist
+      const existingLedger = await tx.ledger.findFirst({
+        where: {
           userId: targetUserId,
           leagueId,
           matchDayId,
-          amount: -1,
-          reason: `MatchDay ${matchDay.number} Entry Fee (Proxy)`
+          reason: { contains: "Entry Fee" }
         }
       })
+
+      if (!existingLedger) {
+        await tx.ledger.create({
+          data: {
+            userId: targetUserId,
+            leagueId,
+            matchDayId,
+            amount: -1,
+            reason: `MatchDay ${matchDay.number} Entry Fee (Proxy)`
+          }
+        })
+      }
 
       // Log the proxy bet
       await tx.auditLog.create({
@@ -70,9 +109,11 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
           leagueId,
           userId: session.user.id,
           action: "Scommessa Proxy",
-          details: `L'admin ha inserito una scommessa per conto di ${targetUser.name}`
+          details: `L'admin ha inserito scommesse per conto di ${targetUser.name || 'Utente'}`
         }
       })
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable
     })
   }
 
