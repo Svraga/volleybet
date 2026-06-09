@@ -71,7 +71,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
       <NotificationBell leagueId={league.id} notifications={user.notifications} />
       <GuidedTour isAdmin={isAdmin} />
       <div id="tour-welcome" className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap pr-12">
-        <h1 className="text-3xl md:text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1 truncate max-w-full">
+        <h1 className="text-xl md:text-2xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1 truncate max-w-full">
           {league.name}
         </h1>
         

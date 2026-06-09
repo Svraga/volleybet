@@ -11,8 +11,7 @@ import { CircleDollarSign, Trophy } from "lucide-react"
 import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 import BottomNav from "@/components/BottomNav"
 import UpdateNicknameForm from "@/components/UpdateNicknameForm"
-import UpdateCoinForm from "@/components/UpdateCoinForm"
-import UpdateLeagueNameForm from "@/components/UpdateLeagueNameForm"
+import { cookies } from "next/headers"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -31,7 +30,21 @@ export default async function ProfilePage() {
 
   const adminEmail = "svraga.channel.bs@gmail.com"
 
-  const totalCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
+  const cookieStore = await cookies()
+  const lastLeagueId = cookieStore.get("lastLeagueId")?.value
+  const activeLeague = user.leagues.find(l => l.id === lastLeagueId) || user.leagues[0]
+
+  let balanceCoins = 0
+  let balanceName = "Monete"
+  if (activeLeague) {
+    balanceCoins = user.ledgers
+      .filter(l => l.leagueId === activeLeague.id)
+      .reduce((acc, l) => acc + l.amount, 0)
+    balanceName = activeLeague.coinName
+  } else {
+    balanceCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
+  }
+
   const totalPoints = user.bets.reduce((acc, b) => acc + (b.pointsEarned || 0), 0)
   const exactHits = user.bets.filter(b => b.pointsEarned === 3).length
   const winnerHits = user.bets.filter(b => (b.pointsEarned || 0) >= 1).length
@@ -50,12 +63,12 @@ export default async function ProfilePage() {
         <div className="grid gap-8 w-full max-w-2xl">
           <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
-              <CardTitle>Saldo Globale</CardTitle>
+              <CardTitle>Saldo {activeLeague ? `Campionato (${activeLeague.name})` : "Globale"}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center gap-2 text-3xl sm:text-4xl font-bold text-green-600 bg-gray-100 py-4 border-[3px] border-black shadow-brutal-sm rounded-brutal break-all px-2">
-                <CircleDollarSign className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
-                <span>{Math.floor(totalCoins)} Monete</span>
+              <div className="flex items-center justify-center gap-2 text-xl sm:text-2xl font-bold text-green-600 bg-gray-100 py-3 border-[3px] border-black shadow-brutal-sm rounded-brutal break-all px-2">
+                <CircleDollarSign className="w-6 h-6 shrink-0" />
+                <span>{Math.floor(balanceCoins)} {balanceName}</span>
               </div>
             </CardContent>
           </Card>
@@ -94,8 +107,6 @@ export default async function ProfilePage() {
                           
                           {isAdmin ? (
                             <div className="space-y-4 mt-4 border-t-[2px] border-dashed border-gray-300 pt-4">
-                              <UpdateLeagueNameForm leagueId={league.id} defaultName={league.name} />
-                              <UpdateCoinForm leagueId={league.id} defaultName={league.coinName} />
                               <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
                             </div>
                           ) : (

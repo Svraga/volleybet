@@ -38,7 +38,7 @@ export default function UpdateNicknameForm({ defaultName, redirectTo }: { defaul
       <div className="space-y-2">
         <label className="font-bold">Nickname Visualizzato</label>
         <div className="flex gap-4">
-          <Input name="nickname" defaultValue={defaultName} maxLength={15} className="flex-1" />
+          <Input name="nickname" defaultValue={defaultName} className="flex-1" />
           <SubmitButton variant="primary" defaultText="Salva" loadingText="..." />
         </div>
       </div>

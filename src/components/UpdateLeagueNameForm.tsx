@@ -10,10 +10,6 @@ export default function UpdateLeagueNameForm({ leagueId, defaultName }: { league
   const [val, setVal] = useState(defaultName)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.length > 15) {
-      brutalAlert("Il massimo numero di caratteri per il nome del campionato è 15.")
-      return
-    }
     setVal(e.target.value)
   }
 
@@ -28,6 +24,7 @@ export default function UpdateLeagueNameForm({ leagueId, defaultName }: { league
     }
     try {
       await updateLeagueName(leagueId, formData)
+      brutalAlert("Nome del campionato aggiornato con successo!")
     } catch (e: any) {
       brutalAlert(e.message || "Errore durante l'aggiornamento.")
     }

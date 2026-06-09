@@ -106,7 +106,7 @@ export default function CreateLeaguePage() {
           <CardContent className="p-6 space-y-4">
             <div className={step === 1 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Come vuoi chiamare questo campionato?</p>
-              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={15} className="text-xl h-12" />
+              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} className="text-xl h-12" />
             </div>
 
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
@@ -164,7 +164,7 @@ export default function CreateLeaguePage() {
             <div className={step === 4 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Scegli il nome della tua valuta</p>
               <p className="font-bold text-gray-500 text-sm">I giocatori useranno questi gettoni virtuali per scommettere. Puoi chiamarli Coin, Birre, Fich, o come preferisci.</p>
-              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} maxLength={15} className="text-xl h-12" />
+              <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} className="text-xl h-12" />
             </div>
 
             <div className="pt-6 flex justify-center items-center gap-4 w-full max-w-sm mx-auto">

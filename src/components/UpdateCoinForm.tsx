@@ -10,19 +10,24 @@ export default function UpdateCoinForm({ leagueId, defaultName }: { leagueId: st
   const [val, setVal] = useState(defaultName)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.length > 15) {
-      brutalAlert("Il massimo numero di caratteri per la valuta è 15.")
-      return
-    }
     setVal(e.target.value)
   }
 
   const action = async (formData: FormData) => {
+    if (val.trim().length === 0) {
+      brutalAlert("Il nome della valuta è obbligatorio.")
+      return
+    }
     if (val.trim().length > 15) {
       brutalAlert("Il massimo numero di caratteri per la valuta è 15.")
       return
     }
-    await updateCoinName(leagueId, formData)
+    try {
+      await updateCoinName(leagueId, formData)
+      brutalAlert("Valuta aggiornata con successo!")
+    } catch (e: any) {
+      brutalAlert(e.message || "Errore durante l'aggiornamento.")
+    }
   }
 
   return (

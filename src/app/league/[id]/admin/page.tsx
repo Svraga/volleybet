@@ -11,8 +11,6 @@ import DeleteMatchDayButton from "@/components/DeleteMatchDayButton"
 import AdminHeader from "@/components/AdminHeader"
 import AdminPageTour from "@/components/AdminPageTour"
 import SubmitButton from "@/components/SubmitButton"
-import UpdateLeagueNameForm from "@/components/UpdateLeagueNameForm"
-import UpdateCoinForm from "@/components/UpdateCoinForm"
 
 export default async function AdminPanelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,7 +62,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
     <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-secondary pt-12">
       <AdminPageTour hasMatchdays={matchDays.length > 0} />
       <div className="w-full max-w-4xl mb-8">
-        <AdminHeader leagueId={league.id} hasEmptyMatchDays={hasEmptyMatchDays} />
+        <AdminHeader leagueId={league.id} leagueName={league.name} coinName={league.coinName} hasEmptyMatchDays={hasEmptyMatchDays} />
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 w-full max-w-4xl">
@@ -87,19 +85,6 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                   </div>
                   <SubmitButton variant="primary" className="w-full mt-4 h-12" defaultText="Crea Giornata" loadingText="CREAZIONE..." />
                 </form>
-              </div>
-            </details>
-          </Card>
-
-          <Card className="bg-white overflow-hidden border-[3px] border-black">
-            <details className="group">
-              <summary className="list-none cursor-pointer flex justify-between items-center bg-primary text-black font-bold p-4 hover:bg-yellow-400 transition-colors">
-                <span className="text-xl">⚙️ Impostazioni</span>
-                <span className="transition group-open:rotate-180">▼</span>
-              </summary>
-              <div className="p-4 border-t-[3px] border-black bg-white space-y-4">
-                <UpdateLeagueNameForm leagueId={league.id} defaultName={league.name} />
-                <UpdateCoinForm leagueId={league.id} defaultName={league.coinName} />
               </div>
             </details>
           </Card>
