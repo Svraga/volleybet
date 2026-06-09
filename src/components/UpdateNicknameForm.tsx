@@ -35,12 +35,10 @@ export default function UpdateNicknameForm({ defaultName, redirectTo }: { defaul
 
   return (
     <form action={handleAction} className="space-y-4">
-      <div className="space-y-2">
-        <label className="font-bold">Nickname Visualizzato</label>
-        <div className="flex gap-4">
-          <Input name="nickname" defaultValue={defaultName} className="flex-1" />
-          <SubmitButton variant="primary" defaultText="Salva" loadingText="..." />
-        </div>
+      <div className="space-y-3">
+        <label className="font-bold block text-sm">Nickname Visualizzato</label>
+        <Input name="nickname" defaultValue={defaultName} className="w-full text-base h-11" />
+        <SubmitButton variant="primary" defaultText="Salva Nickname" loadingText="SALVATAGGIO..." className="w-full h-11 uppercase" />
       </div>
     </form>
   )

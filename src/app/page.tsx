@@ -50,7 +50,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-20">
+    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-8">
       <div className="absolute top-4 right-4">
         <LogoutButton />
       </div>

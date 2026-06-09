@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Home, AlertTriangle, Settings, X } from "lucide-react"
+import { Settings, X } from "lucide-react"
 import UpdateLeagueNameForm from "@/components/UpdateLeagueNameForm"
 import UpdateCoinForm from "@/components/UpdateCoinForm"
 
@@ -19,74 +18,25 @@ export default function AdminHeader({
   coinName, 
   hasEmptyMatchDays 
 }: AdminHeaderProps) {
-  const router = useRouter()
-  const [showExitModal, setShowExitModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
-
-  const handleHomeClick = (e: React.MouseEvent) => {
-    if (hasEmptyMatchDays) {
-      e.preventDefault()
-      setShowExitModal(true)
-    } else {
-      router.push(`/league/${leagueId}`)
-    }
-  }
 
   return (
     <>
       <div className="flex justify-between items-center gap-4 w-full mb-8 flex-wrap">
-        <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1 truncate max-w-[calc(100%-110px)]">
+        <h1 className="text-base md:text-lg font-black uppercase tracking-tight bg-white border-[3px] border-black shadow-brutal px-3 py-1.5 inline-block -rotate-1 truncate max-w-[calc(100%-60px)]">
           Admin - {leagueName}
         </h1>
         
         <div className="flex gap-3 items-center">
           <button 
             onClick={() => setShowSettingsModal(true)}
-            className="bg-yellow-300 hover:bg-yellow-400 text-black border-[3px] border-black p-2 font-bold uppercase text-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center rounded-brutal"
+            className="bg-yellow-300 hover:bg-yellow-400 text-black border-[3px] border-black p-1.5 font-bold uppercase text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center rounded-brutal"
             title="Impostazioni Campionato"
           >
-            <Settings className="w-6 h-6" />
-          </button>
-          <button 
-            onClick={handleHomeClick}
-            className="bg-white hover:bg-gray-100 text-black border-[3px] border-black p-2 font-bold uppercase text-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center rounded-brutal"
-            title="Torna alla Dashboard"
-          >
-            <Home className="w-6 h-6" />
+            <Settings className="w-5 h-5" />
           </button>
         </div>
       </div>
-
-      {showExitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white border-[4px] border-black shadow-brutal p-6 max-w-sm w-full space-y-6 transform rotate-1">
-            <div className="flex items-center gap-3 text-red-600">
-              <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-xl font-bold uppercase leading-tight">Attenzione!</h2>
-            </div>
-            <p className="font-bold text-sm">
-              Stai uscendo senza aver aggiunto partite a una o più giornate. Vuoi davvero procedere?
-            </p>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setShowExitModal(false)}
-                className="flex-1 bg-white border-[3px] border-black p-2 font-bold uppercase text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-              >
-                Resta qui
-              </button>
-              <button 
-                onClick={() => {
-                  setShowExitModal(false)
-                  router.push(`/league/${leagueId}`)
-                }}
-                className="flex-1 bg-red-500 text-white border-[3px] border-black p-2 font-bold uppercase text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-              >
-                Esci Comunque
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showSettingsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

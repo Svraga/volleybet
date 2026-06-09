@@ -150,17 +150,21 @@ export default function AdminMatchdayPanel({
         ) : (
           <div className="space-y-2">
             {matchDay.matches.map((m: any) => (
-              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm gap-2 min-w-0">
-                <span className="truncate flex-1 min-w-0" title={`${m.teamA} vs ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
-                <span className="font-bold border-[2px] border-black p-1 bg-yellow-100 flex-shrink-0 whitespace-nowrap">
+              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-3 font-bold shadow-brutal-sm gap-4 min-w-0 bg-white">
+                <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
+                  <span className="truncate w-full block text-sm" title={m.teamA}>{m.teamA}</span>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                  <span className="truncate w-full block text-sm" title={m.teamB}>{m.teamB}</span>
+                </div>
+                <span className="font-bold border-[2px] border-black p-2 bg-yellow-100 flex-shrink-0 whitespace-nowrap text-sm">
                   {m.resultA !== null && m.resultB !== null ? `${m.resultA} - ${m.resultB}` : "Da giocare"}
                 </span>
               </div>
             ))}
             {hasOddTeams && matchDay.restingTeam && (
-              <div className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm bg-gray-200 gap-2 min-w-0">
-                <span className="truncate flex-1 min-w-0" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
-                <span className="font-bold border-[2px] border-black p-1 bg-white flex-shrink-0 whitespace-nowrap">
+              <div className="flex justify-between items-center border-[2px] border-black p-3 font-bold shadow-brutal-sm bg-gray-200 gap-4 min-w-0">
+                <span className="truncate flex-1 min-w-0 text-sm text-center" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
+                <span className="font-bold border-[2px] border-black p-2 bg-white flex-shrink-0 whitespace-nowrap text-sm">
                   RIPOSA
                 </span>
               </div>
@@ -178,13 +182,17 @@ export default function AdminMatchdayPanel({
             {matchDay.matches.map((m: any) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
-                <div key={`res_${m.id}`} className="flex justify-between items-center gap-2 min-w-0">
-                  <span className="font-bold text-sm flex-1 truncate min-w-0" title={`${m.teamA} - ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
+                <div key={`res_${m.id}`} className="flex justify-between items-center gap-4 min-w-0 border-[2px] border-black p-3 bg-gray-50 shadow-brutal-sm">
+                  <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
+                    <span className="truncate w-full block text-sm" title={m.teamA}>{m.teamA}</span>
+                    <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                    <span className="truncate w-full block text-sm" title={m.teamB}>{m.teamB}</span>
+                  </div>
                   <select 
                     name={`result_${m.id}`} 
                     defaultValue={existingValue}
                     required
-                    className="h-10 border-[3px] border-black bg-white px-2 py-1 font-bold focus:outline-none focus:shadow-brutal-sm" 
+                    className="h-10 border-[3px] border-black bg-white px-2 py-1 font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
                   >
                     <option value="" disabled className="text-gray-400">Seleziona</option>
                     <option value="3-0">3 - 0</option>
@@ -209,15 +217,15 @@ export default function AdminMatchdayPanel({
           
           <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
             <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
-            <form action={boundUpdateDeadline} className="flex gap-2">
+            <form action={boundUpdateDeadline} className="flex flex-col gap-3">
               <input 
                 type="datetime-local" 
                 name="deadline" 
                 defaultValue={new Date(new Date(matchDay.deadline).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
-                className="flex-1 border-[2px] border-black px-2 py-1 font-bold text-sm" 
+                className="w-full border-[2px] border-black px-3 py-2 font-bold text-sm bg-white" 
                 required 
               />
-              <SubmitButton variant="primary" className="text-sm" defaultText="Aggiorna" loadingText="IN CORSO..." />
+              <SubmitButton variant="primary" className="w-full text-sm h-10 uppercase" defaultText="Aggiorna Scadenza" loadingText="IN CORSO..." />
             </form>
           </div>
 
@@ -265,9 +273,13 @@ export default function AdminMatchdayPanel({
                       const isHomeTeam = m.teamA === teams.find(t=>t.isHome)?.name || m.teamB === teams.find(t=>t.isHome)?.name;
                       if (isHomeTeam) return null; // Proxy can't bet on home team either usually? Wait, home team is league level, I don't have it here. Let's pass it.
                       return (
-                        <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-2 min-w-0">
-                          <span className="flex-1 truncate min-w-0" title={`${m.teamA} - ${m.teamB}`}>{m.teamA} - {m.teamB}</span>
-                          <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-1 flex-shrink-0">
+                        <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-4 min-w-0 border-[2px] border-black p-3 bg-white shadow-brutal-sm">
+                          <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
+                            <span className="truncate w-full block text-xs" title={m.teamA}>{m.teamA}</span>
+                            <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                            <span className="truncate w-full block text-xs" title={m.teamB}>{m.teamB}</span>
+                          </div>
+                          <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-2 py-1 flex-shrink-0 h-10 font-bold bg-white focus:outline-none">
                             <option value="" disabled className="text-gray-400">0-0</option>
                             <option value="3-0">3-0</option>
                             <option value="3-1">3-1</option>
