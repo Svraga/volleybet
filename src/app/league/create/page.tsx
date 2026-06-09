@@ -180,7 +180,7 @@ export default function CreateLeaguePage() {
                   Avanti
                 </Button>
               ) : (
-                <SubmitButton variant="primary" defaultText="Genera" loadingText="CREAZIONE..." className="w-full h-14 text-base md:text-lg bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal" />
+                <SubmitButton variant="primary" defaultText="Genera" loadingText="GENERA..." className="w-full h-14 text-sm md:text-base bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal" />
               )}
             </div>
           </CardContent>

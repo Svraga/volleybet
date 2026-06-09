@@ -25,8 +25,8 @@ export default function SubmitButton({
       {...props}
     >
       {pending ? (
-        <span className="text-sm md:text-base uppercase font-black tracking-wider flex items-center justify-center">
-          <Loader2 className="w-4 h-4 animate-brutal-spin mr-2 shrink-0" strokeWidth={3} />
+        <span className="text-sm md:text-base uppercase font-black tracking-wider flex items-center justify-center gap-1">
+          <Loader2 className="w-4 h-4 animate-brutal-spin shrink-0" strokeWidth={3} />
           {loadingText}
         </span>
       ) : (

@@ -66,7 +66,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 w-full max-w-4xl">
-        <div id="tour-admin-new-matchday" className="md:col-span-1 space-y-8">
+        <div id="tour-admin-new-matchday" className="md:col-span-1 space-y-8 min-w-0">
           <Card className="bg-white overflow-hidden border-[3px] border-black">
             <details className="group">
               <summary className="list-none cursor-pointer flex justify-between items-center bg-primary text-black font-bold p-4 hover:bg-yellow-400 transition-colors">
@@ -90,7 +90,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
           </Card>
         </div>
 
-        <div id="tour-admin-matchday-list" className="md:col-span-2 space-y-8">
+        <div id="tour-admin-matchday-list" className="md:col-span-2 space-y-8 min-w-0">
           {matchDays.map(md => (
             <Card key={md.id} className="bg-white overflow-hidden">
               <details className="group" open={md.status === 'OPEN'}>
