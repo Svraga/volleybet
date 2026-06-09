@@ -55,28 +55,30 @@ export default function AdminMatchdayPanel({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-2 w-full">
-        <button 
-          type="button"
-          onClick={() => setActiveTab("matches")}
-          className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-3' : ''} ${activeTab === "matches" ? 'bg-yellow-300' : 'bg-white hover:bg-gray-100'}`}
-        >
-          Gestione Partite
-        </button>
-        {!isMatchDayEmpty && (
+      <div className="flex flex-col gap-2 w-full">
+        <div className="grid grid-cols-2 gap-2 w-full">
           <button 
             type="button"
-            onClick={() => setActiveTab("results")}
-            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400' : 'bg-white hover:bg-gray-100'}`}
+            onClick={() => setActiveTab("matches")}
+            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-2' : ''} ${activeTab === "matches" ? 'bg-yellow-300' : 'bg-white hover:bg-gray-100'}`}
           >
-            Inserimento Risultati
+            Gestione Partite
           </button>
-        )}
+          {!isMatchDayEmpty && (
+            <button 
+              type="button"
+              onClick={() => setActiveTab("results")}
+              className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400' : 'bg-white hover:bg-gray-100'}`}
+            >
+              Inserimento Risultati
+            </button>
+          )}
+        </div>
         {!isMatchDayEmpty && (
           <button 
             type="button"
             onClick={() => setActiveTab("proxy")}
-            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "proxy" ? 'bg-purple-400 text-white' : 'bg-white text-black hover:bg-gray-100'}`}
+            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all w-full ${activeTab === "proxy" ? 'bg-purple-400 text-white' : 'bg-white text-black hover:bg-gray-100'}`}
           >
             Logistica & Proxy
           </button>
@@ -91,15 +93,15 @@ export default function AdminMatchdayPanel({
           {isMatchDayEmpty ? (
           <form action={boundSetMatches} className="space-y-4">
             {Array.from({ length: numFixedRows }).map((_, i) => (
-              <div key={`row_${i}`} className="flex flex-col gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm bg-gray-50">
-                <div className="w-full">
+              <div key={`row_${i}`} className="flex flex-col gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm bg-gray-50 min-w-0 w-full">
+                <div className="w-full min-w-0">
                   <label className="text-[10px] uppercase font-black text-gray-500">Squadra Casa</label>
                   <select 
                     name={`teamA_${i}`} 
                     required 
                     value={selectedTeams[i * 2]}
                     onChange={(e) => handleTeamChange(i * 2, e.target.value)}
-                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm"
+                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm truncate"
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Casa</option>
                     {teams.map(t => (
@@ -109,14 +111,14 @@ export default function AdminMatchdayPanel({
                     ))}
                   </select>
                 </div>
-                <div className="w-full">
+                <div className="w-full min-w-0">
                   <label className="text-[10px] uppercase font-black text-gray-500">Squadra Ospite</label>
                   <select 
                     name={`teamB_${i}`} 
                     required 
                     value={selectedTeams[i * 2 + 1]}
                     onChange={(e) => handleTeamChange(i * 2 + 1, e.target.value)}
-                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm"
+                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm truncate"
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Ospite</option>
                     {teams.map(t => (
@@ -129,14 +131,14 @@ export default function AdminMatchdayPanel({
               </div>
             ))}
             {hasOddTeams && (
-              <div className="flex flex-col gap-2 border-[2px] border-black p-2 bg-gray-100 shadow-brutal-sm mt-4">
+              <div className="flex flex-col gap-2 border-[2px] border-black p-2 bg-gray-100 shadow-brutal-sm mt-4 min-w-0 w-full">
                 <label className="text-sm font-bold">Squadra che RIPOSA</label>
                 <select 
                   name="restingTeam" 
                   required 
                   value={restingTeam}
                   onChange={(e) => setRestingTeam(e.target.value)}
-                  className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold"
+                  className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold truncate"
                 >
                   <option value="" disabled className="text-gray-400">Seleziona Squadra che Riposa</option>
                   {teams.map(t => (
@@ -259,7 +261,7 @@ export default function AdminMatchdayPanel({
                 setSelectedProxyUser("");
               }} className="space-y-4">
                 <select 
-                  className="w-full border-[3px] border-black p-2 font-bold" 
+                  className="w-full border-[3px] border-black p-2 font-bold truncate" 
                   required
                   value={selectedProxyUser}
                   onChange={e => setSelectedProxyUser(e.target.value)}

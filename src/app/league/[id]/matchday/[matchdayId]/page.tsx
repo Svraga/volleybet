@@ -34,14 +34,9 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12">
-      <div className="w-full max-w-3xl flex flex-col items-start gap-4 mb-8">
-        <Link href={`/league/${league.id}`}>
-          <Button variant="outline" className="bg-white border-[3px] border-black text-sm px-3 py-1 h-10 shadow-brutal-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none">
-            Indietro
-          </Button>
-        </Link>
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 self-center mt-4">
-          <h1 className="text-2xl md:text-4xl font-bold uppercase bg-white border-0 md:border-[4px] border-black md:shadow-brutal md:px-4 md:py-2 inline-block md:-rotate-1 text-center md:text-left bg-transparent md:bg-white pb-2 border-b-[4px] md:border-b-[4px]">
+      <div className="w-full max-w-3xl flex flex-col items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mt-4 w-full justify-center">
+          <h1 className="text-2xl md:text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block md:-rotate-1 text-center w-full md:w-auto">
             Scommetti: Giornata {matchDay.number}
           </h1>
           <div className="bg-yellow-300 border-[3px] border-black px-4 py-2 md:rotate-2 shadow-[2px_2px_0_rgba(0,0,0,1)] text-center transform hover:rotate-0 transition-transform flex items-center justify-center flex-col">
