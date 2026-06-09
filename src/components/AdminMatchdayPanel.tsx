@@ -55,25 +55,28 @@ export default function AdminMatchdayPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 flex-wrap">
+      <div className="grid grid-cols-2 gap-2 w-full">
         <button 
+          type="button"
           onClick={() => setActiveTab("matches")}
-          className={`flex-1 min-w-[100px] border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "matches" ? 'bg-yellow-300 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
+          className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-2' : ''} ${activeTab === "matches" ? 'bg-yellow-300 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
         >
           Gestione Partite
         </button>
         {!isMatchDayEmpty && (
           <button 
+            type="button"
             onClick={() => setActiveTab("results")}
-            className={`flex-1 min-w-[100px] border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
+            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
           >
             Inserimento Risultati
           </button>
         )}
         {!isMatchDayEmpty && (
           <button 
+            type="button"
             onClick={() => setActiveTab("proxy")}
-            className={`flex-1 min-w-[100px] border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "proxy" ? 'bg-purple-400 text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white text-black hover:bg-gray-100'}`}
+            className={`col-span-2 border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "proxy" ? 'bg-purple-400 text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white text-black hover:bg-gray-100'}`}
           >
             Logistica & Proxy
           </button>
@@ -88,15 +91,15 @@ export default function AdminMatchdayPanel({
           {isMatchDayEmpty ? (
           <form action={boundSetMatches} className="space-y-4">
             {Array.from({ length: numFixedRows }).map((_, i) => (
-              <div key={`row_${i}`} className="flex flex-col md:flex-row gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm">
-                <div className="flex-1">
-                  <label className="text-xs font-bold">Casa</label>
+              <div key={`row_${i}`} className="flex flex-col gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm bg-gray-50">
+                <div className="w-full">
+                  <label className="text-[10px] uppercase font-black text-gray-500">Squadra Casa</label>
                   <select 
                     name={`teamA_${i}`} 
                     required 
                     value={selectedTeams[i * 2]}
                     onChange={(e) => handleTeamChange(i * 2, e.target.value)}
-                    className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold"
+                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm"
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Casa</option>
                     {teams.map(t => (
@@ -106,14 +109,14 @@ export default function AdminMatchdayPanel({
                     ))}
                   </select>
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs font-bold">Ospite</label>
+                <div className="w-full">
+                  <label className="text-[10px] uppercase font-black text-gray-500">Squadra Ospite</label>
                   <select 
                     name={`teamB_${i}`} 
                     required 
                     value={selectedTeams[i * 2 + 1]}
                     onChange={(e) => handleTeamChange(i * 2 + 1, e.target.value)}
-                    className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold"
+                    className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm"
                   >
                     <option value="" disabled className="text-gray-400">Seleziona Ospite</option>
                     {teams.map(t => (
@@ -184,9 +187,9 @@ export default function AdminMatchdayPanel({
               return (
                 <div key={`res_${m.id}`} className="flex justify-between items-center gap-4 min-w-0 border-[2px] border-black p-3 bg-gray-50 shadow-brutal-sm">
                   <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
-                    <span className="truncate w-full block text-sm" title={m.teamA}>{m.teamA}</span>
+                    <span className="truncate w-full block text-sm font-bold" title={m.teamA}>{m.teamA}</span>
                     <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
-                    <span className="truncate w-full block text-sm" title={m.teamB}>{m.teamB}</span>
+                    <span className="truncate w-full block text-sm font-bold" title={m.teamB}>{m.teamB}</span>
                   </div>
                   <select 
                     name={`result_${m.id}`} 
@@ -275,9 +278,9 @@ export default function AdminMatchdayPanel({
                       return (
                         <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-4 min-w-0 border-[2px] border-black p-3 bg-white shadow-brutal-sm">
                           <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
-                            <span className="truncate w-full block text-xs" title={m.teamA}>{m.teamA}</span>
+                            <span className="truncate w-full block text-xs font-bold" title={m.teamA}>{m.teamA}</span>
                             <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
-                            <span className="truncate w-full block text-xs" title={m.teamB}>{m.teamB}</span>
+                            <span className="truncate w-full block text-xs font-bold" title={m.teamB}>{m.teamB}</span>
                           </div>
                           <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-2 py-1 flex-shrink-0 h-10 font-bold bg-white focus:outline-none">
                             <option value="" disabled className="text-gray-400">0-0</option>

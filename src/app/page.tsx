@@ -56,7 +56,7 @@ export default async function Home() {
       </div>
 
       <div className="space-y-4 text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tighter uppercase inline-block bg-white px-4 py-2 border-[4px] border-black shadow-brutal transform -rotate-1">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter uppercase inline-block bg-white px-3 py-1.5 border-[3px] border-black shadow-brutal transform -rotate-1">
           Benvenuto, {user?.name}!
         </h1>
         {(!user?.leagues || user.leagues.length === 0) && (
