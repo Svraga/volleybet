@@ -12,6 +12,7 @@ import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 import BottomNav from "@/components/BottomNav"
 import UpdateNicknameForm from "@/components/UpdateNicknameForm"
 import UpdateCoinForm from "@/components/UpdateCoinForm"
+import UpdateLeagueNameForm from "@/components/UpdateLeagueNameForm"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -93,6 +94,7 @@ export default async function ProfilePage() {
                           
                           {isAdmin ? (
                             <div className="space-y-4 mt-4 border-t-[2px] border-dashed border-gray-300 pt-4">
+                              <UpdateLeagueNameForm leagueId={league.id} defaultName={league.name} />
                               <UpdateCoinForm leagueId={league.id} defaultName={league.coinName} />
                               <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
                             </div>

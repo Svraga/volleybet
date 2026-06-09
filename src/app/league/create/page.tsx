@@ -44,7 +44,7 @@ export default function CreateLeaguePage() {
   const nextStep = () => {
     if (step === 1) {
       if (!leagueName.trim()) return brutalAlert("Inserisci un nome per il campionato.")
-      if (leagueName.trim().length > 25) return brutalAlert("Il nome del campionato non può superare i 25 caratteri.")
+      if (leagueName.trim().length > 15) return brutalAlert("Il nome del campionato non può superare i 15 caratteri.")
     }
     if (step === 2) {
       // Nessuna validazione necessaria, select ha sempre un valore
@@ -106,7 +106,7 @@ export default function CreateLeaguePage() {
           <CardContent className="p-6 space-y-4">
             <div className={step === 1 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Come vuoi chiamare questo campionato?</p>
-              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={25} className="text-xl h-12" />
+              <Input name="name" value={leagueName} onChange={e => setLeagueName(e.target.value)} required={step === 1} maxLength={15} className="text-xl h-12" />
             </div>
 
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
@@ -190,7 +190,7 @@ export default function CreateLeaguePage() {
           <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:underline">Terms & Conditions</Link>
         </div>
-        <p className="mt-2 text-xs">© {new Date().getFullYear()} VolleyBet. Tutti i diritti riservati.</p>
+        <p className="mt-2 text-xs">© {new Date().getFullYear()} VolleyBet.</p>
       </footer>
     </main>
   )

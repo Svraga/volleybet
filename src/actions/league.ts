@@ -25,6 +25,7 @@ export async function createLeague(formData: FormData) {
   const teams = formData.getAll("teams[]") as string[]
 
   if (!name || !homeTeam || teams.length < 2) throw new Error("Missing required fields or not enough teams")
+  if (name.trim().length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
 
   // Generate a secure random 8-character invite code
   const inviteCode = "VOLLEY-" + randomBytes(4).toString("hex").toUpperCase()
@@ -127,6 +128,29 @@ export async function updateCoinName(leagueId: string, formData: FormData) {
   await prisma.league.update({
     where: { id: league.id },
     data: { coinName: coinName.trim() }
+  })
+
+  revalidatePath("/profile")
+  revalidatePath(`/league/${league.id}`)
+}
+
+export async function updateLeagueName(leagueId: string, formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Not authenticated")
+
+  const leagueName = formData.get("leagueName") as string
+  if (!leagueName) return
+
+  const trimmed = leagueName.trim()
+  if (trimmed.length === 0) throw new Error("Il nome del campionato è obbligatorio")
+  if (trimmed.length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (league?.adminId !== session.user.id) throw new Error("Not admin")
+
+  await prisma.league.update({
+    where: { id: league.id },
+    data: { name: trimmed }
   })
 
   revalidatePath("/profile")
