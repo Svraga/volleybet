@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { driver } from "driver.js"
 import "driver.js/dist/driver.css"
+import { useAlertStore } from "@/store/alertStore"
 
 export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean }) {
   const [showDummy, setShowDummy] = useState(false)
@@ -25,11 +26,18 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
       animate: true,
       popoverClass: 'brutal-tour-popover',
       onDestroyStarted: () => {
-        if (!tourDriver.hasNextStep() || confirm("Sei sicuro di voler saltare questa guida?")) {
+        if (!tourDriver.hasNextStep()) {
           tourDriver.destroy()
           localStorage.setItem("volleybet_admin_page_tour_done", "true")
           if (forceTour) localStorage.removeItem("volleybet_force_tour")
           setShowDummy(false)
+        } else {
+          useAlertStore.getState().showConfirm("Sei sicuro di voler saltare il tutorial?", () => {
+            tourDriver.destroy()
+            localStorage.setItem("volleybet_admin_page_tour_done", "true")
+            if (forceTour) localStorage.removeItem("volleybet_force_tour")
+            setShowDummy(false)
+          })
         }
       }
     })

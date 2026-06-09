@@ -21,7 +21,7 @@ export default function BrutalAlertProvider() {
                   if (onCancel) onCancel();
                   closeAlert();
                 }} 
-                className="w-full text-xl h-14 uppercase font-black tracking-wider border-[3px] border-black"
+                className="flex-1 text-base sm:text-xl h-12 sm:h-14 uppercase font-black tracking-wider border-[3px] border-black px-2"
               >
                 Annulla
               </Button>
@@ -31,7 +31,7 @@ export default function BrutalAlertProvider() {
                   if (onConfirm) onConfirm();
                   closeAlert();
                 }} 
-                className="w-full text-xl h-14 uppercase font-black tracking-wider bg-red-500 text-white hover:bg-red-600"
+                className="flex-1 text-base sm:text-xl h-12 sm:h-14 uppercase font-black tracking-wider bg-red-500 text-white hover:bg-red-600 px-2"
               >
                 Conferma
               </Button>

@@ -33,7 +33,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
   const boundPlaceBets = placeBets.bind(null, league.id, matchDay.id)
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12">
+    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12 pb-32">
       <div className="w-full max-w-3xl flex flex-col items-center gap-4 mb-8">
         <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mt-4 w-full justify-center">
           <h1 className="text-2xl md:text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block md:-rotate-1 text-center w-full md:w-auto">

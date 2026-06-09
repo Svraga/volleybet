@@ -155,21 +155,21 @@ export default function AdminMatchdayPanel({
         ) : (
           <div className="space-y-2">
             {matchDay.matches.map((m: any) => (
-              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-3 font-bold shadow-brutal-sm gap-4 min-w-0 bg-white">
+              <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm gap-2 min-w-0 bg-white">
                 <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
-                  <span className="truncate w-full block text-sm" title={m.teamA}>{m.teamA}</span>
-                  <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
-                  <span className="truncate w-full block text-sm" title={m.teamB}>{m.teamB}</span>
+                  <span className="truncate w-full block text-[11px] sm:text-xs" title={m.teamA}>{m.teamA}</span>
+                  <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                  <span className="truncate w-full block text-[11px] sm:text-xs" title={m.teamB}>{m.teamB}</span>
                 </div>
-                <span className="font-bold border-[2px] border-black px-2 py-1 bg-yellow-100 flex-shrink-0 whitespace-nowrap text-xs">
+                <span className="font-bold border-[2px] border-black px-1 py-0 bg-yellow-100 flex-shrink-0 whitespace-nowrap text-[10px] leading-relaxed">
                   {m.resultA !== null && m.resultB !== null ? `${m.resultA} - ${m.resultB}` : "Da giocare"}
                 </span>
               </div>
             ))}
             {hasOddTeams && matchDay.restingTeam && (
-              <div className="flex justify-between items-center border-[2px] border-black p-3 font-bold shadow-brutal-sm bg-gray-200 gap-4 min-w-0">
-                <span className="truncate flex-1 min-w-0 text-sm text-center" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
-                <span className="font-bold border-[2px] border-black px-2 py-1 bg-white flex-shrink-0 whitespace-nowrap text-xs">
+              <div className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm bg-gray-200 gap-2 min-w-0">
+                <span className="truncate flex-1 min-w-0 text-[11px] sm:text-xs text-center" title={matchDay.restingTeam}>{matchDay.restingTeam}</span>
+                <span className="font-bold border-[2px] border-black px-1 py-0 bg-white flex-shrink-0 whitespace-nowrap text-[10px] leading-relaxed">
                   RIPOSA
                 </span>
               </div>
@@ -187,17 +187,17 @@ export default function AdminMatchdayPanel({
             {matchDay.matches.map((m: any) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
-                <div key={`res_${m.id}`} className="flex justify-between items-center gap-4 min-w-0 border-[2px] border-black p-3 bg-gray-50 shadow-brutal-sm">
+                <div key={`res_${m.id}`} className="flex justify-between items-center gap-2 min-w-0 border-[2px] border-black p-2 bg-gray-50 shadow-brutal-sm">
                   <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
-                    <span className="truncate w-full block text-sm font-bold" title={m.teamA}>{m.teamA}</span>
-                    <span className="text-[10px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
-                    <span className="truncate w-full block text-sm font-bold" title={m.teamB}>{m.teamB}</span>
+                    <span className="truncate w-full block text-[11px] sm:text-xs font-bold" title={m.teamA}>{m.teamA}</span>
+                    <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                    <span className="truncate w-full block text-[11px] sm:text-xs font-bold" title={m.teamB}>{m.teamB}</span>
                   </div>
                   <select 
                     name={`result_${m.id}`} 
                     defaultValue={existingValue}
                     required
-                    className="h-8 border-[2px] border-black bg-white px-1 py-0 text-xs font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
+                    className="h-6 border-[2px] border-black bg-white px-1 py-0 text-[10px] font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
                   >
                     <option value="" disabled className="text-gray-400">Sel.</option>
                     <option value="3-0">3 - 0</option>
