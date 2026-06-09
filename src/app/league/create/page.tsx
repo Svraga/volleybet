@@ -167,18 +167,20 @@ export default function CreateLeaguePage() {
               <Input name="coinName" value={coinName} onChange={e => setCoinName(e.target.value)} placeholder="es. Birre" required={step === 4} className="text-xl h-12" />
             </div>
 
-            <div className="pt-6 flex justify-center items-center gap-4 w-full max-w-sm mx-auto">
-              {step > 1 && (
-                <Button type="button" variant="secondary" onClick={prevStep} className="flex-1 h-14 text-base md:text-lg">
+            <div className="pt-6 grid grid-cols-2 gap-4 w-full max-w-sm mx-auto">
+              {step > 1 ? (
+                <Button type="button" variant="secondary" onClick={prevStep} className="w-full h-14 text-base md:text-lg">
                   Indietro
                 </Button>
+              ) : (
+                <div />
               )}
               {step < 4 ? (
-                <Button type="button" variant="primary" onClick={nextStep} className="flex-1 h-14 text-base md:text-lg bg-blue-500 text-white hover:bg-blue-600 border-black border-[3px] shadow-brutal">
+                <Button type="button" variant="primary" onClick={nextStep} className="w-full h-14 text-base md:text-lg bg-blue-500 text-white hover:bg-blue-600 border-black border-[3px] shadow-brutal">
                   Avanti
                 </Button>
               ) : (
-                <SubmitButton variant="primary" defaultText="Genera" loadingText="CREAZIONE..." className="flex-1 h-14 text-base md:text-lg bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal" />
+                <SubmitButton variant="primary" defaultText="Genera" loadingText="CREAZIONE..." className="w-full h-14 text-base md:text-lg bg-green-500 text-white hover:bg-green-600 border-black border-[3px] shadow-brutal" />
               )}
             </div>
           </CardContent>

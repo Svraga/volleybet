@@ -50,19 +50,22 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-8">
-      <div className="absolute top-4 right-4">
-        <LogoutButton />
-      </div>
-
-      <div className="space-y-4 text-center mb-12">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter uppercase inline-block bg-white px-3 py-1.5 border-[3px] border-black shadow-brutal transform -rotate-1">
+    <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-6">
+      {/* Header Row: Welcome and Logout button */}
+      <div className="w-full max-w-4xl flex justify-between items-center mb-12 gap-4">
+        <h1 className="text-lg sm:text-2xl font-bold uppercase bg-white border-[3px] border-black shadow-brutal px-3 py-1.5 -rotate-1 truncate max-w-[calc(100%-100px)]">
           Benvenuto, {user?.name}!
         </h1>
-        {(!user?.leagues || user.leagues.length === 0) && (
-          <p className="text-xl font-bold mt-4">Non appartieni a nessun campionato al momento.</p>
-        )}
+        <div className="shrink-0">
+          <LogoutButton />
+        </div>
       </div>
+
+      {(!user?.leagues || user.leagues.length === 0) && (
+        <div className="space-y-4 text-center mb-12">
+          <p className="text-xl font-bold">Non appartieni a nessun campionato al momento.</p>
+        </div>
+      )}
 
       {user?.leagues && user.leagues.length > 0 && (
         <div className="w-full max-w-4xl mb-12">

@@ -55,11 +55,11 @@ export default function AdminMatchdayPanel({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 w-full">
+      <div className="grid grid-cols-3 gap-2 w-full">
         <button 
           type="button"
           onClick={() => setActiveTab("matches")}
-          className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-2' : ''} ${activeTab === "matches" ? 'bg-yellow-300 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
+          className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-3' : ''} ${activeTab === "matches" ? 'bg-yellow-300' : 'bg-white hover:bg-gray-100'}`}
         >
           Gestione Partite
         </button>
@@ -67,7 +67,7 @@ export default function AdminMatchdayPanel({
           <button 
             type="button"
             onClick={() => setActiveTab("results")}
-            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-gray-100'}`}
+            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400' : 'bg-white hover:bg-gray-100'}`}
           >
             Inserimento Risultati
           </button>
@@ -76,7 +76,7 @@ export default function AdminMatchdayPanel({
           <button 
             type="button"
             onClick={() => setActiveTab("proxy")}
-            className={`col-span-2 border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "proxy" ? 'bg-purple-400 text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' : 'bg-white text-black hover:bg-gray-100'}`}
+            className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "proxy" ? 'bg-purple-400 text-white' : 'bg-white text-black hover:bg-gray-100'}`}
           >
             Logistica & Proxy
           </button>

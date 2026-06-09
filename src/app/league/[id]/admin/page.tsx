@@ -105,7 +105,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                     </div>
                   </div>
                 </summary>
-                <CardContent className="space-y-6 pt-6">
+                <CardContent className="space-y-6 pt-3 mt-1">
                   <AdminMatchdayPanel 
                     leagueId={league.id} 
                     matchDay={md} 
