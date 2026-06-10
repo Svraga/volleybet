@@ -68,14 +68,14 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-primary pt-12 relative">
-      <NotificationBell leagueId={league.id} notifications={user.notifications} />
       <GuidedTour isAdmin={isAdmin} />
-      <div id="tour-welcome" className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap pr-12">
+      <div id="tour-welcome" className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap">
         <h1 className="text-xl md:text-2xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1 truncate max-w-full">
           {league.name}
         </h1>
         
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <NotificationBell leagueId={league.id} notifications={user.notifications} />
           {isAdmin && (
             <AdminButtonClient leagueId={league.id} />
           )}
@@ -84,8 +84,8 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
       <div className="flex flex-col gap-4 w-full max-w-4xl">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div id="tour-coin" className="flex-1 bg-white border-[3px] border-black shadow-brutal px-4 py-2 flex items-center justify-start gap-3">
-            <span className="font-bold text-gray-500 uppercase text-xs sm:text-sm">{league.coinName}:</span>
+          <div id="tour-coin" className="w-fit bg-white border-[3px] border-black shadow-brutal px-4 py-2 flex items-center justify-start gap-3">
+            <span className="font-bold text-gray-500 text-xs sm:text-sm">{league.coinName}:</span>
             <span className="text-xl sm:text-2xl font-bold flex items-center gap-1"><CircleDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />{Math.floor(currentCoins)}</span>
           </div>
         </div>

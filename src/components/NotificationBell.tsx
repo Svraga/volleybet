@@ -13,7 +13,7 @@ export default function NotificationBell({
   return (
     <Link 
       href={`/league/${leagueId}/notifications`}
-      className="absolute top-4 right-4 z-50 font-bold border-[2px] border-black bg-white shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-gray-100 p-2 transition-all flex items-center justify-center"
+      className="relative font-bold border-[2px] border-black bg-white shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-gray-100 p-2 transition-all flex items-center justify-center"
     >
       <Bell className="w-6 h-6" />
       {unreadCount > 0 && (

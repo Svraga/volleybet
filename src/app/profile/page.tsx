@@ -50,6 +50,8 @@ export default async function ProfilePage() {
   const winnerHits = user.bets.filter(b => (b.pointsEarned || 0) >= 1).length
   const totalBets = user.bets.length
   const accuracy = totalBets > 0 ? Math.round((exactHits / totalBets) * 100) : 0
+  const winnerAccuracy = totalBets > 0 ? Math.round((winnerHits / totalBets) * 100) : 0
+  const globalCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
 
   return (
     <div className="pb-20 md:pb-0 min-h-screen bg-primary">
@@ -63,13 +65,30 @@ export default async function ProfilePage() {
         <div className="grid gap-8 w-full max-w-2xl">
           <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
-              <CardTitle>Saldo {activeLeague ? `Campionato (${activeLeague.name})` : "Globale"}</CardTitle>
+              <CardTitle>Le tue Statistiche Globali</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center gap-2 text-xl sm:text-2xl font-bold text-green-600 bg-gray-100 py-3 border-[3px] border-black shadow-brutal-sm rounded-brutal break-all px-2">
-                <CircleDollarSign className="w-6 h-6 shrink-0" />
-                <span>{Math.floor(balanceCoins)} {balanceName}</span>
-              </div>
+              <ul className="space-y-4 text-xl">
+                <li className="flex justify-between border-b-[3px] border-black pb-2">
+                  <span className="font-bold text-gray-600">Punti Totali</span>
+                  <span className="font-bold">{totalPoints} pt</span>
+                </li>
+                <li className="flex justify-between border-b-[3px] border-black pb-2">
+                  <span className="font-bold text-gray-600">Saldo Globale</span>
+                  <span className="font-bold flex items-center gap-1">
+                    <CircleDollarSign className="w-5 h-5 text-yellow-500" />
+                    {Math.floor(globalCoins)}
+                  </span>
+                </li>
+                <li className="flex justify-between border-b-[3px] border-black pb-2">
+                  <span className="font-bold text-gray-600">Risultati Esatti</span>
+                  <span className="font-bold">{exactHits}/{totalBets} ({accuracy}%)</span>
+                </li>
+                <li className="flex justify-between border-b-[3px] border-black pb-2">
+                  <span className="font-bold text-gray-600">Partite Prese</span>
+                  <span className="font-bold">{winnerHits}/{totalBets} ({winnerAccuracy}%)</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
 
@@ -139,35 +158,7 @@ export default async function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border-[3px] border-black shadow-brutal">
-            <CardHeader>
-              <CardTitle>Le tue Statistiche Globali</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-4 text-xl">
-                <li className="flex justify-between border-b-[3px] border-black pb-2">
-                  <span className="font-bold text-gray-600">Scommesse Piazzate</span>
-                  <span className="font-bold">{totalBets}</span>
-                </li>
-                <li className="flex justify-between border-b-[3px] border-black pb-2">
-                  <span className="font-bold text-gray-600">Punti Totali</span>
-                  <span className="font-bold">{totalPoints} pt</span>
-                </li>
-                <li className="flex justify-between border-b-[3px] border-black pb-2">
-                  <span className="font-bold text-gray-600">Risultati Esatti</span>
-                  <span className="font-bold">{exactHits}</span>
-                </li>
-                <li className="flex justify-between border-b-[3px] border-black pb-2">
-                  <span className="font-bold text-gray-600">Partite Prese</span>
-                  <span className="font-bold">{winnerHits}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span className="font-bold text-gray-600">Precisione</span>
-                  <span className="font-bold">{accuracy}%</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+
 
           <div className="bg-white border-[4px] border-black p-6 shadow-[4px_4px_0_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center space-y-4 mt-8">
             <h2 className="text-2xl font-black uppercase tracking-widest bg-yellow-300 px-2 border-[2px] border-black -rotate-2 inline-block">Assistenza</h2>
