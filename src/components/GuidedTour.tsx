@@ -22,6 +22,8 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
     const tourDriver = driver({
       showProgress: true,
       animate: true,
+      allowClose: true,
+      allowKeyboardControl: true,
       popoverClass: 'brutal-tour-popover',
       onDestroyStarted: () => {
         if (!tourDriver.hasNextStep()) {

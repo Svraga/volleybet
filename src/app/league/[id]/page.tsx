@@ -10,7 +10,7 @@ import GuidedTour from "@/components/GuidedTour"
 import AdminButtonClient from "@/components/AdminButtonClient"
 import CopyInviteButton from "@/components/CopyInviteButton"
 import NotificationBell from "@/components/NotificationBell"
-import { ShieldCheck, Medal, TriangleAlert } from "lucide-react"
+import { ShieldCheck, Medal, TriangleAlert, CircleDollarSign } from "lucide-react"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -84,9 +84,9 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
       <div className="flex flex-col gap-4 w-full max-w-4xl">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div id="tour-coin" className="flex-1 bg-white border-[3px] border-black shadow-brutal px-4 py-2 flex items-center justify-between">
-            <span className="font-bold text-gray-500 uppercase text-xs sm:text-sm">{league.coinName}</span>
-            <span className="text-xl sm:text-2xl font-bold">{Math.floor(currentCoins)}</span>
+          <div id="tour-coin" className="flex-1 bg-white border-[3px] border-black shadow-brutal px-4 py-2 flex items-center justify-start gap-3">
+            <span className="font-bold text-gray-500 uppercase text-xs sm:text-sm">{league.coinName}:</span>
+            <span className="text-xl sm:text-2xl font-bold flex items-center gap-1"><CircleDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />{Math.floor(currentCoins)}</span>
           </div>
         </div>
 

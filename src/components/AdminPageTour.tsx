@@ -24,6 +24,8 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
     const tourDriver = driver({
       showProgress: true,
       animate: true,
+      allowClose: true,
+      allowKeyboardControl: true,
       popoverClass: 'brutal-tour-popover',
       onDestroyStarted: () => {
         if (!tourDriver.hasNextStep()) {

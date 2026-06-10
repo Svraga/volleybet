@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 
-import { Home } from "lucide-react"
 
 export default async function StatsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ round?: string }> }) {
   const { id } = await params;
@@ -73,9 +72,6 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
         <h1 className="text-4xl md:text-5xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
           Classifica {round ? ` - Giornata ${matchDays.find(m => m.id === round)?.number || ''}` : ''}
         </h1>
-        <Link href={`/league/${league.id}`}>
-          <Button variant="outline" className="bg-white p-3"><Home className="w-6 h-6" /></Button>
-        </Link>
       </div>
 
       <div className="w-full max-w-4xl flex gap-2 overflow-x-auto pb-4 mb-4">
