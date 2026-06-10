@@ -54,15 +54,15 @@ export default async function ProfilePage() {
   const globalCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
 
   return (
-    <div className="pb-20 md:pb-0 min-h-screen bg-primary">
-      <main className="flex flex-col items-center p-6 pt-12">
-        <div className="w-full max-w-2xl mb-8 flex justify-center items-center">
+    <div className="pb-20 md:pb-0 min-h-screen bg-primary w-full overflow-x-hidden">
+      <main className="flex flex-col items-center p-6 pt-12 w-full max-w-2xl mx-auto">
+        <div className="w-full mb-8 flex justify-center items-center">
           <h1 className="text-4xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">
             Il tuo Profilo
           </h1>
         </div>
 
-        <div className="grid gap-8 w-full max-w-2xl">
+        <div className="grid gap-8 w-full">
           <Card className="bg-white border-[3px] border-black shadow-brutal">
             <CardHeader>
               <CardTitle>Le tue Statistiche Globali</CardTitle>
