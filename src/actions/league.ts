@@ -110,6 +110,7 @@ export async function deleteLeague(leagueId: string) {
     await tx.matchDay.deleteMany({ where: { leagueId } })
     await tx.ledger.deleteMany({ where: { leagueId } })
     await tx.team.deleteMany({ where: { leagueId } })
+    await tx.notification.deleteMany({ where: { leagueId } })
     await tx.auditLog.deleteMany({ where: { leagueId } })
     await tx.league.delete({ where: { id: leagueId } })
   })

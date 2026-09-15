@@ -37,6 +37,11 @@ export default async function Home() {
     include: { leagues: true }
   })
 
+  // Stale session check (e.g. database wiped or user removed)
+  if (!user) {
+    redirect("/api/auth/signout")
+  }
+
   if (user?.leagues && user.leagues.length > 0) {
     const cookieStore = await cookies()
     const lastLeagueId = cookieStore.get("lastLeagueId")?.value

@@ -93,9 +93,10 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       const allZeros = usersWithBets.every(uid => userPoints[uid] === 0)
 
       if (allZeros) {
-        // Refund everyone exactly what they spent
+        // Refund everyone exactly what they spent (entry fee)
         for (const uid of usersWithBets) {
-          const spent = userBetsCount[uid] || 0
+          const userFeeLedger = betLedgers.find(l => l.userId === uid)
+          const spent = userFeeLedger ? Math.abs(userFeeLedger.amount) : 1
           if (spent > 0) {
             await tx.ledger.create({
               data: {
