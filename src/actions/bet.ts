@@ -41,17 +41,28 @@ export async function placeBets(leagueId: string, matchDayId: string, formData: 
     throw new Error("Scadenza superata: impossibile inserire o modificare i pronostici")
   }
 
+  // Fetch user's team in this league
+  const member = await prisma.leagueMember.findUnique({
+    where: {
+      userId_leagueId: {
+        userId: session.user.id,
+        leagueId
+      }
+    }
+  })
+  const userTeam = member?.teamName || league.homeTeam
+
   // Parse bets from formData
   const betsToCreate: { matchId: string; predictedA: number; predictedB: number }[] = []
   
   for (const match of matchDay.matches) {
-    // Check if home team is playing
-    if (match.teamA === league.homeTeam || match.teamB === league.homeTeam) {
+    // Check if user's personal team is playing
+    if (match.teamA === userTeam || match.teamB === userTeam) {
       const betVal = formData.get(`bet_${match.id}`) as string
       if (betVal) {
-        throw new Error("Forbidden: Non puoi scommettere sulla squadra di casa (403)")
+        throw new Error(`Forbidden: Non puoi scommettere sulla tua squadra (${userTeam}) (403)`)
       }
-      continue // skip if no bet provided
+      continue // skip if personal team
     }
 
     const betVal = (formData.get(`bet_${match.id}`) as string)?.trim()

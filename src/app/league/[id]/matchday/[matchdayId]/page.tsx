@@ -28,6 +28,16 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
     redirect(`/league/${league.id}`)
   }
 
+  const member = await prisma.leagueMember.findUnique({
+    where: {
+      userId_leagueId: {
+        userId: session.user.id,
+        leagueId: league.id,
+      },
+    },
+  })
+  const userTeam = member?.teamName || league.homeTeam
+
   const isDeadlinePassed = new Date() > matchDay.deadline
   
   const boundPlaceBets = placeBets.bind(null, league.id, matchDay.id)
@@ -49,6 +59,16 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
         </div>
+
+        <div className="bg-white border-[3px] border-black p-3 shadow-brutal-sm text-center w-full">
+          <span className="font-bold text-sm text-gray-700">La tua squadra: </span>
+          <span className="font-black bg-yellow-300 px-2 py-0.5 border-[2px] border-black uppercase text-sm ml-1">{userTeam}</span>
+          {matchDay.restingTeam === userTeam ? (
+            <p className="text-xs font-bold text-green-700 mt-1">✨ La tua squadra riposa in questa giornata: puoi pronosticare su tutte le partite in programma!</p>
+          ) : (
+            <p className="text-xs font-bold text-gray-600 mt-1">La partita della tua squadra non è visibile per evitare conflitti d'interesse.</p>
+          )}
+        </div>
       </div>
 
       <Card className="w-full max-w-3xl bg-white border-[4px] border-black shadow-brutal">
@@ -58,8 +78,8 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
           </CardHeader>
           <CardContent className="space-y-6 overflow-x-auto max-w-full">
             {matchDay.matches.map(m => {
-              const isHomeTeam = m.teamA === league.homeTeam || m.teamB === league.homeTeam
-              if (isHomeTeam) return null;
+              const isUserTeam = m.teamA === userTeam || m.teamB === userTeam
+              if (isUserTeam) return null;
 
               const existingBet = m.bets.find(b => b.userId === session.user.id)
               const existingValue = existingBet ? `${existingBet.predictedA}-${existingBet.predictedB}` : ""
@@ -122,9 +142,6 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
               Nessuno, nemmeno l'amministratore, può più modificarle senza lasciare traccia.
             </p>
             {matchDay.matches.map(m => {
-              const isHomeTeam = m.teamA === league.homeTeam || m.teamB === league.homeTeam;
-              if (isHomeTeam) return null;
-
               return (
                 <div key={m.id} className="border-[2px] border-black p-3">
                   <div className="font-bold mb-2 border-b-[2px] border-black pb-1 truncate" title={`${m.teamA} - ${m.teamB}`}>

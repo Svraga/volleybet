@@ -51,6 +51,12 @@ export async function createLeague(formData: FormData) {
       users: {
         connect: { id: session.user.id }
       },
+      members: {
+        create: {
+          userId: session.user.id,
+          teamName: trimmedHome
+        }
+      },
       teams: {
         create: cleanTeams.map(t => ({ name: t }))
       }
@@ -61,6 +67,21 @@ export async function createLeague(formData: FormData) {
   redirect(`/league/${league.id}`)
 }
 
+export async function getLeaguePreview(inviteCodeRaw: string) {
+  if (!inviteCodeRaw) return { error: "Codice invito vuoto." }
+  const inviteCode = inviteCodeRaw.trim().toUpperCase()
+  const league = await prisma.league.findUnique({
+    where: { inviteCode },
+    include: { teams: { orderBy: { name: "asc" } } }
+  })
+  if (!league) return { error: "Campionato non trovato o codice errato." }
+  return {
+    id: league.id,
+    name: league.name,
+    teams: league.teams.map(t => t.name)
+  }
+}
+
 export async function joinLeague(prevState: any, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
@@ -69,24 +90,53 @@ export async function joinLeague(prevState: any, formData: FormData) {
   await new Promise(resolve => setTimeout(resolve, 2000))
 
   const inviteCodeRaw = formData.get("inviteCode") as string
+  const teamNameRaw = formData.get("teamName") as string
+
   if (!inviteCodeRaw) return { error: "Codice invito vuoto." }
+  if (!teamNameRaw) return { error: "Devi selezionare la tua squadra di appartenenza." }
 
   const inviteCode = inviteCodeRaw.trim().toUpperCase()
+  const teamName = teamNameRaw.trim()
 
   const league = await prisma.league.findUnique({
-    where: { inviteCode }
+    where: { inviteCode },
+    include: { teams: true }
   })
 
   if (!league) return { error: "Campionato inesistente o codice errato." }
 
-  await prisma.league.update({
-    where: { id: league.id },
-    data: {
-      users: { connect: { id: session.user.id } }
-    }
+  if (!league.teams.some(t => t.name === teamName)) {
+    return { error: "La squadra selezionata non appartiene a questo campionato." }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.league.update({
+      where: { id: league.id },
+      data: {
+        users: { connect: { id: session.user.id } }
+      }
+    })
+
+    await tx.leagueMember.upsert({
+      where: {
+        userId_leagueId: {
+          userId: session.user.id,
+          leagueId: league.id
+        }
+      },
+      update: {
+        teamName
+      },
+      create: {
+        userId: session.user.id,
+        leagueId: league.id,
+        teamName
+      }
+    })
   })
 
   revalidatePath("/")
+  revalidatePath(`/league/${league.id}`)
   redirect(`/league/${league.id}`)
 }
 
@@ -101,11 +151,20 @@ export async function leaveLeague(leagueId: string) {
     throw new Error("L'amministratore non può abbandonare il proprio campionato. Puoi eliminarlo dalle impostazioni del profilo se non ti serve più.")
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { 
-      leagues: { disconnect: { id: leagueId } } 
-    }
+  await prisma.$transaction(async (tx) => {
+    await tx.leagueMember.deleteMany({
+      where: {
+        userId: session.user.id,
+        leagueId
+      }
+    })
+
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: { 
+        leagues: { disconnect: { id: leagueId } } 
+      }
+    })
   })
 
   revalidatePath("/")
@@ -129,6 +188,7 @@ export async function deleteLeague(leagueId: string) {
     await tx.team.deleteMany({ where: { leagueId } })
     await tx.notification.deleteMany({ where: { leagueId } })
     await tx.auditLog.deleteMany({ where: { leagueId } })
+    await tx.leagueMember.deleteMany({ where: { leagueId } })
     await tx.league.delete({ where: { id: leagueId } })
   })
 

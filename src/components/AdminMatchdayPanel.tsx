@@ -282,14 +282,24 @@ export default function AdminMatchdayPanel({
               <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Hanno Scommesso</h4>
               <ul className="text-sm font-bold text-green-700 space-y-1">
                 {usersWhoBet.length === 0 && <li className="text-gray-400">Nessuno</li>}
-                {usersWhoBet.map(u => <li key={u.id}>✓ {u.name}</li>)}
+                {usersWhoBet.map(u => (
+                  <li key={u.id} className="flex items-center justify-between gap-1">
+                    <span className="truncate">✓ {u.name}</span>
+                    <span className="text-[10px] bg-white text-black px-1 border border-black shrink-0 font-bold">{u.teamName || homeTeam}</span>
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="border-[2px] border-black p-2 bg-gray-50">
               <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Mancanti</h4>
               <ul className="text-sm font-bold text-red-700 space-y-1">
                 {usersMissing.length === 0 && <li className="text-gray-400">Nessuno</li>}
-                {usersMissing.map(u => <li key={u.id}>✗ {u.name}</li>)}
+                {usersMissing.map(u => (
+                  <li key={u.id} className="flex items-center justify-between gap-1">
+                    <span className="truncate">✗ {u.name}</span>
+                    <span className="text-[10px] bg-white text-black px-1 border border-black shrink-0 font-bold">{u.teamName || homeTeam}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -311,37 +321,48 @@ export default function AdminMatchdayPanel({
                 >
                   <option value="" disabled>Seleziona Utente</option>
                   {usersMissing.map(u => (
-                    <option key={`proxy_${u.id}`} value={u.id}>{u.name}</option>
+                    <option key={`proxy_${u.id}`} value={u.id}>
+                      {u.name} ({u.teamName || homeTeam})
+                    </option>
                   ))}
                 </select>
 
-                {selectedProxyUser && (
-                  <div className="space-y-2 border-[2px] border-black p-2 bg-yellow-100">
-                    {matchDay.matches.map((m: any) => {
-                      const isHomeTeam = m.teamA === homeTeam || m.teamB === homeTeam;
-                      if (isHomeTeam) return null; // Home team match is excluded
-                      return (
-                        <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-4 min-w-0 border-[2px] border-black p-3 bg-white shadow-brutal-sm">
-                          <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
-                            <span className="truncate w-full block text-xs font-bold" title={m.teamA}>{m.teamA}</span>
-                            <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
-                            <span className="truncate w-full block text-xs font-bold" title={m.teamB}>{m.teamB}</span>
+                {selectedProxyUser && (() => {
+                  const targetUser = users.find(u => u.id === selectedProxyUser);
+                  const targetUserTeam = targetUser?.teamName || homeTeam;
+
+                  return (
+                    <div className="space-y-2 border-[2px] border-black p-2 bg-yellow-100">
+                      <div className="bg-white border-[2px] border-black px-2 py-1 text-xs font-bold flex justify-between items-center">
+                        <span>Squadra di {targetUser?.name || "Utente"}:</span>
+                        <span className="font-black bg-yellow-300 px-1 border border-black uppercase">{targetUserTeam}</span>
+                      </div>
+                      {matchDay.matches.map((m: any) => {
+                        const isTargetTeam = m.teamA === targetUserTeam || m.teamB === targetUserTeam;
+                        if (isTargetTeam) return null; // Target user's team match is excluded
+                        return (
+                          <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-4 min-w-0 border-[2px] border-black p-3 bg-white shadow-brutal-sm">
+                            <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
+                              <span className="truncate w-full block text-xs font-bold" title={m.teamA}>{m.teamA}</span>
+                              <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
+                              <span className="truncate w-full block text-xs font-bold" title={m.teamB}>{m.teamB}</span>
+                            </div>
+                            <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-1 py-0 text-xs flex-shrink-0 h-8 font-bold bg-white focus:outline-none">
+                              <option value="" disabled className="text-gray-400">Sel.</option>
+                              <option value="3-0">3-0</option>
+                              <option value="3-1">3-1</option>
+                              <option value="3-2">3-2</option>
+                              <option value="2-3">2-3</option>
+                              <option value="1-3">1-3</option>
+                              <option value="0-3">0-3</option>
+                            </select>
                           </div>
-                          <select name={`bet_${m.id}`} required defaultValue="" className="border-[2px] border-black px-1 py-0 text-xs flex-shrink-0 h-8 font-bold bg-white focus:outline-none">
-                            <option value="" disabled className="text-gray-400">Sel.</option>
-                            <option value="3-0">3-0</option>
-                            <option value="3-1">3-1</option>
-                            <option value="3-2">3-2</option>
-                            <option value="2-3">2-3</option>
-                            <option value="1-3">1-3</option>
-                            <option value="0-3">0-3</option>
-                          </select>
-                        </div>
-                      )
-                    })}
-                    <SubmitButton variant="secondary" className="w-full text-xs font-black uppercase" defaultText="Salva Proxy-Bet" loadingText="SALVATAGGIO..." />
-                  </div>
-                )}
+                        )
+                      })}
+                      <SubmitButton variant="secondary" className="w-full text-xs font-black uppercase" defaultText="Salva Proxy-Bet" loadingText="SALVATAGGIO..." />
+                    </div>
+                  );
+                })()}
               </form>
             </div>
           )}

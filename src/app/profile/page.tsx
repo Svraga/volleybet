@@ -21,6 +21,7 @@ export default async function ProfilePage() {
     where: { id: session.user.id },
     include: {
       leagues: true,
+      memberships: true,
       ledgers: true,
       bets: true
     }
@@ -112,11 +113,19 @@ export default async function ProfilePage() {
                 <div className="space-y-6">
                   {user.leagues.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i).map(league => {
                     const isAdmin = league.adminId === user.id
+                    const member = user.memberships?.find(m => m.leagueId === league.id)
+                    const teamName = member?.teamName || league.homeTeam
+
                     return (
                       <div key={league.id} className="border-[3px] border-black p-4 bg-gray-50 flex flex-col gap-4 min-w-0">
                         <div className="flex justify-between items-center gap-2 min-w-0">
                           <h3 className="text-xl font-bold uppercase truncate min-w-0 flex-1">{league.name}</h3>
                           {isAdmin && <span className="bg-yellow-300 text-xs font-black px-2 py-1 border-[2px] border-black uppercase flex-shrink-0">Admin</span>}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Squadra:</span>
+                          <span className="text-xs font-black bg-white px-2 py-0.5 border-[2px] border-black uppercase truncate max-w-[240px]">{teamName}</span>
                         </div>
                         
                         <div className="flex flex-col gap-2">

@@ -47,7 +47,8 @@ model User {
   image         String?
   
   // Custom app fields
-  leagues       League[]  @relation("LeagueMembers")
+  leagues       League[]       @relation("LeagueMembers")
+  memberships   LeagueMember[]
   bets          Bet[]
   accounts      Account[]
   sessions      Session[]
@@ -55,8 +56,8 @@ model User {
   auditLogs     AuditLog[]
   notifications Notification[]
   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model VerificationToken {
@@ -76,7 +77,8 @@ model League {
   hasOddTeams   Boolean   @default(false)
   coinName      String    @default("Coin")
   
-  users         User[]    @relation("LeagueMembers")
+  users         User[]         @relation("LeagueMembers")
+  members       LeagueMember[]
   matchDays     MatchDay[]
   ledgers       Ledger[]
   teams         Team[]
@@ -170,4 +172,19 @@ model Notification {
   type      String   // e.g. "MATCHDAY_CREATED", "SCORED", "PROXY_BET", "DEADLINE_CHANGED"
   createdAt DateTime @default(now())
 }
+
+model LeagueMember {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leagueId  String
+  league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  teamName  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, leagueId])
+}
+
 

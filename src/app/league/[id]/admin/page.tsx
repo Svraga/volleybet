@@ -43,7 +43,12 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
         { bets: { some: { match: { matchDay: { leagueId: league.id } } } } }
       ]
     },
-    include: { bets: true }
+    include: { 
+      bets: true,
+      memberships: {
+        where: { leagueId: league.id }
+      }
+    }
   })
 
   // Sort: OPEN first, then SCORED, then by number descending
@@ -112,7 +117,11 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                     matchDay={md} 
                     teams={teams}
                     hasOddTeams={league.hasOddTeams}
-                    users={users.map(u => ({ ...u, bets: u.bets.filter(b => md.matches.some(m => m.id === b.matchId)) }))}
+                    users={users.map(u => ({ 
+                      ...u, 
+                      teamName: u.memberships?.[0]?.teamName || league.homeTeam,
+                      bets: u.bets.filter(b => md.matches.some(m => m.id === b.matchId)) 
+                    }))}
                   />
                   <div className="flex justify-center pt-4 border-t-[4px] border-black border-dashed mt-4">
                     <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />

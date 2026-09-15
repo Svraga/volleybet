@@ -22,6 +22,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
       ]
     },
     include: {
+      memberships: { where: { leagueId: id } },
       ledgers: { where: { leagueId: id, ...(round ? { matchDayId: round } : {}) } },
       bets: {
         where: { match: { matchDay: { leagueId: id, status: "SCORED", ...(round ? { id: round } : {}) } } }
@@ -50,9 +51,11 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
     const totalBetsScored = u.bets.length
     const accuracy = totalBetsScored > 0 ? Math.round((exactHits / totalBetsScored) * 100) : 0
     const winnerAccuracy = totalBetsScored > 0 ? Math.round((winnerHits / totalBetsScored) * 100) : 0
+    const userTeam = u.memberships[0]?.teamName || league.homeTeam
 
     return {
       user: u,
+      userTeam,
       totalCoins,
       totalPoints,
       exactHits,
@@ -97,11 +100,14 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
               {pointsRanking.map((s, idx) => (
                 <li key={s.user.id} className="flex flex-col border-b-[3px] border-black pb-2">
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold w-8 text-gray-400">{idx + 1}°</span>
-                      <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <span className="text-2xl font-bold w-8 text-gray-400 shrink-0">{idx + 1}°</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
+                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam}</span>
+                      </div>
                     </div>
-                    <span className="text-2xl font-bold">{s.totalPoints} pt</span>
+                    <span className="text-2xl font-bold shrink-0">{s.totalPoints} pt</span>
                   </div>
                   {!round && (
                     <div className="pl-12 text-sm font-bold text-gray-500 mt-1">
@@ -124,11 +130,14 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
               <ul className="space-y-4">
                 {coinRanking.map((s, idx) => (
                   <li key={s.user.id} className="flex justify-between items-center border-b-[3px] border-black pb-2">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold w-8">{idx + 1}°</span>
-                      <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <span className="text-2xl font-bold w-8 shrink-0">{idx + 1}°</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
+                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam}</span>
+                      </div>
                     </div>
-                    <span className={`text-2xl font-bold ${s.totalCoins >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-2xl font-bold shrink-0 ${s.totalCoins >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {s.totalCoins > 0 ? '+' : ''}{Math.floor(s.totalCoins)}
                     </span>
                   </li>

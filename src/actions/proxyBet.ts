@@ -40,13 +40,23 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
     throw new Error("Deadline passed: Impossibile inserire proxy bets oltre l'orario di scadenza")
   }
 
+  const member = await prisma.leagueMember.findUnique({
+    where: {
+      userId_leagueId: {
+        userId: targetUserId,
+        leagueId: leagueId,
+      },
+    },
+  })
+  const targetUserTeam = member?.teamName || league.homeTeam
+
   const betsToCreate: { matchId: string, predictedA: number, predictedB: number }[] = []
   
   for (const match of matchDay.matches) {
-    if (match.teamA === league.homeTeam || match.teamB === league.homeTeam) {
+    if (match.teamA === targetUserTeam || match.teamB === targetUserTeam) {
       const betVal = formData.get(`bet_${match.id}`) as string
       if (betVal) {
-        throw new Error("Forbidden: Non puoi scommettere sulla squadra di casa per conto del giocatore")
+        throw new Error(`Forbidden: Non puoi scommettere sulla squadra di appartenenza (${targetUserTeam}) per conto del giocatore`)
       }
       continue
     }
