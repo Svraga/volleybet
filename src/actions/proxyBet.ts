@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
+import { isValidVolleyScore, parseVolleyScore } from "@/lib/volleyball"
+
 export async function proxyPlaceBets(leagueId: string, matchDayId: string, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
@@ -27,7 +29,12 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
     include: { matches: true }
   })
 
-  if (!matchDay || matchDay.status !== "OPEN") throw new Error("Matchday not open")
+  // Prevent cross-tenant IDOR
+  if (!matchDay || matchDay.leagueId !== leagueId) {
+    throw new Error("Matchday non appartenente a questo campionato")
+  }
+
+  if (matchDay.status !== "OPEN") throw new Error("Matchday non aperto")
 
   if (new Date() > matchDay.deadline) {
     throw new Error("Deadline passed: Impossibile inserire proxy bets oltre l'orario di scadenza")
@@ -46,12 +53,15 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
 
     const betVal = formData.get(`bet_${match.id}`) as string
     if (betVal) {
-      const [predA, predB] = betVal.split("-").map(Number)
-      if (!isNaN(predA) && !isNaN(predB)) {
+      if (!isValidVolleyScore(betVal)) {
+        throw new Error(`Punteggio non valido per la partita: ${betVal}`)
+      }
+      const parsed = parseVolleyScore(betVal)
+      if (parsed) {
         betsToCreate.push({
           matchId: match.id,
-          predictedA: predA,
-          predictedB: predB,
+          predictedA: parsed.setA,
+          predictedB: parsed.setB,
         })
       }
     }
@@ -110,6 +120,16 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
           userId: session.user.id,
           action: "Scommessa Proxy",
           details: `L'admin ha inserito scommesse per conto di ${targetUser.name || 'Utente'}`
+        }
+      })
+
+      // Notify the target user
+      await tx.notification.create({
+        data: {
+          userId: targetUserId,
+          leagueId,
+          message: `L'amministratore ha inserito i tuoi pronostici per la Giornata ${matchDay.number} (Proxy Bet).`,
+          type: "PROXY_BET"
         }
       })
     }, {

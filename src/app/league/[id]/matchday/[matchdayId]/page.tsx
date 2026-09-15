@@ -24,7 +24,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
     include: { matches: { include: { bets: { include: { user: true } } } } }
   })
 
-  if (!matchDay || matchDay.status !== "OPEN") {
+  if (!matchDay || matchDay.leagueId !== league.id || matchDay.status !== "OPEN") {
     redirect(`/league/${league.id}`)
   }
 

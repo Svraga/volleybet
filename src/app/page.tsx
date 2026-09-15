@@ -8,7 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ all?: string; view?: string }>
+}) {
   const session = await getServerSession(authOptions)
 
   if (!session?.user) {
@@ -42,7 +46,10 @@ export default async function Home() {
     redirect("/api/auth/signout")
   }
 
-  if (user?.leagues && user.leagues.length > 0) {
+  const sp = searchParams ? await searchParams : {}
+  const showAll = sp.all === "true" || sp.view === "all"
+
+  if (!showAll && user?.leagues && user.leagues.length > 0) {
     const cookieStore = await cookies()
     const lastLeagueId = cookieStore.get("lastLeagueId")?.value
     const belongsToLastLeague = lastLeagueId && user.leagues.some(l => l.id === lastLeagueId)

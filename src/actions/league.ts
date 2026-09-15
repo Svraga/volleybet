@@ -24,25 +24,35 @@ export async function createLeague(formData: FormData) {
   
   const teams = formData.getAll("teams[]") as string[]
 
-  if (!name || !homeTeam || teams.length < 2) throw new Error("Missing required fields or not enough teams")
-  if (name.trim().length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
+  const trimmedName = name.trim()
+  const trimmedHome = homeTeam.trim()
+  const trimmedCoin = (coinName || "Coin").trim()
+
+  if (!trimmedName || !trimmedHome || teams.length < 2) throw new Error("Campi obbligatori mancanti o squadre insufficienti")
+  if (trimmedName.length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
+  if (trimmedCoin.length > 15) throw new Error("Il nome della valuta non può superare i 15 caratteri")
+
+  // Sanitize and deduplicate teams
+  const cleanTeams = Array.from(new Set(teams.map(t => t.trim()).filter(Boolean)))
+  if (cleanTeams.length < 2) throw new Error("Inserisci almeno due squadre valide e distinte")
+  if (!cleanTeams.includes(trimmedHome)) throw new Error("La squadra reale deve far parte delle squadre del campionato")
 
   // Generate a secure random 8-character invite code
   const inviteCode = "VOLLEY-" + randomBytes(4).toString("hex").toUpperCase()
 
   const league = await prisma.league.create({
     data: {
-      name,
-      homeTeam,
+      name: trimmedName,
+      homeTeam: trimmedHome,
       hasOddTeams,
-      coinName,
+      coinName: trimmedCoin,
       inviteCode,
       adminId: session.user.id,
       users: {
         connect: { id: session.user.id }
       },
       teams: {
-        create: teams.map(t => ({ name: t }))
+        create: cleanTeams.map(t => ({ name: t }))
       }
     }
   })
@@ -83,6 +93,13 @@ export async function joinLeague(prevState: any, formData: FormData) {
 export async function leaveLeague(leagueId: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Not authenticated")
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!league) throw new Error("Campionato non trovato")
+
+  if (league.adminId === session.user.id) {
+    throw new Error("L'amministratore non può abbandonare il proprio campionato. Puoi eliminarlo dalle impostazioni del profilo se non ti serve più.")
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },
@@ -126,12 +143,16 @@ export async function updateCoinName(leagueId: string, formData: FormData) {
   const coinName = formData.get("coinName") as string
   if (!coinName) return
 
+  const trimmed = coinName.trim()
+  if (trimmed.length === 0) throw new Error("Il nome della valuta non può essere vuoto")
+  if (trimmed.length > 15) throw new Error("Il nome della valuta non può superare i 15 caratteri")
+
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (league?.adminId !== session.user.id) throw new Error("Not admin")
 
   await prisma.league.update({
     where: { id: league.id },
-    data: { coinName: coinName.trim() }
+    data: { coinName: trimmed }
   })
 
   revalidatePath("/profile")

@@ -5,6 +5,8 @@ import { Prisma } from "@prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
+import { isValidVolleyScore, parseVolleyScore } from "@/lib/volleyball"
 
 export async function scoreMatchDay(leagueId: string, matchDayId: string, formData: FormData) {
   const session = await getServerSession(authOptions)
@@ -18,39 +20,44 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
     include: { matches: { include: { bets: true } } }
   })
 
-  if (!matchDay) throw new Error("Matchday not found")
-
-  // Update match results
-  const matchesToUpdate = matchDay.matches.map(m => {
-    const resultVal = formData.get(`result_${m.id}`) as string
-    if (resultVal) {
-      const [resA, resB] = resultVal.split("-").map(Number)
-      return { id: m.id, resultA: resA, resultB: resB }
-    }
-    return null
-  }).filter(Boolean) as { id: string, resultA: number, resultB: number }[]
-
-  if (matchesToUpdate.length !== matchDay.matches.length) {
-    throw new Error("Devi inserire tutti i risultati")
+  if (!matchDay || matchDay.leagueId !== leagueId) {
+    throw new Error("Matchday non trovato o non appartenente a questo campionato")
   }
 
-  await prisma.$transaction(async (tx) => {
-    // 0. Double check status inside isolated transaction to prevent race conditions
-    const currentMatchDay = await tx.matchDay.findUnique({ where: { id: matchDay.id } })
-    if (currentMatchDay?.status === "SCORED") {
-      throw new Error("I risultati di questa giornata sono già stati calcolati. Ricarica la pagina.")
+  // Parse and validate match results
+  const matchesToUpdate: { id: string; resultA: number; resultB: number }[] = []
+  for (const m of matchDay.matches) {
+    const resultVal = (formData.get(`result_${m.id}`) as string)?.trim()
+    if (!resultVal) {
+      throw new Error("Devi inserire tutti i risultati prima di procedere")
     }
+    if (!isValidVolleyScore(resultVal)) {
+      throw new Error(`Risultato non valido: ${resultVal}. Punteggi ammessi: 3-0, 3-1, 3-2, 2-3, 1-3, 0-3`)
+    }
+    const parsed = parseVolleyScore(resultVal)
+    if (!parsed) {
+      throw new Error(`Errore nel parsing del punteggio: ${resultVal}`)
+    }
+    matchesToUpdate.push({
+      id: m.id,
+      resultA: parsed.setA,
+      resultB: parsed.setB
+    })
+  }
 
-    // 0.5 If already scored, remove old payouts and refunds (this is for re-scoring, but since we throw above, it's mostly unused unless we want to allow re-scoring later)
-    if (matchDay.status === "SCORED") {
+  const isRescore = matchDay.status === "SCORED"
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Clean up old payouts and refunds if re-scoring
+    if (isRescore) {
       await tx.ledger.deleteMany({
         where: { matchDayId: matchDay.id, amount: { gt: 0 } }
       })
     }
 
-    // 1. Update matches and bets
+    // 2. Update matches and bets
     let userPoints: Record<string, number> = {} // userId -> points
-    let userBetsCount: Record<string, number> = {} // userId -> number of bets
+    let userBetsCount: Record<string, number> = {}
 
     for (const matchUpdate of matchesToUpdate) {
       await tx.match.update({
@@ -80,8 +87,7 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       }
     }
 
-    // Calculate total pool (from ledgers to be exact, but it's equal to total bets since 1 bet = 1 coin)
-    // Find how many coins were spent this matchday
+    // 3. Calculate total pool from entry fee ledgers
     const betLedgers = await tx.ledger.findMany({
       where: { matchDayId: matchDay.id, amount: { lt: 0 } }
     })
@@ -90,10 +96,10 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
 
     if (totalPool > 0) {
       const usersWithBets = Object.keys(userPoints)
-      const allZeros = usersWithBets.every(uid => userPoints[uid] === 0)
+      const allZeros = usersWithBets.length > 0 && usersWithBets.every(uid => userPoints[uid] === 0)
 
       if (allZeros) {
-        // Refund everyone exactly what they spent (entry fee)
+        // Refund everyone exactly what they spent
         for (const uid of usersWithBets) {
           const userFeeLedger = betLedgers.find(l => l.userId === uid)
           const spent = userFeeLedger ? Math.abs(userFeeLedger.amount) : 1
@@ -102,57 +108,50 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
               data: {
                 userId: uid,
                 leagueId,
-                matchDayId,
+                matchDayId: matchDay.id,
                 amount: spent,
                 reason: "Refund (Everyone scored 0)"
               }
             })
           }
         }
-      } else {
-        // Group by points and sort descending
+      } else if (usersWithBets.length > 0) {
+        // Group by points descending
         const sortedScores = Array.from(new Set(Object.values(userPoints))).sort((a, b) => b - a)
-        
-        let rankDistribution: Record<string, number> = {} // userId -> coins won
-        
+        let rankDistribution: Record<string, number> = {}
+
         const firstScore = sortedScores[0]
         const firstPlaceUsers = usersWithBets.filter(u => userPoints[u] === firstScore)
 
         if (firstPlaceUsers.length === 1) {
-            // ONLY ONE FIRST PLACE
-            const u1 = firstPlaceUsers[0]
-            
-            // Check if there is a second place
-            let totalSecondPlacePayout = 0
-            if (sortedScores.length > 1) {
-                const secondScore = sortedScores[1]
-                const secondPlaceUsers = usersWithBets.filter(u => userPoints[u] === secondScore)
-                
-                for (const u2 of secondPlaceUsers) {
-                    const spent = 1 // Costo fisso di entry per MatchDay
-                    const payout = spent
-                    rankDistribution[u2] = payout
-                    totalSecondPlacePayout += payout
-                }
-                
-                if (totalSecondPlacePayout > totalPool) {
-                    const splitAmount = totalPool / secondPlaceUsers.length
-                    for (const u2 of secondPlaceUsers) {
-                        rankDistribution[u2] = splitAmount
-                    }
-                    totalSecondPlacePayout = totalPool
-                }
-            }
+          // Exactly 1 winner
+          const u1 = firstPlaceUsers[0]
+          let totalSecondPlacePayout = 0
 
-            // 1st place takes the rest
-            rankDistribution[u1] = Math.max(0, totalPool - totalSecondPlacePayout)
-        } else {
-            // MULTIPLE FIRST PLACES (EX-AEQUO)
-            const splitAmount = totalPool / firstPlaceUsers.length
-            for (const u of firstPlaceUsers) {
-                rankDistribution[u] = splitAmount
+          if (sortedScores.length > 1 && totalPool >= 3) {
+            // Only reward 2nd place if pool >= 3 to protect winner's profit
+            const secondScore = sortedScores[1]
+            const secondPlaceUsers = usersWithBets.filter(u => userPoints[u] === secondScore)
+
+            // Cap total second place payout so winner always gets at least half the pool and at least 2 coins
+            const maxSecondPlacePool = Math.min(secondPlaceUsers.length, Math.floor((totalPool - 1) / 2))
+            
+            if (maxSecondPlacePool > 0) {
+              const payoutPerSecond = maxSecondPlacePool / secondPlaceUsers.length
+              for (const u2 of secondPlaceUsers) {
+                rankDistribution[u2] = payoutPerSecond
+                totalSecondPlacePayout += payoutPerSecond
+              }
             }
-            // 2nd places get 0.
+          }
+
+          rankDistribution[u1] = Math.max(1, totalPool - totalSecondPlacePayout)
+        } else {
+          // Multiple first places: split pool equally
+          const splitAmount = totalPool / firstPlaceUsers.length
+          for (const u of firstPlaceUsers) {
+            rankDistribution[u] = splitAmount
+          }
         }
 
         // Apply payouts
@@ -162,7 +161,7 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
               data: {
                 userId: uid,
                 leagueId,
-                matchDayId,
+                matchDayId: matchDay.id,
                 amount: coins,
                 reason: `Payout MatchDay ${matchDay.number}`
               }
@@ -172,7 +171,7 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       }
     }
 
-    // Close MatchDay
+    // Set MatchDay status to SCORED
     await tx.matchDay.update({
       where: { id: matchDay.id },
       data: { status: "SCORED" }
@@ -183,8 +182,10 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       data: {
         leagueId,
         userId: session.user.id,
-        action: "Risultati Inseriti",
-        details: `Risultati inseriti e premi distribuiti per la Giornata ${matchDay.number}`
+        action: isRescore ? "Risultati Modificati" : "Risultati Inseriti",
+        details: isRescore
+          ? `Risultati e classifiche ricalcolati per la Giornata ${matchDay.number}`
+          : `Risultati inseriti e premi distribuiti per la Giornata ${matchDay.number}`
       }
     })
 
@@ -193,7 +194,9 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       data: users.map(u => ({
         userId: u.id,
         leagueId,
-        message: `Sono stati pubblicati i risultati e le classifiche della Giornata ${matchDay.number}!`,
+        message: isRescore
+          ? `Attenzione: I risultati e le classifiche della Giornata ${matchDay.number} sono stati aggiornati dall'amministratore!`
+          : `Sono stati pubblicati i risultati e le classifiche della Giornata ${matchDay.number}!`,
         type: "SCORED"
       }))
     })
@@ -201,5 +204,8 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable
   })
 
+  revalidatePath(`/league/${leagueId}/admin`)
+  revalidatePath(`/league/${leagueId}`)
+  revalidatePath(`/league/${leagueId}/stats`)
   redirect(`/league/${leagueId}/admin`)
 }
