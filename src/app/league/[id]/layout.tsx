@@ -32,16 +32,10 @@ export default async function LeagueLayout({
     redirect("/")
   }
   
-  let adminEmail = ""
-  if (league.adminId) {
-    const admin = await prisma.user.findUnique({ where: { id: league.adminId }})
-    adminEmail = admin?.email || ""
-  }
-
   return (
     <>
       <LastLeagueTracker leagueId={id} />
-      <BottomNav leagueId={id} adminEmail={adminEmail} />
+      <BottomNav leagueId={id} />
       {children}
     </>
   )

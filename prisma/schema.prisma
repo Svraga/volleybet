@@ -188,3 +188,10 @@ model LeagueMember {
 }
 
 
+
+model SecurityRateLimit {
+  key String @id
+  attempts Int
+  expiresAt DateTime
+  @@index([expiresAt])
+}

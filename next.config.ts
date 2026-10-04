@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: { mcpServer: false, serverActions: { bodySizeLimit: "64kb" } },
   async headers() {
     return [
       {

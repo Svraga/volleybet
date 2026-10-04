@@ -1,10 +1,9 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { requireLeagueMember } from "@/lib/security"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
-import { Button } from "@/components/ui/Button"
-import Link from "next/link"
 import SubmitButton from "@/components/SubmitButton"
 import { placeBets } from "@/actions/bet"
 import { TriangleAlert } from "lucide-react"
@@ -13,15 +12,16 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
   const { id, matchdayId } = await params;
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/")
+  const league = await requireLeagueMember(id, session.user.id)
 
-  const league = await prisma.league.findUnique({
-    where: { id }
-  })
   if (!league) redirect("/")
 
   const matchDay = await prisma.matchDay.findUnique({
     where: { id: matchdayId },
-    include: { matches: { include: { bets: { include: { user: true } } } } }
+    include: { matches: { include: { bets: {
+      where: { OR: [{ userId: session.user.id }, { match: { matchDay: { deadline: { lte: new Date() } } } }] },
+      select: { id: true, userId: true, predictedA: true, predictedB: true, user: { select: { name: true } } }
+    } } } }
   })
 
   if (!matchDay || matchDay.leagueId !== league.id || matchDay.status !== "OPEN") {
@@ -36,9 +36,10 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
       },
     },
   })
-  const userTeam = member?.teamName || league.homeTeam
+  if (!member) throw new Error("Iscrizione senza squadra: contatta l'amministratore")
+  const userTeam = member.teamName
 
-  const isDeadlinePassed = new Date() > matchDay.deadline
+  const isDeadlinePassed = new Date().getTime() >= matchDay.deadline.getTime()
   
   const boundPlaceBets = placeBets.bind(null, league.id, matchDay.id)
 
@@ -66,7 +67,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
           {matchDay.restingTeam === userTeam ? (
             <p className="text-xs font-bold text-green-700 mt-1">✨ La tua squadra riposa in questa giornata: puoi pronosticare su tutte le partite in programma!</p>
           ) : (
-            <p className="text-xs font-bold text-gray-600 mt-1">La partita della tua squadra non è visibile per evitare conflitti d'interesse.</p>
+            <p className="text-xs font-bold text-gray-600 mt-1">La partita della tua squadra non è visibile per evitare conflitti d&apos;interesse.</p>
           )}
         </div>
       </div>
@@ -139,7 +140,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
           <CardContent className="space-y-6 pt-6">
             <p className="font-bold text-gray-700">
               Essendo passata la scadenza, tutte le scommesse sono ora pubbliche. 
-              Nessuno, nemmeno l'amministratore, può più modificarle senza lasciare traccia.
+              Nessuno, nemmeno l&apos;amministratore, può più modificarle senza lasciare traccia.
             </p>
             {matchDay.matches.map(m => {
               return (

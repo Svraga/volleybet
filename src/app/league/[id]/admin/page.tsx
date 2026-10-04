@@ -2,8 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
-import { Button } from "@/components/ui/Button"
+import { Card, CardContent, CardTitle } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
 import { createMatchDay } from "@/actions/matchday"
 import AdminMatchdayPanel from "@/components/AdminMatchdayPanel"
@@ -36,18 +35,11 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
   })
 
   const users = await prisma.user.findMany({
-    where: {
-      OR: [
-        { leagues: { some: { id: league.id } } },
-        { ledgers: { some: { leagueId: league.id } } },
-        { bets: { some: { match: { matchDay: { leagueId: league.id } } } } }
-      ]
-    },
-    include: { 
-      bets: true,
-      memberships: {
-        where: { leagueId: league.id }
-      }
+    where: { leagues: { some: { id: league.id } } },
+    select: {
+      id: true, name: true,
+      bets: { where: { match: { matchDay: { leagueId: league.id } } }, select: { matchId: true } },
+      memberships: { where: { leagueId: league.id }, select: { teamName: true } }
     }
   })
 
@@ -114,17 +106,19 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                   <AdminMatchdayPanel 
                     leagueId={league.id} 
                     homeTeam={league.homeTeam}
-                    matchDay={md} 
+                    matchDay={md}
+                    initiallyClosed={md.status !== "OPEN" || new Date().getTime() >= md.deadline.getTime()}
                     teams={teams}
                     hasOddTeams={league.hasOddTeams}
                     users={users.map(u => ({ 
-                      ...u, 
-                      teamName: u.memberships?.[0]?.teamName || league.homeTeam,
-                      bets: u.bets.filter(b => md.matches.some(m => m.id === b.matchId)) 
+                      id: u.id,
+                      name: u.name,
+                      teamName: u.memberships[0]?.teamName || "",
+                      hasBets: u.bets.some(b => md.matches.some(m => m.id === b.matchId))
                     }))}
                   />
                   <div className="flex justify-center pt-4 border-t-[4px] border-black border-dashed mt-4">
-                    <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />
+                    {md.status === "OPEN" && new Date().getTime() < md.deadline.getTime() && <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />}
                   </div>
                 </CardContent>
               </details>

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/Button"
+import MarkNotificationsRead from "@/components/MarkNotificationsRead"
 
 export default async function NotificationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,20 +30,10 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
 
   // Mark all as read
   const unreadCount = notifications.filter(n => !n.isRead).length
-  if (unreadCount > 0) {
-    await prisma.notification.updateMany({
-      where: {
-        userId: session.user.id,
-        leagueId: id,
-        isRead: false
-      },
-      data: { isRead: true }
-    })
-  }
-
   return (
     <main className="flex min-h-screen flex-col items-center p-6 bg-primary pt-12">
       <div className="w-full max-w-2xl flex flex-col gap-6">
+        {unreadCount > 0 && <MarkNotificationsRead leagueId={id} />}
         <div className="flex justify-center items-center bg-white border-[4px] border-black p-4 shadow-brutal">
           <h1 className="text-2xl font-black uppercase">Le tue Notifiche</h1>
         </div>

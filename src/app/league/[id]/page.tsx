@@ -56,7 +56,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
     where: { leagues: { some: { id: league.id } } },
     include: {
       bets: {
-        where: { match: { matchDay: { status: "SCORED" } } }
+        where: { match: { matchDay: { leagueId: league.id, status: "SCORED" } } }
       }
     }
   })

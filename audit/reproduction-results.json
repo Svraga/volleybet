@@ -1,0 +1,53 @@
+{
+  "method": "Actual TypeScript functions; in-memory mocks; no live database or HTTP exploitation",
+  "results": [
+    {
+      "name": "Team switching retains bets and bypasses own-team restriction",
+      "reproduced": true
+    },
+    {
+      "name": "Proxy bet followed by personal submission charges two entry fees",
+      "reproduced": true
+    },
+    {
+      "name": "Two stale OPEN reads followed by serial scoring transactions duplicate payouts",
+      "reproduced": true
+    },
+    {
+      "name": "Bet update commits after scoring using state read outside transaction",
+      "reproduced": true
+    },
+    {
+      "name": "Expired deadline can be moved forward and predictions modified again",
+      "reproduced": true
+    },
+    {
+      "name": "Replacing matches deletes predictions while retaining their entry fees",
+      "reproduced": true
+    },
+    {
+      "name": "Proxy action overwrites an existing personal prediction",
+      "reproduced": true
+    },
+    {
+      "name": "League preview queries and returns private league metadata without session",
+      "reproduced": true
+    },
+    {
+      "name": "Unbounded numRows accepts Infinity (instrumented loop, safely interrupted)",
+      "reproduced": true
+    },
+    {
+      "name": "Admin client props contain exact predictions before deadline and unnecessary emails",
+      "reproduced": true
+    },
+    {
+      "name": "Stats and betting page functions do not independently enforce membership",
+      "reproduced": true
+    },
+    {
+      "name": "Installed NextAuth middleware throws for malformed anonymous Bearer header",
+      "reproduced": true
+    }
+  ]
+}

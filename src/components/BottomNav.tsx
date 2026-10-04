@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Trophy, User } from "lucide-react"
 
-export default function BottomNav({ leagueId, adminEmail }: { leagueId?: string, adminEmail?: string }) {
+export default function BottomNav({ leagueId }: { leagueId?: string }) {
   const pathname = usePathname()
 
   const navItems = [

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { requireLeagueMember } from "@/lib/security"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -12,6 +13,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
   const { round } = await searchParams;
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/")
+  const league = await requireLeagueMember(id, session.user.id)
 
   const leagueUsers = await prisma.user.findMany({
     where: {
@@ -30,9 +32,6 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
     }
   })
 
-  const league = await prisma.league.findUnique({
-    where: { id }
-  })
 
   const matchDays = await prisma.matchDay.findMany({
     where: { leagueId: id, status: "SCORED" },

@@ -1,0 +1,86 @@
+{
+  "schemaApplied": true,
+  "weakInvites": 0,
+  "rateLimitIndexExists": true,
+  "rateLimitRows": 0,
+  "tables": [
+    {
+      "table_name": "Account",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "AuditLog",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Bet",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "League",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "LeagueMember",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Ledger",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Match",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "MatchDay",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Notification",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "SecurityRateLimit",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Session",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "Team",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "User",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "VerificationToken",
+      "rls": true,
+      "owned_by_app": true
+    },
+    {
+      "table_name": "_LeagueMembers",
+      "rls": true,
+      "owned_by_app": true
+    }
+  ],
+  "grantsChecked": 30,
+  "deniedProbes": 12,
+  "backendReadSuccessful": true
+}

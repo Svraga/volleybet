@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/Input"
 import { joinLeague, getLeaguePreview } from "@/actions/league"
 import Link from "next/link"
 import { useActionState, useState } from "react"
-import { ArrowLeft, CheckCircle2, Trophy } from "lucide-react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
 
 export default function JoinLeaguePage() {
-  const [state, formAction, isPending] = useActionState(joinLeague, { error: null } as any)
+  const [state, formAction, isPending] = useActionState(joinLeague, { error: null })
   const [inviteCode, setInviteCode] = useState("")
   const [checkingCode, setCheckingCode] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
@@ -29,7 +29,7 @@ export default function JoinLeaguePage() {
         setPreviewError(res.error)
         setLeagueData(null)
       } else if (res.name && res.teams) {
-        setLeagueData(res as any)
+        setLeagueData({ id: res.id, name: res.name, teams: res.teams })
         setSelectedTeam("")
       }
     } catch {
@@ -73,7 +73,8 @@ export default function JoinLeaguePage() {
                     setInviteCode(e.target.value.toUpperCase())
                     setPreviewError(null)
                   }}
-                  placeholder="es. VOLLEY-ABCD1234" 
+                  maxLength={64}
+                  placeholder="Incolla il codice VOLLEY-..."
                   className="text-center text-xl uppercase font-mono tracking-widest h-14"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {

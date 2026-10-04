@@ -1,243 +1,137 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { randomBytes } from "crypto"
+import { consumeRateLimit, formText, MAX_TEAMS, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
+
+function inviteCode(raw: unknown) {
+  if (typeof raw !== "string" || raw.length > 64) throw new Error("Codice invito non valido")
+  const code = raw.trim().toUpperCase()
+  if (!/^VOLLEY-[0-9A-F]{32}$/.test(code)) throw new Error("Codice invito non valido")
+  return code
+}
 
 export async function createLeague(formData: FormData) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  // Verify the user exists in the database (handles cases where DB was wiped but session cookie remains)
-  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id } })
-  if (!dbUser) {
-    throw new Error("Utente non trovato nel database. Il database di test è stato resettato. Effettua il LOGOUT e accedi nuovamente per ricreare il tuo profilo.")
-  }
-
-  const name = formData.get("name") as string
-  const homeTeam = formData.get("homeTeam") as string
-  const coinName = (formData.get("coinName") as string) || "Coin"
-  const hasOddTeams = formData.get("hasOddTeams") === "true"
-  
-  const teams = formData.getAll("teams[]") as string[]
-
-  const trimmedName = name.trim()
-  const trimmedHome = homeTeam.trim()
-  const trimmedCoin = (coinName || "Coin").trim()
-
-  if (!trimmedName || !trimmedHome || teams.length < 2) throw new Error("Campi obbligatori mancanti o squadre insufficienti")
-  if (trimmedName.length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
-  if (trimmedCoin.length > 15) throw new Error("Il nome della valuta non può superare i 15 caratteri")
-
-  // Sanitize and deduplicate teams
-  const cleanTeams = Array.from(new Set(teams.map(t => t.trim()).filter(Boolean)))
-  if (cleanTeams.length < 2) throw new Error("Inserisci almeno due squadre valide e distinte")
-  if (!cleanTeams.includes(trimmedHome)) throw new Error("La squadra reale deve far parte delle squadre del campionato")
-
-  // Generate a secure random 8-character invite code
-  const inviteCode = "VOLLEY-" + randomBytes(4).toString("hex").toUpperCase()
-
-  const league = await prisma.league.create({
-    data: {
-      name: trimmedName,
-      homeTeam: trimmedHome,
-      hasOddTeams,
-      coinName: trimmedCoin,
-      inviteCode,
-      adminId: session.user.id,
-      users: {
-        connect: { id: session.user.id }
-      },
-      members: {
-        create: {
-          userId: session.user.id,
-          teamName: trimmedHome
-        }
-      },
-      teams: {
-        create: cleanTeams.map(t => ({ name: t }))
-      }
-    }
+  const userId = await requireUserId()
+  await consumeRateLimit(userId, "create-league", 5, 3600000)
+  const name = formText(formData, "name", 15)
+  const homeTeam = formText(formData, "homeTeam", 20)
+  const coinName = formText(formData, "coinName", 15, false) || "Coin"
+  const entries = formData.getAll("teams[]")
+  if (entries.length < 2 || entries.length > MAX_TEAMS) throw new Error("Numero di squadre non valido")
+  if (entries.some(t => typeof t !== "string" || !t.trim() || t.length > 20)) throw new Error("Squadra non valida")
+  const teams = entries.map(t => (t as string).trim())
+  if (new Set(teams).size !== teams.length || !teams.includes(homeTeam)) throw new Error("Squadre duplicate o squadra di appartenenza non valida")
+  const league = await prisma.$transaction(async tx => {
+    // Serialize creation per user, so the ownership quota cannot be raced.
+    await tx.user.update({ where: { id: userId }, data: { updatedAt: new Date() } })
+    if (await tx.league.count({ where: { adminId: userId } }) >= 20) throw new Error("Hai raggiunto il limite di campionati")
+    return tx.league.create({ data: {
+      name, homeTeam, coinName, hasOddTeams: teams.length % 2 !== 0,
+      inviteCode: "VOLLEY-" + randomBytes(16).toString("hex").toUpperCase(),
+      adminId: userId,
+      users: { connect: { id: userId } }, members: { create: { userId, teamName: homeTeam } },
+      teams: { create: teams.map(name => ({ name })) },
+    } })
   })
-
   revalidatePath("/")
   redirect(`/league/${league.id}`)
 }
 
 export async function getLeaguePreview(inviteCodeRaw: string) {
-  if (!inviteCodeRaw) return { error: "Codice invito vuoto." }
-  const inviteCode = inviteCodeRaw.trim().toUpperCase()
+  const userId = await requireUserId()
+  await consumeRateLimit(userId, "invites", 10, 600000)
+  let code: string
+  try { code = inviteCode(inviteCodeRaw) } catch { return { error: "Codice invito non valido." } }
   const league = await prisma.league.findUnique({
-    where: { inviteCode },
-    include: { teams: { orderBy: { name: "asc" } } }
+    where: { inviteCode: code }, select: { id: true, name: true, teams: { select: { name: true }, orderBy: { name: "asc" } } },
   })
   if (!league) return { error: "Campionato non trovato o codice errato." }
-  return {
-    id: league.id,
-    name: league.name,
-    teams: league.teams.map(t => t.name)
-  }
+  return { id: league.id, name: league.name, teams: league.teams.map(t => t.name) }
 }
 
-export async function joinLeague(prevState: any, formData: FormData) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  // ARTIFICIAL DELAY (2s): Mitigazione base contro bot e script di Brute-Forcing del codice invito
-  await new Promise(resolve => setTimeout(resolve, 2000))
-
-  const inviteCodeRaw = formData.get("inviteCode") as string
-  const teamNameRaw = formData.get("teamName") as string
-
-  if (!inviteCodeRaw) return { error: "Codice invito vuoto." }
-  if (!teamNameRaw) return { error: "Devi selezionare la tua squadra di appartenenza." }
-
-  const inviteCode = inviteCodeRaw.trim().toUpperCase()
-  const teamName = teamNameRaw.trim()
-
-  const league = await prisma.league.findUnique({
-    where: { inviteCode },
-    include: { teams: true }
+export async function joinLeague(_prevState: unknown, formData: FormData): Promise<{ error: string | null }> {
+  const userId = await requireUserId()
+  await consumeRateLimit(userId, "invites", 10, 600000)
+  const code = inviteCode(formText(formData, "inviteCode", 64))
+  const teamName = formText(formData, "teamName", 20)
+  const preview = await prisma.league.findUnique({ where: { inviteCode: code }, select: { id: true } })
+  if (!preview) return { error: "Campionato non trovato o codice errato." }
+  await withLeagueTransaction(preview.id, userId, "join", async (tx, league) => {
+    if (league.inviteCode !== code) throw new Error("Codice invito non più valido")
+    const team = await tx.team.findFirst({ where: { leagueId: league.id, name: teamName } })
+    if (!team) throw new Error("La squadra non appartiene al campionato")
+    const existing = await tx.leagueMember.findUnique({ where: { userId_leagueId: { userId, leagueId: league.id } } })
+    if (existing && existing.teamName !== teamName) throw new Error("La squadra di appartenenza non può essere cambiata")
+    if (!existing) {
+      const historical = await tx.ledger.count({ where: { userId, leagueId: league.id } })
+      const historicalBets = await tx.bet.count({ where: { userId, match: { matchDay: { leagueId: league.id } } } })
+      if (historical || historicalBets) throw new Error("Iscrizione storica senza squadra: contatta l'amministratore")
+      await tx.leagueMember.create({ data: { userId, leagueId: league.id, teamName } })
+    }
+    await tx.league.update({ where: { id: league.id }, data: { users: { connect: { id: userId } } } })
   })
-
-  if (!league) return { error: "Campionato inesistente o codice errato." }
-
-  if (!league.teams.some(t => t.name === teamName)) {
-    return { error: "La squadra selezionata non appartiene a questo campionato." }
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.league.update({
-      where: { id: league.id },
-      data: {
-        users: { connect: { id: session.user.id } }
-      }
-    })
-
-    await tx.leagueMember.upsert({
-      where: {
-        userId_leagueId: {
-          userId: session.user.id,
-          leagueId: league.id
-        }
-      },
-      update: {
-        teamName
-      },
-      create: {
-        userId: session.user.id,
-        leagueId: league.id,
-        teamName
-      }
-    })
-  })
-
   revalidatePath("/")
-  revalidatePath(`/league/${league.id}`)
-  redirect(`/league/${league.id}`)
+  revalidatePath(`/league/${preview.id}`)
+  redirect(`/league/${preview.id}`)
 }
 
 export async function leaveLeague(leagueId: string) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  const league = await prisma.league.findUnique({ where: { id: leagueId } })
-  if (!league) throw new Error("Campionato non trovato")
-
-  if (league.adminId === session.user.id) {
-    throw new Error("L'amministratore non può abbandonare il proprio campionato. Puoi eliminarlo dalle impostazioni del profilo se non ti serve più.")
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.leagueMember.deleteMany({
-      where: {
-        userId: session.user.id,
-        leagueId
-      }
-    })
-
-    await tx.user.update({
-      where: { id: session.user.id },
-      data: { 
-        leagues: { disconnect: { id: leagueId } } 
-      }
-    })
+  const userId = await requireUserId()
+  await withLeagueTransaction(leagueId, userId, "member", async (tx, league) => {
+    if (league.adminId === userId) throw new Error("L'amministratore non può abbandonare il proprio campionato")
+    // Preserve the fixed team, including after leaving and rejoining.
+    await tx.user.update({ where: { id: userId }, data: { leagues: { disconnect: { id: leagueId } } } })
   })
-
   revalidatePath("/")
   redirect("/")
 }
 
 export async function deleteLeague(leagueId: string) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  const league = await prisma.league.findUnique({ where: { id: leagueId } })
-  if (!league) throw new Error("Campionato non trovato")
-  if (league.adminId !== session.user.id) throw new Error("Solo l'admin può eliminare il campionato")
-
-  await prisma.$transaction(async (tx) => {
-    // Cascade delete manually since schema doesn't have onDelete: Cascade for all
+  const userId = await requireUserId()
+  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
     await tx.bet.deleteMany({ where: { match: { matchDay: { leagueId } } } })
+    await tx.ledger.deleteMany({ where: { leagueId } }) // remove FK references before matchdays
     await tx.match.deleteMany({ where: { matchDay: { leagueId } } })
     await tx.matchDay.deleteMany({ where: { leagueId } })
-    await tx.ledger.deleteMany({ where: { leagueId } })
     await tx.team.deleteMany({ where: { leagueId } })
     await tx.notification.deleteMany({ where: { leagueId } })
     await tx.auditLog.deleteMany({ where: { leagueId } })
     await tx.leagueMember.deleteMany({ where: { leagueId } })
     await tx.league.delete({ where: { id: leagueId } })
   })
-
   revalidatePath("/")
   redirect("/")
 }
 
 export async function updateCoinName(leagueId: string, formData: FormData) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  const coinName = formData.get("coinName") as string
-  if (!coinName) return
-
-  const trimmed = coinName.trim()
-  if (trimmed.length === 0) throw new Error("Il nome della valuta non può essere vuoto")
-  if (trimmed.length > 15) throw new Error("Il nome della valuta non può superare i 15 caratteri")
-
-  const league = await prisma.league.findUnique({ where: { id: leagueId } })
-  if (league?.adminId !== session.user.id) throw new Error("Not admin")
-
-  await prisma.league.update({
-    where: { id: league.id },
-    data: { coinName: trimmed }
+  const userId = await requireUserId()
+  const coinName = formText(formData, "coinName", 15)
+  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    await tx.league.update({ where: { id: leagueId }, data: { coinName } })
   })
-
   revalidatePath("/profile")
-  revalidatePath(`/league/${league.id}`)
+  revalidatePath(`/league/${leagueId}`)
 }
 
 export async function updateLeagueName(leagueId: string, formData: FormData) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) throw new Error("Not authenticated")
-
-  const leagueName = formData.get("leagueName") as string
-  if (!leagueName) return
-
-  const trimmed = leagueName.trim()
-  if (trimmed.length === 0) throw new Error("Il nome del campionato è obbligatorio")
-  if (trimmed.length > 15) throw new Error("Il nome del campionato non può superare i 15 caratteri")
-
-  const league = await prisma.league.findUnique({ where: { id: leagueId } })
-  if (league?.adminId !== session.user.id) throw new Error("Not admin")
-
-  await prisma.league.update({
-    where: { id: league.id },
-    data: { name: trimmed }
+  const userId = await requireUserId()
+  const name = formText(formData, "leagueName", 15)
+  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    await tx.league.update({ where: { id: leagueId }, data: { name } })
   })
-
   revalidatePath("/profile")
-  revalidatePath(`/league/${league.id}`)
+  revalidatePath(`/league/${leagueId}`)
+}
+
+export async function rotateInviteCode(leagueId: string) {
+  const userId = await requireUserId()
+  requireId(leagueId)
+  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    await tx.league.update({ where: { id: leagueId }, data: { inviteCode: "VOLLEY-" + randomBytes(16).toString("hex").toUpperCase() } })
+    await tx.auditLog.create({ data: { leagueId, userId, action: "Invito rigenerato", details: "Il precedente codice invito non è più valido." } })
+  })
+  revalidatePath(`/league/${leagueId}`)
 }

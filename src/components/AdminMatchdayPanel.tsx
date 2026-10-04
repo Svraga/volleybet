@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import type { Match, MatchDay, Team } from "@prisma/client"
 import { Button } from "@/components/ui/Button"
 import { setMatches, updateDeadline } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
@@ -10,22 +11,29 @@ import SubmitButton from "@/components/SubmitButton"
 export default function AdminMatchdayPanel({ 
   leagueId, 
   homeTeam,
-  matchDay, 
+  matchDay,
+  initiallyClosed,
   teams,
   hasOddTeams,
   users
 }: { 
   leagueId: string, 
   homeTeam: string,
-  matchDay: any, 
-  teams: any[],
+  matchDay: MatchDay & { matches: Match[] },
+  initiallyClosed: boolean,
+  teams: Pick<Team, "id" | "name">[],
   hasOddTeams: boolean,
-  users: any[] // Users with their bets for this matchday
+  users: { id: string; name: string | null; teamName: string; hasBets: boolean }[]
 }) {
   const [activeTab, setActiveTab] = useState<"matches" | "results" | "proxy">("matches")
   const isMatchDayEmpty = matchDay.matches.length === 0
   const isScored = matchDay.status === "SCORED"
-  const isClosed = matchDay.status === "CLOSED" || new Date() > new Date(matchDay.deadline)
+  const [isClosed, setIsClosed] = useState(initiallyClosed)
+  useEffect(() => {
+    const timer = setInterval(() => { setIsClosed(matchDay.status !== "OPEN" || new Date().getTime() >= new Date(matchDay.deadline).getTime()) }, 1000)
+    return () => clearInterval(timer)
+  }, [matchDay.status, matchDay.deadline])
+  const hasEntries = users.some(u => u.hasBets)
   const [isEditingMatches, setIsEditingMatches] = useState(false)
 
   // SECTION 1: Match Management
@@ -36,7 +44,7 @@ export default function AdminMatchdayPanel({
   const initialSelectedTeams = () => {
     if (matchDay.matches.length > 0) {
       const arr = Array(initialRows * 2).fill("")
-      matchDay.matches.slice(0, initialRows).forEach((m: any, idx: number) => {
+      matchDay.matches.slice(0, initialRows).forEach((m, idx: number) => {
         arr[idx * 2] = m.teamA
         arr[idx * 2 + 1] = m.teamB
       })
@@ -59,8 +67,8 @@ export default function AdminMatchdayPanel({
   const boundUpdateDeadline = updateDeadline.bind(null, leagueId, matchDay.id)
   const boundProxyPlaceBets = proxyPlaceBets.bind(null, leagueId, matchDay.id)
 
-  const usersWhoBet = users.filter(u => u.bets && u.bets.length > 0)
-  const usersMissing = users.filter(u => !u.bets || u.bets.length === 0)
+  const usersWhoBet = users.filter(u => u.hasBets)
+  const usersMissing = users.filter(u => !u.hasBets && u.teamName)
   const [selectedProxyUser, setSelectedProxyUser] = useState("")
 
   return (
@@ -102,7 +110,7 @@ export default function AdminMatchdayPanel({
             <h3 className="text-xl font-bold uppercase bg-yellow-300 inline-block px-2 border-[2px] border-black -rotate-1">
               1. Gestione Partite
             </h3>
-            {!isMatchDayEmpty && !isClosed && (
+            {!isMatchDayEmpty && !isClosed && !hasEntries && (
               <Button 
                 type="button" 
                 variant="outline" 
@@ -114,11 +122,11 @@ export default function AdminMatchdayPanel({
             )}
           </div>
           
-          {isMatchDayEmpty || isEditingMatches ? (
+          {!isClosed && !hasEntries && (isMatchDayEmpty || isEditingMatches) ? (
             <form action={boundSetMatches} className="space-y-4">
               {isEditingMatches && (
                 <p className="text-xs font-bold text-amber-700 bg-amber-50 p-2 border-[2px] border-amber-400">
-                  Attenzione: modificando gli accoppiamenti, le scommesse precedentemente inserite per questa giornata verranno resettate.
+                  Gli accoppiamenti possono essere modificati solo prima del primo pronostico.
                 </p>
               )}
               {Array.from({ length: numFixedRows }).map((_, i) => (
@@ -183,7 +191,7 @@ export default function AdminMatchdayPanel({
             </form>
           ) : (
             <div className="space-y-2">
-              {matchDay.matches.map((m: any) => (
+              {matchDay.matches.map((m) => (
                 <div key={m.id} className="flex justify-between items-center border-[2px] border-black p-2 font-bold shadow-brutal-sm gap-2 min-w-0 bg-white">
                   <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">
                     <span className="truncate w-full block text-[11px] sm:text-xs" title={m.teamA}>{m.teamA}</span>
@@ -209,7 +217,7 @@ export default function AdminMatchdayPanel({
       )}
 
       {/* SECTION 2: Inserimento Risultati / Modifica Risultati */}
-      {activeTab === "results" && !isMatchDayEmpty && (
+      {activeTab === "results" && !isMatchDayEmpty && isClosed && (
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-green-400 inline-block px-2 border-[2px] border-black -rotate-1">
             2. {isScored ? "Modifica Risultati (Re-Scoring)" : "Inserimento Risultati"}
@@ -222,7 +230,7 @@ export default function AdminMatchdayPanel({
           )}
 
           <form action={boundScoreMatchDay} className="space-y-4">
-            {matchDay.matches.map((m: any) => {
+            {matchDay.matches.map((m) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
                 <div key={`res_${m.id}`} className="flex justify-between items-center gap-2 min-w-0 border-[2px] border-black p-2 bg-gray-50 shadow-brutal-sm">
@@ -263,7 +271,7 @@ export default function AdminMatchdayPanel({
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-purple-400 text-white inline-block px-2 border-[2px] border-black -rotate-1">3. Logistica & Proxy-Bet</h3>
           
-          <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
+          {!isClosed && <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
             <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
             <form action={boundUpdateDeadline} className="flex flex-col gap-3">
               <input 
@@ -275,7 +283,7 @@ export default function AdminMatchdayPanel({
               />
               <SubmitButton variant="primary" className="w-full text-sm h-10 uppercase" defaultText="Aggiorna Scadenza" loadingText="IN CORSO..." />
             </form>
-          </div>
+          </div>}
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="border-[2px] border-black p-2 bg-gray-50">
@@ -304,7 +312,7 @@ export default function AdminMatchdayPanel({
             </div>
           </div>
 
-          {usersMissing.length > 0 && !isScored && (
+          {usersMissing.length > 0 && !isClosed && (
             <div className="border-t-[3px] border-black pt-4">
               <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
               <form action={async (formData) => {
@@ -337,7 +345,7 @@ export default function AdminMatchdayPanel({
                         <span>Squadra di {targetUser?.name || "Utente"}:</span>
                         <span className="font-black bg-yellow-300 px-1 border border-black uppercase">{targetUserTeam}</span>
                       </div>
-                      {matchDay.matches.map((m: any) => {
+                      {matchDay.matches.map((m) => {
                         const isTargetTeam = m.teamA === targetUserTeam || m.teamB === targetUserTeam;
                         if (isTargetTeam) return null; // Target user's team match is excluded
                         return (

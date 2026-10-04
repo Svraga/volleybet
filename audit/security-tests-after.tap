@@ -1,0 +1,142 @@
+﻿TAP version 13
+# Subtest: S04: rejects huge, nonfinite and malformed match counts before entering a transaction
+ok 1 - S04: rejects huge, nonfinite and malformed match counts before entering a transaction
+  ---
+  duration_ms: 335.6806
+  type: 'test'
+  ...
+# Subtest: match configuration accepts bounded valid input and rejects unknown or duplicate teams
+ok 2 - match configuration accepts bounded valid input and rejects unknown or duplicate teams
+  ---
+  duration_ms: 98.3794
+  type: 'test'
+  ...
+# Subtest: S05: existing membership cannot change team, including after leave and rejoin
+ok 3 - S05: existing membership cannot change team, including after leave and rejoin
+  ---
+  duration_ms: 35.7017
+  type: 'test'
+  ...
+# Subtest: S05: own-team bets and rejoining without a recoverable historical team are rejected
+ok 4 - S05: own-team bets and rejoining without a recoverable historical team are rejected
+  ---
+  duration_ms: 66.0239
+  type: 'test'
+  ...
+# Subtest: S06: concurrent scoring and rescore replace payouts without duplicating money
+ok 5 - S06: concurrent scoring and rescore replace payouts without duplicating money
+  ---
+  duration_ms: 44.6456
+  type: 'test'
+  ...
+# Subtest: S07: betting observes scoring, membership and deadline changes after acquiring the lock
+ok 6 - S07: betting observes scoring, membership and deadline changes after acquiring the lock
+  ---
+  duration_ms: 72.5983
+  type: 'test'
+  ...
+# Subtest: S07: a deadline crossed during save rolls back both bet and fee
+ok 7 - S07: a deadline crossed during save rolls back both bet and fee
+  ---
+  duration_ms: 24.9194
+  type: 'test'
+  ...
+# Subtest: S08: an expired, closed or scored day cannot be reopened or deleted
+ok 8 - S08: an expired, closed or scored day cannot be reopened or deleted
+  ---
+  duration_ms: 75.2877
+  type: 'test'
+  ...
+# Subtest: scoring before the deadline and scoring by a nonadmin fail without modifying ledgers
+ok 9 - scoring before the deadline and scoring by a nonadmin fail without modifying ledgers
+  ---
+  duration_ms: 45.567
+  type: 'test'
+  ...
+# Subtest: S10: admin proxy cannot overwrite an existing personal prediction
+ok 10 - S10: admin proxy cannot overwrite an existing personal prediction
+  ---
+  duration_ms: 22.6581
+  type: 'test'
+  ...
+# Subtest: S11: concurrent proxy and personal bets charge a single entry fee
+ok 11 - S11: concurrent proxy and personal bets charge a single entry fee
+  ---
+  duration_ms: 28.4527
+  type: 'test'
+  ...
+# Subtest: S11: historical proxy fees are recognized regardless of reason text
+ok 12 - S11: historical proxy fees are recognized regardless of reason text
+  ---
+  duration_ms: 23.3228
+  type: 'test'
+  ...
+# Subtest: S12: match replacement is rejected after a prediction or historical fee
+ok 13 - S12: match replacement is rejected after a prediction or historical fee
+  ---
+  duration_ms: 72.5646
+  type: 'test'
+  ...
+# Subtest: legacy fees without predictions and zero-score duplicated fees are refunded exactly once
+ok 14 - legacy fees without predictions and zero-score duplicated fees are refunded exactly once
+  ---
+  duration_ms: 31.9222
+  type: 'test'
+  ...
+# Subtest: S13: invitation preview requires authentication and enforces a durable per-user limit
+ok 15 - S13: invitation preview requires authentication and enforces a durable per-user limit
+  ---
+  duration_ms: 36.1247
+  type: 'test'
+  ...
+# Subtest: S13: invite rotation is admin-only and invalidates the previous capability
+ok 16 - S13: invite rotation is admin-only and invalidates the previous capability
+  ---
+  duration_ms: 43.5977
+  type: 'test'
+  ...
+# Subtest: R01: direct stats and betting page calls reject an outsider before reading league data
+ok 17 - R01: direct stats and betting page calls reject an outsider before reading league data
+  ---
+  duration_ms: 99.9518
+  type: 'test'
+  ...
+# Subtest: S09/S14: admin client props contain neither prediction values nor private user fields
+ok 18 - S09/S14: admin client props contain neither prediction values nor private user fields
+  ---
+  duration_ms: 40.0561
+  type: 'test'
+  ...
+# Subtest: S16: payout test entrypoint contains no database connection or destructive operations
+ok 19 - S16: payout test entrypoint contains no database connection or destructive operations
+  ---
+  duration_ms: 1.6557
+  type: 'test'
+  ...
+# Subtest: S17: development MCP is explicitly disabled and action bodies are bounded
+ok 20 - S17: development MCP is explicitly disabled and action bodies are bounded
+  ---
+  duration_ms: 7.6004
+  type: 'test'
+  ...
+# Subtest: braces mitigation preserves normal globs and rejects nested strings and supplied ASTs
+ok 21 - braces mitigation preserves normal globs and rejects nested strings and supplied ASTs
+  ---
+  duration_ms: 147.2228
+  type: 'test'
+  ...
+# Subtest: S15: malformed percent-encoded Bearer tokens fail closed without an uncaught URIError
+ok 22 - S15: malformed percent-encoded Bearer tokens fail closed without an uncaught URIError
+  ---
+  duration_ms: 189.8653
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1939.1985

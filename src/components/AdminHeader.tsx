@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Settings, X } from "lucide-react"
 import UpdateLeagueNameForm from "@/components/UpdateLeagueNameForm"
 import UpdateCoinForm from "@/components/UpdateCoinForm"
+import { rotateInviteCode } from "@/actions/league"
+import SubmitButton from "@/components/SubmitButton"
 
 interface AdminHeaderProps {
   leagueId: string
@@ -15,8 +17,7 @@ interface AdminHeaderProps {
 export default function AdminHeader({ 
   leagueId, 
   leagueName, 
-  coinName, 
-  hasEmptyMatchDays 
+  coinName
 }: AdminHeaderProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
 
@@ -54,6 +55,10 @@ export default function AdminHeader({
             <div className="space-y-4 border-t-[3px] border-black border-dashed pt-4 text-left">
               <UpdateLeagueNameForm leagueId={leagueId} defaultName={leagueName} />
               <UpdateCoinForm leagueId={leagueId} defaultName={coinName} />
+              <form action={rotateInviteCode.bind(null, leagueId)}>
+                <p className="text-sm mb-2">Rigenerando l?invito, il codice precedente smette di funzionare.</p>
+                <SubmitButton defaultText="Rigenera codice invito" loadingText="AGGIORNAMENTO..." />
+              </form>
             </div>
           </div>
         </div>

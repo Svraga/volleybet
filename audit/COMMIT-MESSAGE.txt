@@ -1,0 +1,45 @@
+fix(security): protect league mutations, betting data and Supabase access
+
+Address the security audit findings across dependencies, authorization,
+concurrent scoring, betting deadlines, invitations and database access.
+
+- Upgrade Next.js and eslint-config-next to 16.3.8, NextAuth to 4.24.15,
+  React/React DOM to 19.2.8, and vulnerable transitive dependencies.
+- Apply a documented local braces patch with parser nesting limits and
+  iterative AST validation; retain transparent upstream advisory reporting.
+- Serialize league mutations with a shared PostgreSQL row lock and perform
+  membership, admin, state and deadline checks inside the transaction.
+- Replace prior payouts during scoring/rescoring to prevent duplicate awards;
+  refund actual fees for zero scores and historical fees without predictions.
+- Preserve member team assignments across leaving and rejoining, and reject
+  own-team predictions and unrecoverable historical memberships.
+- Reject bets after closure, deadline reopening, proxy overwrites and match
+  changes after the first prediction or fee; charge a single entry fee.
+- Remove private predictions and unnecessary user fields from client props;
+  enforce membership directly in statistics and betting page data access.
+- Generate 128-bit invitation codes, add admin rotation, and enforce durable
+  per-user rate limits for invitation attempts and league mutations.
+- Bound action bodies, match/team counts, input lengths and creation quotas;
+  validate fixtures, resting teams, future deadlines and duplicate rounds.
+- Move notification read updates from GET rendering to a Server Action.
+- Migrate middleware to proxy, validate token IDs and disable development MCP.
+- Replace destructive payout tests with isolated production-code regressions.
+- Add repeatable PostgreSQL schema/invitation upgrades, RLS and client-grant
+  revocations for application tables, plus real database permission probes.
+- Record the original audit, remediation details and verification evidence.
+
+Validation:
+- 22 security regressions and 5 local HTTP smoke checks pass.
+- TypeScript checking, Prisma generation and production build pass.
+- ESLint passes on remediation files; pre-existing project-wide errors remain.
+- Production npm audit: zero vulnerabilities. Full audit retains five high
+  package reports for the single braces advisory mitigated by the local patch.
+- Supabase upgrade applied: one legacy invitation rotated; verified 15 RLS
+  tables, 30 client-grant checks and 12 denied access probes.
+
+Deployment:
+- Run npm run db:security-upgrade and npm run db:security-verify for any other
+  target database before deploying; these steps are complete on the configured
+  Supabase database. Do not apply the historical SQLite migrations there.
+- Stop old application writers when deploying the updated transaction logic.
+- Share regenerated invitation codes; previous legacy codes are invalidated.

@@ -1,0 +1,65 @@
+{
+  "environment": [
+    {
+      "file": ".env",
+      "keys": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ],
+      "authSecretPresent": true,
+      "authSecretAtLeast32Characters": true,
+      "authSecretLooksLikePlaceholder": false,
+      "authUrlUsesHttps": false,
+      "authUrlIsLocalhost": true,
+      "DATABASE_URL_usesPostgres": true,
+      "DATABASE_URL_explicitTlsSetting": "(unset)",
+      "DIRECT_URL_usesPostgres": true,
+      "DIRECT_URL_explicitTlsSetting": "(unset)"
+    },
+    {
+      "file": ".env.local",
+      "keys": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ],
+      "authSecretPresent": true,
+      "authSecretAtLeast32Characters": true,
+      "authSecretLooksLikePlaceholder": false,
+      "authUrlUsesHttps": false,
+      "authUrlIsLocalhost": true,
+      "DATABASE_URL_usesPostgres": true,
+      "DATABASE_URL_explicitTlsSetting": "(unset)",
+      "DIRECT_URL_usesPostgres": true,
+      "DIRECT_URL_explicitTlsSetting": "(unset)"
+    },
+    {
+      "file": ".env.example",
+      "keys": [
+        "DATABASE_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ],
+      "authSecretPresent": true,
+      "authSecretAtLeast32Characters": false,
+      "authSecretLooksLikePlaceholder": false,
+      "authUrlUsesHttps": false,
+      "authUrlIsLocalhost": true,
+      "DATABASE_URL_usesPostgres": false,
+      "DATABASE_URL_explicitTlsSetting": "(unset)"
+    }
+  ],
+  "trackedSensitiveFiles": [],
+  "trackedFilesMatchingCommonSecretPatterns": [],
+  "commitsWithEnvOrDatabaseFiles": [],
+  "caveat": "Heuristic worktree scan and selected file history; not a full secret scan of every historical blob. No secret values recorded."
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "route": "/profile",
+    "status": 307,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/stats",
+    "status": 307,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/admin",
+    "status": 307,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/matchday/test",
+    "status": 307,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/api/auth/session",
+    "status": 200,
+    "anonymousSession": true
+  }
+]
