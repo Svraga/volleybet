@@ -5,12 +5,14 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
-import { leaveLeague } from "@/actions/league"
 import GuidedTour from "@/components/GuidedTour"
 import AdminButtonClient from "@/components/AdminButtonClient"
 import CopyInviteButton from "@/components/CopyInviteButton"
 import NotificationBell from "@/components/NotificationBell"
-import { ShieldCheck, Medal, TriangleAlert, CircleDollarSign } from "lucide-react"
+import LeagueRules from "@/components/LeagueRules"
+import MatchdayRefresh from "@/components/MatchdayRefresh"
+import { isDayOpen, isDayScheduled } from "@/lib/matchday"
+import { Medal, TriangleAlert, CircleDollarSign } from "lucide-react"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,7 +51,8 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
     orderBy: { number: "asc" }
   })
 
-  const openMatchDays = matchDays.filter(md => md.status === "OPEN" && new Date() <= new Date(md.deadline))
+  const openMatchDays = matchDays.filter(md => isDayOpen(md))
+  const scheduledMatchDays = matchDays.filter(md => isDayScheduled(md))
 
   // Fetch top 3 users by points
   const leagueUsers = await prisma.user.findMany({
@@ -68,11 +71,13 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-primary pt-12 relative">
+      <MatchdayRefresh at={matchDays.flatMap(md => [md.deadline.getTime(), ...(md.opensAt ? [md.opensAt.getTime()] : [])])} />
       <GuidedTour isAdmin={isAdmin} />
       <div id="tour-welcome" className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap">
-        <h1 className="text-xl md:text-2xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1 truncate max-w-full">
-          {league.name}
-        </h1>
+        <div className="flex min-w-0 max-w-full items-center gap-3">
+          <h1 className="min-w-0 truncate text-xl md:text-2xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">{league.name}</h1>
+          <LeagueRules coinName={league.coinName} />
+        </div>
         
         <div className="flex gap-4 items-center">
           <NotificationBell leagueId={league.id} notifications={user.notifications} />
@@ -121,6 +126,22 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
               )}
             </CardContent>
           </Card>
+
+          {scheduledMatchDays.length > 0 && <Card className="bg-white border-[3px] border-black shadow-brutal">
+            <CardHeader><CardTitle className="text-xl">Prossime aperture</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {scheduledMatchDays.map(md => <div key={md.id} className="border-[2px] border-black bg-yellow-100 p-3 shadow-brutal-sm">
+                <p className="font-black">Giornata {md.number}</p>
+                <p className="mt-1 text-xs font-bold">Apertura: {md.opensAt!.toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })}</p>
+                <p className="text-xs font-bold">Scadenza: {md.deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })}</p>
+              </div>)}
+            </CardContent>
+          </Card>}
+
+          <Link href={`/league/${league.id}/predictions`} className="block border-[3px] border-black bg-white p-4 shadow-brutal hover:bg-yellow-100">
+            <span className="font-black uppercase">Confronta i pronostici →</span>
+            <p className="mt-1 text-xs font-bold">Le giocate di tutti, disponibili a scommesse chiuse.</p>
+          </Link>
 
           {/* Top 3 Punti */}
           <Card className="bg-white border-[3px] border-black shadow-brutal">

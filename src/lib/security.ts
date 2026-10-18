@@ -3,6 +3,7 @@ import { Prisma, type League } from "@prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isDayOpen, type DayWindow } from "@/lib/matchday"
 
 export const MAX_TEAMS = 64
 
@@ -60,8 +61,8 @@ export async function withLeagueTransaction<T>(
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, maxWait: 5000, timeout: 15000 })
 }
 
-export function assertBettingOpen(day: { status: string; deadline: Date }) {
-  if (day.status !== "OPEN" || Date.now() >= day.deadline.getTime()) {
+export function assertBettingOpen(day: DayWindow) {
+  if (!isDayOpen(day)) {
     throw new Error("Le scommesse per questa giornata sono chiuse o la scadenza è superata")
   }
 }

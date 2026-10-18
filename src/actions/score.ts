@@ -218,5 +218,6 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
   revalidatePath(`/league/${leagueId}/admin`)
   revalidatePath(`/league/${leagueId}`)
   revalidatePath(`/league/${leagueId}/stats`)
+  revalidatePath(`/league/${leagueId}/predictions`)
   redirect(`/league/${leagueId}/admin`)
 }

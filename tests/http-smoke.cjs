@@ -20,7 +20,7 @@ async function main() {
       catch { await new Promise(resolve => setTimeout(resolve, 250)); }
     }
     assert.equal(ready, true, 'local server failed to start');
-    for (const route of ['/profile', '/league/test/stats', '/league/test/admin', '/league/test/matchday/test']) {
+    for (const route of ['/profile', '/league/test/stats', '/league/test/predictions', '/league/test/admin', '/league/test/matchday/test']) {
       const response = await fetch(base + route, { redirect: 'manual', headers: { authorization: 'Bearer %' }, signal: AbortSignal.timeout(5000) });
       assert.ok([302, 307].includes(response.status), 'protected route must redirect without a valid session');
       assert.equal(response.headers.get('x-frame-options'), 'DENY');
@@ -31,7 +31,7 @@ async function main() {
     assert.equal(session.status, 200); assert.deepEqual(await session.json(), {});
     results.push({ route: '/api/auth/session', status: 200, anonymousSession: true });
     fs.writeFileSync(path.join(__dirname, '../audit/http-smoke-results.json'), JSON.stringify(results, null, 2) + '\n');
-    console.log('HTTP smoke: 5 checks passed; no database access or writes.');
+    console.log('HTTP smoke: 6 checks passed; no database access or writes.');
   } finally { child.kill(); }
 }
 main().catch(() => { console.error('HTTP smoke failed.'); process.exitCode = 1; });

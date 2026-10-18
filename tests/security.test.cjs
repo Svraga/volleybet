@@ -33,8 +33,12 @@ function load(file, world) {
   const context = {
     module, exports: module.exports, console, Date: world.Clock || Date, FormData,
     // Skip only the anti-bruteforce delay; production uses a real 2-second timer.
-    setTimeout: fn => { fn(); return 0; },
+    setTimeout: world.setTimeout || (fn => { fn(); return 0; }),
+    clearTimeout: world.clearTimeout || clearTimeout,
+    clearInterval,
+    window: world.window,
     require: name => {
+      if (world.modules?.[name]) return world.modules[name];
       if (mocks[name]) return mocks[name];
       if (name === 'server-only') return {};
       if (name.startsWith('@/lib/')) return load('src/lib/' + name.split('/').at(-1) + '.ts', world);
@@ -403,13 +407,147 @@ test('S13: invite rotation is admin-only and invalidates the previous capability
   assert.match(w.league.inviteCode, /^VOLLEY-[0-9A-F]{32}$/); assert.notEqual(w.league.inviteCode, oldCode);
   assert.ok((await actions.getLeaguePreview(oldCode)).error);
 });
-test('R01: direct stats and betting page calls reject an outsider before reading league data', async () => {
-  for (const file of ['src/app/league/[id]/stats/page.tsx', 'src/app/league/[id]/matchday/[matchdayId]/page.tsx']) {
+test('R01: direct stats, predictions and betting page calls reject an outsider before reading league data', async () => {
+  for (const file of ['src/app/league/[id]/stats/page.tsx', 'src/app/league/[id]/predictions/page.tsx', 'src/app/league/[id]/matchday/[matchdayId]/page.tsx']) {
     const w = world(); w.actor = 'outsider'; let leaked = false;
     w.db.user.findMany = async () => { leaked = true; return []; };
     w.db.matchDay.findUnique = async () => { leaked = true; return null; };
     await assert.rejects(() => load(file, w).default({ params: Promise.resolve({ id: 'league', matchdayId: 'day' }), searchParams: Promise.resolve({}) }), /403/);
     assert.equal(leaked, false);
+  }
+});
+
+test('scheduled creation validates future instants, order and explicit timezone', async () => {
+  const now = Date.now();
+  const opening = new Date(now + 3600000).toISOString(), deadline = new Date(now + 7200000).toISOString();
+  for (const fields of [
+    { opensAt: new Date(0).toISOString() }, { deadline: new Date(0).toISOString() },
+    { opensAt: deadline }, { opensAt: new Date(now + 10800000).toISOString() },
+    { opensAt: '2029-02-01T12:00' }, { opensAt: '2029-02-30T12:00:00Z' },
+    { deadline: 'invalid' }, { openingMode: 'unknown' },
+  ]) {
+    const w = world(); w.actor = 'admin';
+    await assert.rejects(() => load('src/actions/matchday.ts', w).createMatchDay('league', form({ number: '2', openingMode: 'scheduled', opensAt: opening, deadline, ...fields })));
+    assert.equal(w.createdDay, undefined);
+  }
+  for (const openingMode of ['now', 'scheduled']) {
+    const w = world(); w.actor = 'admin';
+    await call(load('src/actions/matchday.ts', w).createMatchDay, 'league', form({ number: '2', openingMode, opensAt: opening, deadline }));
+    assert.equal(w.createdDay.opensAt?.toISOString() ?? null, openingMode === 'now' ? null : opening);
+    assert.equal(w.createdDay.deadline.toISOString(), deadline);
+    assert.ok(w.notifications[0].message.includes(openingMode === 'now' ? 'aperta' : 'programmata'));
+  }
+});
+
+test('scheduled days reject personal and proxy bets, including after waiting for the league lock', async () => {
+  for (const proxy of [false, true]) {
+    const w = world(); w.md.opensAt = new Date(Date.now() + 600000);
+    const save = load('src/lib/betting.ts', w).saveBets;
+    await assert.rejects(() => save(proxy ? 'admin' : 'player', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), proxy));
+    assert.equal(w.bets.length, 0); assert.equal(w.ledgers.length, 0);
+    w.md.opensAt = null;
+    w.beforeLock = () => { w.md.opensAt = new Date(Date.now() + 600000); };
+    await assert.rejects(() => save(proxy ? 'admin' : 'player', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), proxy));
+    assert.equal(w.bets.length, 0);
+  }
+});
+
+test('scheduled days open automatically at the exact instant and close at the deadline', async () => {
+  const w = world(); w.now = Date.now();
+  w.Clock = class extends Date { static now() { return w.now; } };
+  w.md.opensAt = new Date(w.now + 1000); w.md.deadline = new Date(w.now + 5000);
+  const save = load('src/lib/betting.ts', w).saveBets;
+  await assert.rejects(() => save('player', 'league', 'day', form({ bet_m2: '3-0' })));
+  w.now += 1000;
+  await save('player', 'league', 'day', form({ bet_m2: '3-0' }));
+  assert.equal(w.bets.length, 1); assert.equal(w.ledgers.length, 1);
+  w.now += 4000;
+  await assert.rejects(() => save('player', 'league', 'day', form({ bet_m2: '0-3' })));
+  assert.equal(w.bets[0].predictedA, 3);
+});
+
+test('page refresh timer re-arms for the deadline after the scheduled opening', () => {
+  const w = world(); w.now = 1000;
+  w.Clock = class extends Date { static now() { return w.now; } };
+  let nextId = 0, refreshes = 0, cleanup;
+  const timers = new Map();
+  w.setTimeout = (fn, delay) => { const id = ++nextId; timers.set(id, { fn, at: w.now + delay }); return id; };
+  w.clearTimeout = id => timers.delete(id);
+  w.window = { addEventListener() {}, removeEventListener() {} };
+  w.modules = {
+    react: { useEffect: fn => { cleanup = fn(); } },
+    'next/navigation': { useRouter: () => ({ refresh: () => { refreshes++; } }) },
+  };
+  load('src/components/MatchdayRefresh.tsx', w).default({ at: [2000, 4000] });
+  for (const expected of [2100, 4100]) {
+    assert.equal(timers.size, 1);
+    const [id, timer] = timers.entries().next().value;
+    assert.equal(timer.at, expected);
+    timers.delete(id); w.now = timer.at; timer.fn();
+  }
+  assert.equal(refreshes, 2); assert.equal(timers.size, 0);
+  cleanup();
+});
+
+test('admin can configure scheduled fixtures and open early; members and expired days cannot', async () => {
+  const w = world(); w.actor = 'admin'; w.md.opensAt = new Date(Date.now() + 600000);
+  const actions = load('src/actions/matchday.ts', w);
+  await call(actions.setMatches, 'league', 'day', matchesForm());
+  const opening = w.md.opensAt.toISOString();
+  w.actor = 'player';
+  await assert.rejects(() => actions.openMatchDayNow('league', 'day'), /Unauthorized/);
+  assert.equal(w.md.opensAt.toISOString(), opening);
+  w.actor = 'admin';
+  await actions.openMatchDayNow('league', 'day');
+  assert.equal(w.md.opensAt, null); assert.ok(w.logs.some(l => l.action === 'Aperta Giornata'));
+  await assert.rejects(() => actions.openMatchDayNow('league', 'day'), /già aperta/);
+  w.md.opensAt = new Date(Date.now() + 600000); w.md.deadline = new Date(0);
+  await assert.rejects(() => actions.openMatchDayNow('league', 'day'));
+});
+
+test('scheduled deadline cannot precede opening and early opening requires fixtures', async () => {
+  const w = world(); w.actor = 'admin'; w.md.opensAt = new Date(Date.now() + 600000);
+  const actions = load('src/actions/matchday.ts', w);
+  await assert.rejects(() => actions.updateDeadline('league', 'day', form({ deadline: new Date(Date.now() + 300000).toISOString() })), /successiva/);
+  w.matches = [];
+  await assert.rejects(() => actions.openMatchDayNow('league', 'day'), /accoppiamenti/);
+  assert.notEqual(w.md.opensAt, null);
+});
+
+test('prediction page excludes open days at the database boundary and returns minimal closed-day props', async () => {
+  for (const state of ['OPEN', 'CLOSED', 'SCORED', 'EXPIRED']) {
+    const w = world();
+    w.md.status = state === 'EXPIRED' ? 'OPEN' : state;
+    if (state === 'EXPIRED') w.md.deadline = new Date(0);
+    w.bets.push({ id: 'b1', userId: 'player', matchId: 'm2', predictedA: 3, predictedB: 0, pointsEarned: 3 });
+    const page = load('src/app/league/[id]/predictions/page.tsx', w).default;
+    const readDay = w.db.matchDay.findFirst;
+    let reads = 0;
+    const assertClosedPredicate = where => {
+      assert.equal(where.leagueId, 'league');
+      assert.deepEqual(Array.from(where.OR[0].status.in), ['CLOSED', 'SCORED']);
+      assert.ok(where.OR[1].deadline.lte instanceof Date);
+    };
+    w.db.matchDay.findMany = async ({ where, select }) => {
+      assertClosedPredicate(where); assert.equal(select.matches, undefined);
+      return state === 'OPEN' ? [] : [clone(w.md)];
+    };
+    w.db.matchDay.findFirst = async args => { assertClosedPredicate(args.where); reads++; return readDay(args); };
+    const tree = await page({ params: Promise.resolve({ id: 'league' }), searchParams: Promise.resolve({ round: 'day' }) });
+    const boards = [];
+    function walk(node) {
+      if (!node || typeof node !== 'object') return;
+      if (node.type === 'PredictionsBoard') boards.push(node);
+      for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(walk); else if (value && typeof value === 'object') walk(value);
+    }
+    walk(tree);
+    assert.equal(reads, state === 'OPEN' ? 0 : 1);
+    assert.equal(boards.length, state === 'OPEN' ? 0 : 1);
+    if (boards.length) {
+      const bet = boards[0].props.matches.find(m => m.id === 'm2').bets[0];
+      assert.deepEqual(Object.keys(bet).sort(), ['id', 'name', 'points', 'predictedA', 'predictedB', 'userId']);
+      assert.equal(bet.points, state === 'SCORED' ? 3 : null);
+    }
   }
 });
 test('S09/S14: admin client props contain neither prediction values nor private user fields', async () => {

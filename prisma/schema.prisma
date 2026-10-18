@@ -106,6 +106,7 @@ model MatchDay {
   league        League    @relation(fields: [leagueId], references: [id])
   number        Int
   deadline      DateTime
+  opensAt       DateTime? // null: immediately open (also preserves historical days)
   status        String    @default("OPEN") // OPEN, CLOSED, SCORED
   restingTeam   String?
   

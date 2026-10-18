@@ -10,6 +10,11 @@
     "malformedBearerHandled": true
   },
   {
+    "route": "/league/test/predictions",
+    "status": 307,
+    "malformedBearerHandled": true
+  },
+  {
     "route": "/league/test/admin",
     "status": 307,
     "malformedBearerHandled": true

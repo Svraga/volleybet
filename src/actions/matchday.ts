@@ -2,19 +2,18 @@
 
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
-import { assertBettingOpen, consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
+import { consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
+import { assertDayEditable, futureDate, isDayScheduled, ScheduleError } from "@/lib/matchday"
 import type { Prisma } from "@prisma/client"
 
 function futureDeadline(form: FormData) {
-  const deadline = new Date(formText(form, "deadline", 40))
-  if (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now()) throw new Error("La scadenza deve essere una data futura valida")
-  return deadline
+  return futureDate(formText(form, "deadline", 40), "Scadenza")
 }
 
 async function editableDay(tx: Prisma.TransactionClient, leagueId: string, dayId: string) {
   const day = await tx.matchDay.findFirst({ where: { id: requireId(dayId), leagueId } })
   if (!day) throw new Error("Giornata non appartenente a questo campionato")
-  assertBettingOpen(day)
+  assertDayEditable(day)
   return day
 }
 
@@ -36,17 +35,25 @@ export async function createMatchDay(leagueId: string, formData: FormData) {
   const number = Number(raw)
   if (!/^\d+$/.test(raw) || !Number.isSafeInteger(number) || number < 1 || number > 100000) throw new Error("Numero giornata non valido")
   const deadline = futureDeadline(formData)
+  const openingMode = formText(formData, "openingMode", 10, false) || "now"
+  if (openingMode !== "now" && openingMode !== "scheduled") throw new ScheduleError("Modalità di apertura non valida.")
+  const opensAt = openingMode === "scheduled" ? futureDate(formText(formData, "opensAt", 40), "Apertura") : null
+  if (opensAt && opensAt >= deadline) throw new ScheduleError("L'apertura deve precedere la scadenza.")
   await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    if (opensAt && opensAt.getTime() <= Date.now()) throw new ScheduleError("L'orario di apertura è già passato. Scegli un orario futuro oppure Apri subito.")
     if (await tx.matchDay.findFirst({ where: { leagueId, number } })) throw new Error("Questa giornata esiste già")
     if (await tx.matchDay.count({ where: { leagueId } }) >= 1000) throw new Error("Limite di giornate raggiunto")
-    await tx.matchDay.create({ data: { leagueId, number, deadline } })
+    await tx.matchDay.create({ data: { leagueId, number, deadline, opensAt } })
     await tx.auditLog.create({ data: { leagueId, userId, action: "Creata Giornata", details: `Giornata ${number} creata.` } })
     const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
     await tx.notification.createMany({ data: users.map(u => ({
       userId: u.id, leagueId, type: "MATCHDAY_CREATED",
-      message: `È stata aperta la Giornata ${number}. Scadenza: ${deadline.toLocaleString("it-IT")}.`,
+      message: opensAt
+        ? `Giornata ${number} programmata: apertura ${opensAt.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}. Scadenza: ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`
+        : `È stata aperta la Giornata ${number}. Scadenza: ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`,
     })) })
-    if (Date.now() >= deadline.getTime()) throw new Error("Scadenza superata")
+    if (Date.now() >= deadline.getTime()) throw new ScheduleError("Scadenza superata. Scegli un orario futuro.")
+    if (opensAt && opensAt.getTime() <= Date.now()) throw new ScheduleError("L'orario di apertura è già passato. Scegli un orario futuro oppure Apri subito.")
   })
   refresh(leagueId)
   redirect(`/league/${leagueId}/admin`)
@@ -80,7 +87,7 @@ export async function setMatches(leagueId: string, matchDayId: string, formData:
     await tx.matchDay.update({ where: { id: matchDayId }, data: { restingTeam } })
     await tx.match.createMany({ data: matches })
     await tx.auditLog.create({ data: { leagueId, userId, action: "Modificate Partite", details: `Giornata ${day.number}: impostate ${numRows} partite.` } })
-    assertBettingOpen(day)
+    assertDayEditable(day)
   })
   refresh(leagueId)
   redirect(`/league/${leagueId}/admin`)
@@ -99,7 +106,7 @@ export async function addMatch(leagueId: string, matchDayId: string, formData: F
     if (await tx.match.count({ where: { matchDayId, OR: [{ teamA: { in: [teamA, teamB] } }, { teamB: { in: [teamA, teamB] } }] } })) throw new Error("Squadra già impegnata")
     await tx.match.create({ data: { matchDayId, teamA, teamB } })
     await tx.auditLog.create({ data: { leagueId, userId, action: "Aggiunta Partita", details: `Giornata ${day.number}: ${teamA} - ${teamB}.` } })
-    assertBettingOpen(day)
+    assertDayEditable(day)
   })
   refresh(leagueId)
   redirect(`/league/${leagueId}/admin`)
@@ -114,7 +121,7 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
     await tx.match.deleteMany({ where: { matchDayId } })
     await tx.matchDay.delete({ where: { id: matchDayId } })
     await tx.auditLog.create({ data: { leagueId, userId, action: "Eliminata Giornata", details: `Giornata ${day.number} eliminata e quote annullate.` } })
-    assertBettingOpen(day)
+    assertDayEditable(day)
   })
   refresh(leagueId)
 }
@@ -124,6 +131,7 @@ export async function updateDeadline(leagueId: string, matchDayId: string, formD
   const deadline = futureDeadline(formData)
   await withLeagueTransaction(leagueId, userId, "admin", async tx => {
     const day = await editableDay(tx, leagueId, matchDayId)
+    if (day.opensAt && deadline <= day.opensAt) throw new ScheduleError("La scadenza deve essere successiva all'apertura.")
     await tx.matchDay.update({ where: { id: matchDayId }, data: { deadline } })
     await tx.auditLog.create({ data: {
       leagueId, userId, action: "Modificata Scadenza",
@@ -135,9 +143,36 @@ export async function updateDeadline(leagueId: string, matchDayId: string, formD
       message: `La scadenza della Giornata ${day.number} è stata modificata al ${deadline.toLocaleString("it-IT")}.`,
     })) })
     // Neither the old nor the new deadline may pass during this operation.
-    assertBettingOpen(day)
-    if (Date.now() >= deadline.getTime()) throw new Error("Scadenza superata")
+    assertDayEditable(day)
+    if (Date.now() >= deadline.getTime()) throw new ScheduleError("Scadenza superata. Scegli un orario futuro.")
   })
   refresh(leagueId)
   redirect(`/league/${leagueId}/admin`)
+}
+
+export async function openMatchDayNow(leagueId: string, matchDayId: string) {
+  const userId = await requireUserId()
+  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    const day = await editableDay(tx, leagueId, matchDayId)
+    if (!isDayScheduled(day)) throw new Error("La giornata è già aperta")
+    if (!await tx.match.count({ where: { matchDayId } })) throw new Error("Imposta prima gli accoppiamenti")
+    await tx.matchDay.update({ where: { id: day.id }, data: { opensAt: null } })
+    await tx.auditLog.create({ data: { leagueId, userId, action: "Aperta Giornata", details: `Giornata ${day.number}: apertura anticipata dall'amministratore.` } })
+    const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
+    await tx.notification.createMany({ data: users.map(u => ({ userId: u.id, leagueId, type: "MATCHDAY_CREATED", message: `La Giornata ${day.number} è ora aperta!` })) })
+    assertDayEditable(day)
+  })
+  refresh(leagueId)
+}
+
+// Expected date errors are returned to the forms; authorization and framework
+// redirects must keep their normal behavior.
+export async function createMatchDayFromForm(leagueId: string, formData: FormData) {
+  try { await createMatchDay(leagueId, formData) }
+  catch (error) { if (error instanceof ScheduleError) return { error: error.message }; throw error }
+}
+
+export async function updateDeadlineFromForm(leagueId: string, matchDayId: string, formData: FormData) {
+  try { await updateDeadline(leagueId, matchDayId, formData) }
+  catch (error) { if (error instanceof ScheduleError) return { error: error.message }; throw error }
 }

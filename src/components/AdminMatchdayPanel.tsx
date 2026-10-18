@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import type { Match, MatchDay, Team } from "@prisma/client"
 import { Button } from "@/components/ui/Button"
-import { setMatches, updateDeadline } from "@/actions/matchday"
+import { setMatches, updateDeadlineFromForm, openMatchDayNow } from "@/actions/matchday"
+import MatchdayDateForm from "@/components/MatchdayDateForm"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 import SubmitButton from "@/components/SubmitButton"
@@ -13,6 +14,7 @@ export default function AdminMatchdayPanel({
   homeTeam,
   matchDay,
   initiallyClosed,
+  initiallyScheduled,
   teams,
   hasOddTeams,
   users
@@ -21,6 +23,7 @@ export default function AdminMatchdayPanel({
   homeTeam: string,
   matchDay: MatchDay & { matches: Match[] },
   initiallyClosed: boolean,
+  initiallyScheduled: boolean,
   teams: Pick<Team, "id" | "name">[],
   hasOddTeams: boolean,
   users: { id: string; name: string | null; teamName: string; hasBets: boolean }[]
@@ -29,10 +32,14 @@ export default function AdminMatchdayPanel({
   const isMatchDayEmpty = matchDay.matches.length === 0
   const isScored = matchDay.status === "SCORED"
   const [isClosed, setIsClosed] = useState(initiallyClosed)
+  const [isScheduled, setIsScheduled] = useState(initiallyScheduled)
   useEffect(() => {
-    const timer = setInterval(() => { setIsClosed(matchDay.status !== "OPEN" || new Date().getTime() >= new Date(matchDay.deadline).getTime()) }, 1000)
+    const timer = setInterval(() => {
+      setIsClosed(matchDay.status !== "OPEN" || Date.now() >= new Date(matchDay.deadline).getTime())
+      setIsScheduled(matchDay.status === "OPEN" && !!matchDay.opensAt && Date.now() < new Date(matchDay.opensAt).getTime())
+    }, 1000)
     return () => clearInterval(timer)
-  }, [matchDay.status, matchDay.deadline])
+  }, [matchDay.status, matchDay.deadline, matchDay.opensAt])
   const hasEntries = users.some(u => u.hasBets)
   const [isEditingMatches, setIsEditingMatches] = useState(false)
 
@@ -64,7 +71,7 @@ export default function AdminMatchdayPanel({
 
   const boundSetMatches = setMatches.bind(null, leagueId, matchDay.id)
   const boundScoreMatchDay = scoreMatchDay.bind(null, leagueId, matchDay.id)
-  const boundUpdateDeadline = updateDeadline.bind(null, leagueId, matchDay.id)
+  const boundUpdateDeadline = updateDeadlineFromForm.bind(null, leagueId, matchDay.id)
   const boundProxyPlaceBets = proxyPlaceBets.bind(null, leagueId, matchDay.id)
 
   const usersWhoBet = users.filter(u => u.hasBets)
@@ -73,6 +80,15 @@ export default function AdminMatchdayPanel({
 
   return (
     <div className="space-y-4">
+      {isScheduled && !isClosed && <div className="border-[3px] border-black bg-yellow-100 p-3 space-y-3 shadow-brutal-sm">
+        <p className="font-black uppercase text-sm">Apertura programmata</p>
+        <p className="text-sm font-bold">{new Date(matchDay.opensAt!).toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })} (ora italiana)</p>
+        <p className="text-xs font-bold">Puoi preparare gli accoppiamenti prima dell’apertura.</p>
+        <form action={openMatchDayNow.bind(null, leagueId, matchDay.id)}>
+          <SubmitButton variant="primary" className="w-full text-sm" disabled={isMatchDayEmpty} defaultText="Apri subito" loadingText="APERTURA..." />
+        </form>
+        {isMatchDayEmpty && <p className="text-xs font-bold">Imposta gli accoppiamenti per aprire subito.</p>}
+      </div>}
       <div className="flex flex-col gap-2 w-full">
         <div className="grid grid-cols-2 gap-2 w-full">
           <button 
@@ -273,16 +289,7 @@ export default function AdminMatchdayPanel({
           
           {!isClosed && <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
             <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
-            <form action={boundUpdateDeadline} className="flex flex-col gap-3">
-              <input 
-                type="datetime-local" 
-                name="deadline" 
-                defaultValue={new Date(new Date(matchDay.deadline).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
-                className="w-full border-[2px] border-black px-3 py-2 font-bold text-sm bg-white" 
-                required 
-              />
-              <SubmitButton variant="primary" className="w-full text-sm h-10 uppercase" defaultText="Aggiorna Scadenza" loadingText="IN CORSO..." />
-            </form>
+            <MatchdayDateForm action={boundUpdateDeadline} deadline={new Date(matchDay.deadline).toISOString()} opensAt={matchDay.opensAt ? new Date(matchDay.opensAt).toISOString() : null} />
           </div>}
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">
@@ -312,7 +319,7 @@ export default function AdminMatchdayPanel({
             </div>
           </div>
 
-          {usersMissing.length > 0 && !isClosed && (
+          {usersMissing.length > 0 && !isClosed && !isScheduled && (
             <div className="border-t-[3px] border-black pt-4">
               <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
               <form action={async (formData) => {

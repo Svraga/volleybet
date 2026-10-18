@@ -13,7 +13,8 @@
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "test:security": "node --test tests/security.test.cjs",
     "db:security-upgrade": "dotenv -e .env.local -- node scripts/apply-security-schema.cjs",
-    "db:security-verify": "dotenv -e .env.local -- node scripts/verify-security-schema.cjs"
+    "db:security-verify": "dotenv -e .env.local -- node scripts/verify-security-schema.cjs",
+    "db:matchday-opening-upgrade": "dotenv -e .env.local -- prisma db execute --file prisma/matchday-opening-upgrade.sql --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
