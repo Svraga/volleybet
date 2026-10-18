@@ -122,12 +122,18 @@ function world() {
         return add(w.bets, create);
       },
       update: async ({ where, data }) => Object.assign(w.bets.find(b => b.id === where.id), clone(data)),
+      updateMany: async ({ where, data }) => {
+        const rows = w.bets.filter(b => matchWhere(b, where));
+        rows.forEach(b => Object.assign(b, clone(data)));
+        return { count: rows.length };
+      },
       deleteMany: async ({ where }) => { w.bets = w.bets.filter(b => !matchWhere(b, where)); },
     },
     ledger: {
       findFirst: async ({ where }) => clone(w.ledgers.find(l => matchWhere(l, where)) ?? null),
       findMany: async ({ where }) => clone(w.ledgers.filter(l => matchWhere(l, where))),
       create: async ({ data }) => add(w.ledgers, data),
+      createMany: async ({ data }) => { data.forEach(d => add(w.ledgers, d)); return { count: data.length }; },
       deleteMany: async ({ where }) => { w.ledgers = w.ledgers.filter(l => !matchWhere(l, where)); },
     },
     auditLog: { create: async ({ data }) => add(w.logs, data) },
@@ -268,6 +274,58 @@ test('S06: concurrent scoring and rescore replace payouts without duplicating mo
   await call(score, 'league', 'day', f);
   assert.equal(positiveTotal(w), 1); assert.equal(w.bets[0].pointsEarned, 0);
 });
+test('scoring a populated day fits the transaction budget with simulated 100ms database round trips', async () => {
+  const w = world(); seedScoring(w); w.bets = []; w.ledgers = [];
+  w.matches = Array.from({ length: 6 }, (_, i) => ({ id: `m${i}`, matchDayId: 'day', teamA: `A${i}`, teamB: `B${i}` }));
+  const f = form(Object.fromEntries(w.matches.map(m => [`result_${m.id}`, '3-0'])));
+  for (let i = 0; i < 120; i++) {
+    const userId = `user${i}`;
+    w.ledgers.push({ userId, leagueId: 'league', matchDayId: 'day', amount: -1 });
+    for (const m of w.matches) w.bets.push({ id: `${userId}-${m.id}`, userId, matchId: m.id,
+      predictedA: i % 3 === 2 ? 0 : 3, predictedB: i % 3 === 0 ? 0 : i % 3 === 1 ? 1 : 3 });
+  }
+  for (let i = 0; i < 40; i++) w.ledgers.push({ userId: `legacy${i}`, leagueId: 'league', matchDayId: 'day', amount: -1 });
+  let inTransaction = false, elapsed = 0, budget;
+  for (const model of Object.values(w.db)) {
+    if (!model || typeof model !== 'object') continue;
+    for (const [method, query] of Object.entries(model)) model[method] = async (...args) => {
+      if (inTransaction && (elapsed += 100) > budget) throw new Error('Transaction expired (simulated database latency)');
+      return query(...args);
+    };
+  }
+  const transaction = w.db.$transaction;
+  w.db.$transaction = (fn, options) => transaction(async tx => {
+    elapsed = 0; budget = options.timeout; inTransaction = true;
+    try { return await fn(tx); } finally { inTransaction = false; }
+  }, options);
+  const score = load('src/actions/score.ts', w).scoreMatchDay;
+  for (let run = 0; run < 2; run++) {
+    if (run === 1) for (const m of w.matches) f.set(`result_${m.id}`, '0-3');
+    await call(score, 'league', 'day', f);
+    assert.equal(w.md.status, 'SCORED');
+    assert.equal(positiveTotal(w), 160);
+    for (let i = 0; i < 120; i++) {
+      const bets = w.bets.filter(b => b.userId === `user${i}`);
+      assert.ok(bets.every(b => b.pointsEarned === (run === 0 ? [3, 1, 0] : [0, 0, 3])[i % 3]));
+      const winnings = w.ledgers.filter(l => l.userId === `user${i}` && l.amount > 0);
+      assert.equal(winnings.length, i % 3 === (run === 0 ? 0 : 2) ? 1 : 0);
+      if (winnings.length) assert.equal(winnings[0].amount, 3);
+    }
+    assert.equal(w.ledgers.filter(l => l.userId.startsWith('legacy') && l.amount === 1).length, 40);
+  }
+});
+
+test('failed batch payouts roll back results, points and previous payouts together', async () => {
+  const w = world(); seedScoring(w);
+  const score = load('src/actions/score.ts', w).scoreMatchDay;
+  await call(score, 'league', 'day', resultsForm());
+  const before = clone({ matches: w.matches, bets: w.bets, ledgers: w.ledgers, md: w.md, logs: w.logs, notifications: w.notifications });
+  w.db.ledger.createMany = async () => { throw new Error('Database write failed'); };
+  const f = resultsForm(); f.set('result_m2', '0-3');
+  await assert.rejects(() => call(score, 'league', 'day', f), /Database write failed/);
+  for (const [key, value] of Object.entries(before)) assert.deepEqual(w[key], value);
+});
+
 test('S07: betting observes scoring, membership and deadline changes after acquiring the lock', async () => {
   for (const mutate of [w => { w.md.status = 'SCORED'; }, w => { w.md.deadline = new Date(0); }, w => { w.active.delete('player'); }]) {
     const w = world(); w.beforeLock = () => mutate(w);

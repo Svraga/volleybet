@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import type { Prisma } from "@prisma/client"
 import { isValidVolleyScore, parseVolleyScore } from "@/lib/volleyball"
 import { consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
 
@@ -53,6 +54,8 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
 
     // 2. Update matches and bets
     const userPoints: Record<string, number> = {} // userId -> points
+    const betIdsByPoints = new Map<number, string[]>([[0, []], [1, []], [3, []]])
+    const credits: Prisma.LedgerCreateManyInput[] = []
 
     for (const matchUpdate of matchesToUpdate) {
       await tx.match.update({
@@ -72,12 +75,20 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
           if (signPredicted === signActual) points = 1
         }
 
-        await tx.bet.update({
-          where: { id: bet.id },
-          data: { pointsEarned: points }
-        })
+        betIdsByPoints.get(points)!.push(bet.id)
 
         userPoints[bet.userId] = (userPoints[bet.userId] || 0) + points
+      }
+    }
+
+    // Batch equal scores instead of making one database round trip per prediction.
+    // Chunk IDs to keep large days below the database parameter limit.
+    for (const [pointsEarned, ids] of betIdsByPoints) {
+      for (let start = 0; start < ids.length; start += 1000) {
+        await tx.bet.updateMany({
+          where: { id: { in: ids.slice(start, start + 1000) } },
+          data: { pointsEarned }
+        })
       }
     }
 
@@ -90,9 +101,9 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
     for (const fee of betLedgers) feesByUser[fee.userId] = (feesByUser[fee.userId] || 0) + Math.abs(fee.amount)
     // Refund legacy fees without predictions instead of donating them to other players.
     for (const [uid, spent] of Object.entries(feesByUser)) {
-      if (!(uid in userPoints)) await tx.ledger.create({ data: {
+      if (!(uid in userPoints)) credits.push({
         userId: uid, leagueId, matchDayId: matchDay.id, amount: spent, reason: "Refund (No predictions)"
-      } })
+      })
     }
     const totalPool = Object.entries(feesByUser).reduce((sum, [uid, spent]) => uid in userPoints ? sum + spent : sum, 0)
 
@@ -105,14 +116,12 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
         for (const uid of usersWithBets) {
           const spent = feesByUser[uid]
           if (spent > 0) {
-            await tx.ledger.create({
-              data: {
-                userId: uid,
-                leagueId,
-                matchDayId: matchDay.id,
-                amount: spent,
-                reason: "Refund (Everyone scored 0)"
-              }
+            credits.push({
+              userId: uid,
+              leagueId,
+              matchDayId: matchDay.id,
+              amount: spent,
+              reason: "Refund (Everyone scored 0)"
             })
           }
         }
@@ -158,18 +167,21 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
         // Apply payouts
         for (const [uid, coins] of Object.entries(rankDistribution)) {
           if (coins > 0) {
-            await tx.ledger.create({
-              data: {
-                userId: uid,
-                leagueId,
-                matchDayId: matchDay.id,
-                amount: coins,
-                reason: `Payout MatchDay ${matchDay.number}`
-              }
+            credits.push({
+              userId: uid,
+              leagueId,
+              matchDayId: matchDay.id,
+              amount: coins,
+              reason: `Payout MatchDay ${matchDay.number}`
             })
           }
         }
       }
+    }
+
+    // Keep payouts and refunds atomic with results, including when re-scoring.
+    for (let start = 0; start < credits.length; start += 1000) {
+      await tx.ledger.createMany({ data: credits.slice(start, start + 1000) })
     }
 
     // Set MatchDay status to SCORED
