@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
+import { UserRound, ArrowRight } from "lucide-react"
 
 export default async function Home({
   searchParams,
@@ -72,6 +73,19 @@ export default async function Home({
           Benvenuto, {user?.name}!
         </h1>
       </div>
+
+      <Link href="/profile" className="mb-8 block w-full max-w-4xl min-w-0">
+        <Card className="flex items-center justify-between gap-4 bg-white p-4 shadow-brutal transition-all hover:translate-x-px hover:translate-y-px hover:shadow-brutal-sm sm:p-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <UserRound className="h-8 w-8 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <h2 className="text-lg font-black uppercase sm:text-xl">Il tuo profilo</h2>
+              <p className="mt-1 text-xs font-bold text-gray-600 sm:text-sm">Nickname, statistiche e impostazioni.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-6 w-6 shrink-0" aria-hidden="true" />
+        </Card>
+      </Link>
 
       {(!user?.leagues || user.leagues.length === 0) && (
         <div className="space-y-4 text-center mb-12">

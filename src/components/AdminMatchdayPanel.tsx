@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react"
 import type { Match, MatchDay, Team } from "@prisma/client"
 import { Button } from "@/components/ui/Button"
-import { setMatches, updateDeadlineFromForm, openMatchDayNow } from "@/actions/matchday"
-import MatchdayDateForm from "@/components/MatchdayDateForm"
+import { setMatches, openMatchDayNow } from "@/actions/matchday"
 import { scoreMatchDay } from "@/actions/score"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 import SubmitButton from "@/components/SubmitButton"
@@ -71,7 +70,6 @@ export default function AdminMatchdayPanel({
 
   const boundSetMatches = setMatches.bind(null, leagueId, matchDay.id)
   const boundScoreMatchDay = scoreMatchDay.bind(null, leagueId, matchDay.id)
-  const boundUpdateDeadline = updateDeadlineFromForm.bind(null, leagueId, matchDay.id)
   const boundProxyPlaceBets = proxyPlaceBets.bind(null, leagueId, matchDay.id)
 
   const usersWhoBet = users.filter(u => u.hasBets)
@@ -287,11 +285,6 @@ export default function AdminMatchdayPanel({
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-purple-400 text-white inline-block px-2 border-[2px] border-black -rotate-1">3. Logistica & Proxy-Bet</h3>
           
-          {!isClosed && <div className="mb-6 p-3 border-[3px] border-black bg-purple-50">
-            <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Modifica Scadenza (Deadline)</h4>
-            <MatchdayDateForm action={boundUpdateDeadline} deadline={new Date(matchDay.deadline).toISOString()} opensAt={matchDay.opensAt ? new Date(matchDay.opensAt).toISOString() : null} />
-          </div>}
-
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="border-[2px] border-black p-2 bg-gray-50">
               <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Hanno Scommesso</h4>

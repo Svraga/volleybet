@@ -179,9 +179,9 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
           </Card>
 
           {/* Invito - Spostato in fondo */}
-          <div id="tour-invite" className="bg-white border-[3px] border-black shadow-brutal px-4 py-4 flex flex-col items-center justify-center text-center">
+          <div id="tour-invite" className="w-full min-w-0 bg-white border-[3px] border-black shadow-brutal px-4 py-4 flex flex-col items-center justify-center text-center">
             <span className="font-bold text-gray-500 uppercase text-xs mb-1">Codice Invito Lega</span>
-            <span className="text-3xl font-black tracking-widest">{league.inviteCode}</span>
+            <code className="block w-full min-w-0 break-all text-base font-black tracking-wider leading-relaxed select-all sm:text-lg md:text-xl">{league.inviteCode}</code>
             <CopyInviteButton code={league.inviteCode} />
           </div>
         </div>

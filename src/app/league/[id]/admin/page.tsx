@@ -9,6 +9,7 @@ import MatchdayDateForm from "@/components/MatchdayDateForm"
 import MatchdayRefresh from "@/components/MatchdayRefresh"
 import AdminMatchdayPanel from "@/components/AdminMatchdayPanel"
 import DeleteMatchDayButton from "@/components/DeleteMatchDayButton"
+import ChangeDeadlineButton from "@/components/ChangeDeadlineButton"
 import AdminHeader from "@/components/AdminHeader"
 import AdminPageTour from "@/components/AdminPageTour"
 
@@ -110,8 +111,11 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                       hasBets: u.bets.some(b => md.matches.some(m => m.id === b.matchId))
                     }))}
                   />
-                  <div className="flex justify-center pt-4 border-t-[4px] border-black border-dashed mt-4">
-                    {md.status === "OPEN" && new Date().getTime() < md.deadline.getTime() && <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />}
+                  <div className="flex flex-col items-center gap-3 pt-4 border-t-[4px] border-black border-dashed mt-4">
+                    {md.status === "OPEN" && !isDayClosed(md) && <>
+                      <ChangeDeadlineButton leagueId={league.id} matchDayId={md.id} deadline={md.deadline.toISOString()} opensAt={md.opensAt?.toISOString() ?? null} />
+                      <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />
+                    </>}
                   </div>
                 </CardContent>
               </details>
