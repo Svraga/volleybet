@@ -44,9 +44,12 @@ export default async function PredictionsPage({ params, searchParams }: {
         <h1 className="inline-block -rotate-1 border-[4px] border-black bg-white px-4 py-2 text-2xl font-black uppercase shadow-brutal sm:text-3xl">Pronostici della lega</h1>
         <p className="mt-4 text-sm font-bold">Tutte le giocate, visibili dopo la chiusura delle scommesse.</p>
       </div>
-      {days.length > 0 && <nav aria-label="Scegli giornata" className="flex gap-2 overflow-x-auto pb-2">
-        {days.map(d => <Link key={d.id} href={`/league/${league.id}/predictions?round=${d.id}`} aria-current={d.id === visibleDay?.id ? "page" : undefined} className={`shrink-0 border-[3px] border-black px-3 py-2 text-sm font-black shadow-brutal-sm ${d.id === visibleDay?.id ? "bg-secondary" : "bg-white hover:bg-yellow-100"}`}>Giornata {d.number}</Link>)}
-      </nav>}
+      {days.length > 0 && <div className="flex min-w-0 items-center gap-3">
+        <span className="shrink-0 pb-2 text-xs font-black uppercase sm:text-sm">Giornata</span>
+        <nav aria-label="Scegli giornata" className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-2">
+          {days.map(d => <Link key={d.id} href={`/league/${league.id}/predictions?round=${d.id}`} aria-label={`Giornata ${d.number}`} aria-current={d.id === visibleDay?.id ? "page" : undefined} className={`flex h-10 min-w-10 shrink-0 items-center justify-center border-[3px] border-black px-2 text-sm font-black shadow-brutal-sm ${d.id === visibleDay?.id ? "bg-secondary" : "bg-white hover:bg-yellow-100"}`}>{d.number}</Link>)}
+        </nav>
+      </div>}
       {visibleDay ? <>
         <PredictionsBoard key={visibleDay.id} scored={visibleDay.status === "SCORED"} matches={visibleDay.matches.map(m => ({
           id: m.id, teamA: m.teamA, teamB: m.teamB, resultA: m.resultA, resultB: m.resultB,
