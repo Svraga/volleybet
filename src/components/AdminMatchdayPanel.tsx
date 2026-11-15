@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { Match, MatchDay, Team } from "@prisma/client"
 import { Button } from "@/components/ui/Button"
 import { setMatches, openMatchDayNow } from "@/actions/matchday"
-import { scoreMatchDay } from "@/actions/score"
+import { previewMatchDay, scoreMatchDay } from "@/actions/score"
+import { hasPublishedResults } from "@/lib/matchday"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 import SubmitButton from "@/components/SubmitButton"
 
@@ -75,6 +76,10 @@ export default function AdminMatchdayPanel({
   const usersWhoBet = users.filter(u => u.hasBets)
   const usersMissing = users.filter(u => !u.hasBets && u.teamName)
   const [selectedProxyUser, setSelectedProxyUser] = useState("")
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewMatchDay>> | null>(null)
+  const [draftResults, setDraftResults] = useState<Record<string, string>>({})
+  const resultsRevision = useRef(0)
+  const canProxyBet = !hasPublishedResults(matchDay)
 
   return (
     <div className="space-y-4">
@@ -243,7 +248,7 @@ export default function AdminMatchdayPanel({
             </div>
           )}
 
-          <form action={boundScoreMatchDay} className="space-y-4">
+          <form action={boundScoreMatchDay} onChange={() => { resultsRevision.current++; setPreview(null) }} className="space-y-4">
             {matchDay.matches.map((m) => {
               const existingValue = m.resultA !== null && m.resultB !== null ? `${m.resultA}-${m.resultB}` : ""
               return (
@@ -255,11 +260,12 @@ export default function AdminMatchdayPanel({
                   </div>
                   <select 
                     name={`result_${m.id}`} 
-                    defaultValue={existingValue}
+                    value={draftResults[m.id] ?? existingValue}
+                    onChange={e => setDraftResults(previous => ({ ...previous, [m.id]: e.target.value }))}
                     required
                     className="h-8 border-[2px] border-black bg-white px-2 py-0 text-xs font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
                   >
-                    <option value="" disabled className="text-gray-400">Sel.</option>
+                    <option value="" className="text-gray-400">Da giocare</option>
                     <option value="3-0">3 - 0</option>
                     <option value="3-1">3 - 1</option>
                     <option value="3-2">3 - 2</option>
@@ -270,6 +276,33 @@ export default function AdminMatchdayPanel({
                 </div>
               )
             })}
+            <SubmitButton
+              variant="secondary"
+              className="w-full uppercase font-black"
+              formNoValidate
+              formAction={async formData => {
+                const revision = resultsRevision.current
+                setPreview(null)
+                try {
+                  const result = await previewMatchDay(leagueId, matchDay.id, formData)
+                  if (revision === resultsRevision.current) setPreview(result)
+                } catch {
+                  if (revision === resultsRevision.current) setPreview({ error: "Impossibile caricare l'anteprima. Riprova." })
+                }
+              }}
+              defaultText="Anteprima classifica"
+              loadingText="CALCOLO ANTEPRIMA..."
+            />
+            <p className="text-xs font-bold text-gray-600">Compila anche solo alcuni risultati: l’anteprima è privata, non salva risultati e non distribuisce premi.</p>
+            {preview && (preview.error ? <p role="alert" className="bg-red-100 border-[2px] border-black p-2 text-sm font-bold">{preview.error}</p> : <div aria-live="polite" className="border-[3px] border-black bg-yellow-50 p-3">
+              <h4 className="font-black uppercase">Classifica provvisoria</h4>
+              <p className="mb-3 text-xs font-bold">{preview.completed} risultati su {preview.total}. I risultati mancanti non assegnano punti.</p>
+              <ol className="space-y-2">
+                {preview.ranking?.map((user, _index, ranking) => <li key={user.id} className="flex justify-between gap-3 border-b border-black pb-1 text-sm font-bold">
+                  <span className="min-w-0 truncate">{ranking.findIndex(u => u.points === user.points) + 1}° {user.name}</span><span className="shrink-0">{user.points} pt</span>
+                </li>)}
+              </ol>
+            </div>)}
             <SubmitButton 
               variant="primary" 
               className="w-full mt-4 uppercase font-black" 
@@ -312,9 +345,11 @@ export default function AdminMatchdayPanel({
             </div>
           </div>
 
-          {usersMissing.length > 0 && !isClosed && !isScheduled && (
+          {!canProxyBet && <p className="text-sm font-bold">Proxy bet non disponibili: i risultati sono già stati inseriti.</p>}
+          {usersMissing.length > 0 && canProxyBet && (
             <div className="border-t-[3px] border-black pt-4">
               <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
+              <p className="mb-3 text-xs font-bold">L’admin può inserire pronostici anche oltre la deadline, finché i risultati non sono pubblicati.</p>
               <form action={async (formData) => {
                 if (!selectedProxyUser) return;
                 formData.append("userId", selectedProxyUser);

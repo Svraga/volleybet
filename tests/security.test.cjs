@@ -345,13 +345,19 @@ test('S07: a deadline crossed during save rolls back both bet and fee', async ()
   await assert.rejects(() => load('src/lib/betting.ts', w).saveBets('player', 'league', 'day', form({ bet_m2: '3-0' })));
   assert.equal(w.bets.length, 0); assert.equal(w.ledgers.length, 0);
 });
-test('S08: an expired, closed or scored day cannot be reopened or deleted', async () => {
+test('expired and closed days can be reopened by admin, scored days stay locked; deletion remains blocked', async () => {
   for (const status of ['OPEN', 'CLOSED', 'SCORED']) {
     const w = world(); w.actor = 'admin'; w.md.status = status; w.md.deadline = new Date(0);
     const actions = load('src/actions/matchday.ts', w);
-    await assert.rejects(() => actions.updateDeadline('league', 'day', form({ deadline: new Date(Date.now() + 3600000).toISOString() })));
     await assert.rejects(() => actions.deleteMatchDay('league', 'day'));
-    assert.equal(w.md.deadline.getTime(), 0); assert.equal(w.deletedDay, undefined);
+    const update = () => call(actions.updateDeadline, 'league', 'day', form({ deadline: new Date(Date.now() + 3600000).toISOString() }));
+    if (status === 'SCORED') {
+      await assert.rejects(update); assert.equal(w.md.deadline.getTime(), 0);
+    } else {
+      await update(); assert.equal(w.md.status, 'OPEN'); assert.ok(w.md.deadline.getTime() > Date.now());
+      assert.ok(w.notifications.some(n => n.type === 'DEADLINE_CHANGED'));
+    }
+    assert.equal(w.deletedDay, undefined);
   }
 });
 test('scoring before the deadline and scoring by a nonadmin fail without modifying ledgers', async () => {
@@ -365,6 +371,65 @@ test('S10: admin proxy cannot overwrite an existing personal prediction', async 
   const w = world(); w.actor = 'admin'; w.bets.push({ userId: 'player', matchId: 'm2', predictedA: 0, predictedB: 3 });
   await assert.rejects(() => load('src/lib/betting.ts', w).saveBets('admin', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), true));
   assert.equal(w.bets[0].predictedA, 0); assert.equal(w.ledgers.length, 0);
+});
+
+test('admin proxy bypasses opening and deadline while ordinary members remain constrained', async () => {
+  for (const state of ['EXPIRED', 'CLOSED', 'SCHEDULED']) {
+    const w = world(); w.actor = 'admin';
+    if (state === 'EXPIRED') w.md.deadline = new Date(0);
+    if (state === 'CLOSED') w.md.status = 'CLOSED';
+    if (state === 'SCHEDULED') w.md.opensAt = new Date(Date.now() + 600000);
+    const save = load('src/lib/betting.ts', w).saveBets;
+    await assert.rejects(() => save('player', 'league', 'day', form({ bet_m2: '3-0' })));
+    await assert.rejects(() => save('player', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), true), /Unauthorized/);
+    await save('admin', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), true);
+    assert.equal(w.bets.length, 1); assert.equal(w.ledgers.length, 1); assert.equal(w.ledgers[0].amount, -1);
+  }
+});
+
+test('saved results block proxy bets and deadline changes, including results committed while waiting for lock', async () => {
+  for (const afterLock of [false, true]) {
+    const w = world(); w.actor = 'admin'; w.md.deadline = new Date(0);
+    const publish = () => { w.matches[0].resultA = 3; w.matches[0].resultB = 0; };
+    if (afterLock) w.beforeLock = publish; else publish();
+    await assert.rejects(() => load('src/lib/betting.ts', w).saveBets('admin', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), true), /risultati/i);
+    // The isolated transaction mock also rolls back the simulated concurrent write.
+    if (afterLock) w.beforeLock = publish;
+    await assert.rejects(() => load('src/actions/matchday.ts', w).updateDeadline('league', 'day', form({ deadline: new Date(Date.now() + 3600000).toISOString() })), /risultati/i);
+    assert.equal(w.bets.length, 0); assert.equal(w.ledgers.length, 0); assert.equal(w.md.deadline.getTime(), 0);
+  }
+});
+
+test('partial preview scores exact results and winners, preserves official state and matches final scoring', async () => {
+  const w = world(); w.actor = 'admin'; w.md.deadline = new Date(0);
+  w.bets.push(
+    { id: 'b1', userId: 'player', matchId: 'm1', predictedA: 3, predictedB: 0 },
+    { id: 'b2', userId: 'admin', matchId: 'm1', predictedA: 3, predictedB: 1 },
+    { id: 'b3', userId: 'admin', matchId: 'm2', predictedA: 0, predictedB: 3 },
+  );
+  const before = clone({ matches: w.matches, bets: w.bets, ledgers: w.ledgers, md: w.md, logs: w.logs, notifications: w.notifications });
+  const actions = load('src/actions/score.ts', w);
+  const partial = await actions.previewMatchDay('league', 'day', form({ result_m1: '3-0' }));
+  assert.equal(partial.completed, 1); assert.equal(partial.total, 2);
+  assert.equal(partial.ranking.find(u => u.id === 'player').points, 3);
+  assert.equal(partial.ranking.find(u => u.id === 'admin').points, 1);
+  await assert.rejects(() => actions.scoreMatchDay('league', 'day', form({ result_m1: '3-0' })), /tutti i risultati/);
+  for (const [key, value] of Object.entries(before)) assert.deepEqual(w[key], value);
+  const complete = form({ result_m1: '3-0', result_m2: '0-3' });
+  const preview = await actions.previewMatchDay('league', 'day', complete);
+  await call(actions.scoreMatchDay, 'league', 'day', complete);
+  for (const user of preview.ranking) assert.equal(user.points, w.bets.filter(b => b.userId === user.id).reduce((sum, b) => sum + b.pointsEarned, 0));
+});
+
+test('preview rejects nonadmins, open days, missing results and invalid results', async () => {
+  const w = world(); const actions = load('src/actions/score.ts', w);
+  await assert.rejects(() => actions.previewMatchDay('league', 'day', form({ result_m1: '3-0' })), /Unauthorized/);
+  w.actor = 'admin';
+  assert.match((await actions.previewMatchDay('league', 'day', form({ result_m1: '3-0' }))).error, /scadenza/);
+  w.md.deadline = new Date(0);
+  assert.match((await actions.previewMatchDay('league', 'day', form({}))).error, /almeno/);
+  assert.match((await actions.previewMatchDay('league', 'day', form({ result_m1: '2-2' }))).error, /valido/);
+  assert.equal(w.ledgers.length, 0);
 });
 test('S11: concurrent proxy and personal bets charge a single entry fee', async () => {
   const w = world(), save = load('src/lib/betting.ts', w).saveBets;
@@ -417,6 +482,37 @@ test('R01: direct stats, predictions and betting page calls reject an outsider b
   }
 });
 
+test('round standings show net coins below points, including fractional prizes and nonparticipants', async () => {
+  const w = world(); w.md.status = 'SCORED';
+  w.db.user.findMany = async ({ include }) => {
+    assert.equal(include.ledgers.where.leagueId, 'league');
+    assert.equal(include.ledgers.where.matchDayId, 'day');
+    return [
+      { id: 'player', name: 'Player', memberships: [], bets: [], ledgers: [{ amount: -1 }, { amount: 1.5 }] },
+      { id: 'admin', name: 'Admin', memberships: [], bets: [], ledgers: [{ amount: -1 }] },
+      { id: 'absent', name: 'Absent', memberships: [], bets: [], ledgers: [] },
+    ];
+  };
+  const tree = await load('src/app/league/[id]/stats/page.tsx', w).default({ params: Promise.resolve({ id: 'league' }), searchParams: Promise.resolve({ round: 'day' }) });
+  const cards = [];
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'Card') cards.push(node);
+    for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(walk); else if (value && typeof value === 'object') walk(value);
+  }
+  function renderedText(node) {
+    if (node == null || typeof node === 'boolean') return '';
+    if (typeof node !== 'object') return String(node);
+    if (Array.isArray(node)) return node.map(renderedText).join('');
+    return renderedText(node.props?.children);
+  }
+  walk(tree); assert.equal(cards.length, 2);
+  assert.match(renderedText(cards[0]), /Punti Pronostici/);
+  const coins = renderedText(cards[1]);
+  assert.match(coins, /Resoconto Coin/); assert.match(coins, /PlayerA\+0,5/);
+  assert.match(coins, /AdminA-1/); assert.match(coins, /AbsentA0/);
+});
+
 test('scheduled creation validates future instants, order and explicit timezone', async () => {
   const now = Date.now();
   const opening = new Date(now + 3600000).toISOString(), deadline = new Date(now + 7200000).toISOString();
@@ -439,8 +535,8 @@ test('scheduled creation validates future instants, order and explicit timezone'
   }
 });
 
-test('scheduled days reject personal and proxy bets, including after waiting for the league lock', async () => {
-  for (const proxy of [false, true]) {
+test('scheduled days reject personal bets, including after waiting for the league lock', async () => {
+  for (const proxy of [false]) {
     const w = world(); w.md.opensAt = new Date(Date.now() + 600000);
     const save = load('src/lib/betting.ts', w).saveBets;
     await assert.rejects(() => save(proxy ? 'admin' : 'player', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), proxy));

@@ -89,7 +89,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
+      <div className={`grid ${round ? "" : "md:grid-cols-2"} gap-8 w-full max-w-4xl`}>
         <Card className="bg-white">
           <CardHeader>
             <CardTitle>Classifica Punti Pronostici</CardTitle>
@@ -120,12 +120,12 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
           </CardContent>
         </Card>
 
-        {!round && (
           <Card className="bg-white">
             <CardHeader>
-              <CardTitle>Classifica {league.coinName}</CardTitle>
+              <CardTitle>{round ? "Resoconto" : "Classifica"} {league.coinName}</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto max-w-full">
+              {round && <p className="mb-4 text-sm font-bold text-gray-600">Saldo netto della giornata: premi e rimborsi meno quota di partecipazione.</p>}
               <ul className="space-y-4">
                 {coinRanking.map((s, idx) => (
                   <li key={s.user.id} className="flex justify-between items-center border-b-[3px] border-black pb-2">
@@ -137,14 +137,13 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
                       </div>
                     </div>
                     <span className={`text-2xl font-bold shrink-0 ${s.totalCoins >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {s.totalCoins > 0 ? '+' : ''}{Math.floor(s.totalCoins)}
+                      {s.totalCoins > 0 ? '+' : ''}{s.totalCoins.toLocaleString("it-IT", { maximumFractionDigits: 2 })}
                     </span>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
-        )}
       </div>
     </main>
   )

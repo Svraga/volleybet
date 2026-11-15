@@ -14,6 +14,10 @@ export function isDayOpen(day: DayWindow, now = Date.now()) {
 
 export class ScheduleError extends Error {}
 
+export function hasPublishedResults(day: { status: string; matches: { resultA?: number | null; resultB?: number | null }[] }) {
+  return day.status === "SCORED" || day.matches.some(m => m.resultA != null || m.resultB != null)
+}
+
 // Only accept instants with an explicit timezone. datetime-local must be converted
 // in the browser so the server's timezone cannot shift the chosen opening time.
 export function futureDate(raw: string, label: string, now = Date.now()) {

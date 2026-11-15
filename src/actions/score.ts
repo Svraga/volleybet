@@ -5,6 +5,43 @@ import { revalidatePath } from "next/cache"
 import type { Prisma } from "@prisma/client"
 import { isValidVolleyScore, parseVolleyScore } from "@/lib/volleyball"
 import { consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
+import { predictionPoints } from "@/lib/scoring"
+
+export async function previewMatchDay(leagueId: string, matchDayId: string, formData: FormData) {
+  const userId = await requireUserId()
+  requireId(matchDayId)
+  return withLeagueTransaction(leagueId, userId, "admin", async tx => {
+    const day = await tx.matchDay.findFirst({
+      where: { id: matchDayId, leagueId },
+      include: { matches: { include: { bets: { select: { userId: true, predictedA: true, predictedB: true } } } } },
+    })
+    if (!day) throw new Error("Giornata non appartenente a questo campionato")
+    if (Date.now() < day.deadline.getTime()) return { error: "Attendi la scadenza prima di vedere l'anteprima." }
+    const points = new Map<string, number>()
+    let completed = 0
+    for (const match of day.matches) {
+      for (const bet of match.bets) if (!points.has(bet.userId)) points.set(bet.userId, 0)
+      const value = formText(formData, `result_${match.id}`, 3, false)
+      if (!value) continue
+      const score = parseVolleyScore(value)
+      if (!score) return { error: "Uno dei risultati inseriti non è valido." }
+      completed++
+      for (const bet of match.bets) {
+        points.set(bet.userId, (points.get(bet.userId) || 0) + predictionPoints(bet.predictedA, bet.predictedB, score.setA, score.setB))
+      }
+    }
+    if (!completed) return { error: "Inserisci almeno un risultato per vedere l'anteprima." }
+    const users = await tx.user.findMany({
+      where: { OR: [{ leagues: { some: { id: leagueId } } }, { bets: { some: { match: { matchDayId } } } }] },
+      select: { id: true, name: true },
+    })
+    return {
+      completed, total: day.matches.length,
+      ranking: users.map(u => ({ id: u.id, name: u.name || "Utente", points: points.get(u.id) || 0 }))
+        .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "it")),
+    }
+  })
+}
 
 export async function scoreMatchDay(leagueId: string, matchDayId: string, formData: FormData) {
   const userId = await requireUserId()
@@ -27,7 +64,7 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
     // Parse and validate match results
     const matchesToUpdate: { id: string; resultA: number; resultB: number }[] = []
     for (const m of matchDay.matches) {
-      const resultVal = formText(formData, `result_${m.id}`, 3)
+      const resultVal = formText(formData, `result_${m.id}`, 3, false)
       if (!resultVal) {
         throw new Error("Devi inserire tutti i risultati prima di procedere")
       }
@@ -64,16 +101,9 @@ export async function scoreMatchDay(leagueId: string, matchDayId: string, formDa
       })
 
       const match = matchDay.matches.find(m => m.id === matchUpdate.id)!
-      const signActual = matchUpdate.resultA > matchUpdate.resultB ? 1 : 2
 
       for (const bet of match.bets) {
-        let points = 0
-        if (bet.predictedA === matchUpdate.resultA && bet.predictedB === matchUpdate.resultB) {
-          points = 3
-        } else {
-          const signPredicted = bet.predictedA > bet.predictedB ? 1 : 2
-          if (signPredicted === signActual) points = 1
-        }
+        const points = predictionPoints(bet.predictedA, bet.predictedB, matchUpdate.resultA, matchUpdate.resultB)
 
         betIdsByPoints.get(points)!.push(bet.id)
 

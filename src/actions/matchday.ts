@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
-import { assertDayEditable, futureDate, isDayScheduled, ScheduleError } from "@/lib/matchday"
+import { assertDayEditable, futureDate, hasPublishedResults, isDayScheduled, ScheduleError } from "@/lib/matchday"
 import type { Prisma } from "@prisma/client"
 
 function futureDeadline(form: FormData) {
@@ -26,6 +26,7 @@ async function assertNoEntries(tx: Prisma.TransactionClient, leagueId: string, m
 function refresh(leagueId: string) {
   revalidatePath(`/league/${leagueId}/admin`)
   revalidatePath(`/league/${leagueId}`)
+  revalidatePath(`/league/${leagueId}/predictions`)
 }
 
 export async function createMatchDay(leagueId: string, formData: FormData) {
@@ -130,9 +131,11 @@ export async function updateDeadline(leagueId: string, matchDayId: string, formD
   const userId = await requireUserId()
   const deadline = futureDeadline(formData)
   await withLeagueTransaction(leagueId, userId, "admin", async tx => {
-    const day = await editableDay(tx, leagueId, matchDayId)
+    const day = await tx.matchDay.findFirst({ where: { id: requireId(matchDayId), leagueId }, include: { matches: true } })
+    if (!day) throw new Error("Giornata non appartenente a questo campionato")
+    if (hasPublishedResults(day)) throw new ScheduleError("Non puoi cambiare la scadenza dopo l'inserimento dei risultati.")
     if (day.opensAt && deadline <= day.opensAt) throw new ScheduleError("La scadenza deve essere successiva all'apertura.")
-    await tx.matchDay.update({ where: { id: matchDayId }, data: { deadline } })
+    await tx.matchDay.update({ where: { id: matchDayId }, data: { deadline, status: "OPEN" } })
     await tx.auditLog.create({ data: {
       leagueId, userId, action: "Modificata Scadenza",
       details: `Giornata ${day.number}: da ${day.deadline.toISOString()} a ${deadline.toISOString()}.`,
@@ -140,10 +143,8 @@ export async function updateDeadline(leagueId: string, matchDayId: string, formD
     const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
     await tx.notification.createMany({ data: users.map(u => ({
       userId: u.id, leagueId, type: "DEADLINE_CHANGED",
-      message: `La scadenza della Giornata ${day.number} è stata modificata al ${deadline.toLocaleString("it-IT")}.`,
+      message: `La scadenza della Giornata ${day.number} è stata modificata al ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`,
     })) })
-    // Neither the old nor the new deadline may pass during this operation.
-    assertDayEditable(day)
     if (Date.now() >= deadline.getTime()) throw new ScheduleError("Scadenza superata. Scegli un orario futuro.")
   })
   refresh(leagueId)

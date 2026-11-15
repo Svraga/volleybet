@@ -2,6 +2,7 @@ import "server-only"
 import type { Prisma } from "@prisma/client"
 import { assertBettingOpen, formText, requireId, withLeagueTransaction } from "@/lib/security"
 import { parseVolleyScore } from "@/lib/volleyball"
+import { hasPublishedResults } from "@/lib/matchday"
 
 export async function saveBets(actorId: string, leagueId: string, dayId: string, form: FormData, proxy = false) {
   requireId(dayId)
@@ -14,7 +15,8 @@ export async function saveBets(actorId: string, leagueId: string, dayId: string,
     if (!target || !member) throw new Error("Il giocatore non appartiene a questo campionato")
     const day = await tx.matchDay.findFirst({ where: { id: dayId, leagueId }, include: { matches: true } })
     if (!day) throw new Error("Giornata non appartenente a questo campionato")
-    assertBettingOpen(day)
+    if (hasPublishedResults(day)) throw new Error("I risultati sono già inseriti: non puoi aggiungere pronostici")
+    if (!proxy) assertBettingOpen(day)
     if (proxy && await tx.bet.count({ where: { userId: targetId, match: { matchDayId: dayId } } })) {
       throw new Error("Il giocatore ha già inserito i propri pronostici")
     }
@@ -50,7 +52,7 @@ export async function saveBets(actorId: string, leagueId: string, dayId: string,
       } })
     }
     // Roll back slow requests that crossed the deadline while saving.
-    assertBettingOpen(day)
+    if (!proxy) assertBettingOpen(day)
     return league.id
   })
 }

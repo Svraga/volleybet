@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardTitle } from "@/components/ui/Card"
 import { createMatchDayFromForm } from "@/actions/matchday"
-import { isDayClosed, isDayScheduled } from "@/lib/matchday"
+import { hasPublishedResults, isDayClosed, isDayScheduled } from "@/lib/matchday"
 import MatchdayDateForm from "@/components/MatchdayDateForm"
 import MatchdayRefresh from "@/components/MatchdayRefresh"
 import AdminMatchdayPanel from "@/components/AdminMatchdayPanel"
@@ -112,10 +112,8 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                     }))}
                   />
                   <div className="flex flex-col items-center gap-3 pt-4 border-t-[4px] border-black border-dashed mt-4">
-                    {md.status === "OPEN" && !isDayClosed(md) && <>
-                      <ChangeDeadlineButton leagueId={league.id} matchDayId={md.id} deadline={md.deadline.toISOString()} opensAt={md.opensAt?.toISOString() ?? null} />
-                      <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />
-                    </>}
+                    {!hasPublishedResults(md) && <ChangeDeadlineButton leagueId={league.id} matchDayId={md.id} deadline={md.deadline.toISOString()} opensAt={md.opensAt?.toISOString() ?? null} closed={isDayClosed(md)} />}
+                    {md.status === "OPEN" && !isDayClosed(md) && <DeleteMatchDayButton leagueId={league.id} matchDayId={md.id} />}
                   </div>
                 </CardContent>
               </details>

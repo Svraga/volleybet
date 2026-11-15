@@ -11,5 +11,7 @@ export async function proxyPlaceBets(leagueId: string, matchDayId: string, formD
   await saveBets(userId, leagueId, matchDayId, formData, true)
   revalidatePath(`/league/${leagueId}`)
   revalidatePath(`/league/${leagueId}/admin`)
+  revalidatePath(`/league/${leagueId}/predictions`)
+  revalidatePath(`/league/${leagueId}/stats`)
   redirect(`/league/${leagueId}/admin`)
 }
