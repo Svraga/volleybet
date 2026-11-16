@@ -112,7 +112,7 @@ export default function CreateLeaguePage() {
             <div className={step === 2 ? "space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" : "hidden"}>
               <p className="text-xl font-bold text-gray-700">Da quante squadre è composto il girone?</p>
               <p className="font-bold text-gray-500 text-sm">Seleziona il numero totale di squadre. {numTeams % 2 !== 0 ? "(Numero dispari: una squadra riposerà ad ogni turno)" : ""}</p>
-              <select 
+              <select
                 className="flex h-12 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-lg text-black shadow-brutal focus-visible:outline-none focus-visible:ring-0 focus-visible:border-black"
                 value={numTeams}
                 onChange={(e) => handleNumTeamsChange(parseInt(e.target.value))}
@@ -130,23 +130,23 @@ export default function CreateLeaguePage() {
               <div className="space-y-2 max-h-[30vh] overflow-y-auto p-2 border-[2px] border-black bg-gray-50">
                 {teams.map((t, idx) => (
                   <div key={idx} className="flex gap-2 mb-2">
-                    <Input 
-                      name="teams[]" 
-                      value={t} 
-                      onChange={e => handleTeamChange(idx, e.target.value)} 
+                    <Input
+                      name="teams[]"
+                      value={t}
+                      onChange={e => handleTeamChange(idx, e.target.value)}
                       onBlur={() => handleTeamBlur(t)}
                       placeholder={`Squadra ${idx + 1}`}
-                      required={step === 3} 
+                      required={step === 3}
                       className="h-12"
                     />
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-6 space-y-2 p-4 bg-yellow-100 border-[3px] border-black">
                 <p className="text-lg font-bold">Qual è la TUA squadra?</p>
                 <p className="text-sm font-bold text-gray-600 mb-2">Non potrai scommettere sulle partite della tua squadra reale.</p>
-                <select 
+                <select
                   name="homeTeam"
                   className="flex h-12 w-full rounded-brutal border-[3px] border-black bg-white px-4 py-2 text-md text-black shadow-brutal focus-visible:outline-none"
                   value={homeTeam}

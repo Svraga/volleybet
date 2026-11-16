@@ -1,0 +1,688 @@
+{
+  "capturedAt": "2026-11-16T00:38:33.881Z",
+  "readOnly": true,
+  "roles": [
+    {
+      "role": "authenticated",
+      "bypassRls": false,
+      "superuser": false
+    },
+    {
+      "role": "anon",
+      "bypassRls": false,
+      "superuser": false
+    },
+    {
+      "role": "application",
+      "bypassRls": true,
+      "superuser": false
+    }
+  ],
+  "tableSecurity": [
+    {
+      "relname": "Account",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "AuditLog",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Bet",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "League",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "LeagueMember",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Ledger",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Match",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "MatchDay",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Notification",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "SecurityRateLimit",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Session",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "Team",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "User",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "VerificationToken",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    },
+    {
+      "relname": "_LeagueMembers",
+      "rls": true,
+      "forced_rls": false,
+      "app_owns_table": true
+    }
+  ],
+  "grants": [
+    {
+      "role": "authenticated",
+      "tables": [
+        {
+          "relname": "Account",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "AuditLog",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Bet",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "League",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "LeagueMember",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Ledger",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Match",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "MatchDay",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Notification",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "SecurityRateLimit",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Session",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Team",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "User",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "VerificationToken",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "_LeagueMembers",
+          "any_table_privilege": false
+        }
+      ]
+    },
+    {
+      "role": "anon",
+      "tables": [
+        {
+          "relname": "Account",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "AuditLog",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Bet",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "League",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "LeagueMember",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Ledger",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Match",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "MatchDay",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Notification",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "SecurityRateLimit",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Session",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "Team",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "User",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "VerificationToken",
+          "any_table_privilege": false
+        },
+        {
+          "relname": "_LeagueMembers",
+          "any_table_privilege": false
+        }
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "Account",
+      "conname": "Account_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Account",
+      "conname": "Account_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "AuditLog",
+      "conname": "AuditLog_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "AuditLog",
+      "conname": "AuditLog_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "AuditLog",
+      "conname": "AuditLog_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Bet",
+      "conname": "Bet_matchId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Bet",
+      "conname": "Bet_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Bet",
+      "conname": "Bet_score_check",
+      "contype": "c",
+      "definition": "CHECK (((((\"predictedA\" = 3) AND ((\"predictedB\" >= 0) AND (\"predictedB\" <= 2))) OR ((\"predictedB\" = 3) AND ((\"predictedA\" >= 0) AND (\"predictedA\" <= 2)))) AND ((\"pointsEarned\" IS NULL) OR (\"pointsEarned\" = ANY (ARRAY[0, 1, 3])))))"
+    },
+    {
+      "table_name": "Bet",
+      "conname": "Bet_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "League",
+      "conname": "League_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "LeagueMember",
+      "conname": "LeagueMember_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "LeagueMember",
+      "conname": "LeagueMember_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "LeagueMember",
+      "conname": "LeagueMember_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "Ledger_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "Ledger_matchDayId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"matchDayId\") REFERENCES \"MatchDay\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "Ledger_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "Ledger_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "Ledger_whole_coin_kind_check",
+      "contype": "c",
+      "definition": "CHECK ((((kind = 'ENTRY_FEE'::text) AND (amount < 0)) OR ((kind = ANY (ARRAY['PAYOUT'::text, 'REFUND'::text])) AND (amount > 0)) OR (kind = ANY (ARRAY['LEGACY'::text, 'ADJUSTMENT'::text]))))"
+    },
+    {
+      "table_name": "Ledger",
+      "conname": "volleybet_ledger_pool_trigger",
+      "contype": "t",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "table_name": "Match",
+      "conname": "Match_matchDayId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"matchDayId\") REFERENCES \"MatchDay\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Match",
+      "conname": "Match_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Match",
+      "conname": "Match_result_check",
+      "contype": "c",
+      "definition": "CHECK ((((\"resultA\" IS NULL) AND (\"resultB\" IS NULL)) OR ((\"resultA\" IS NOT NULL) AND (\"resultB\" IS NOT NULL) AND (((\"resultA\" = 3) AND ((\"resultB\" >= 0) AND (\"resultB\" <= 2))) OR ((\"resultB\" = 3) AND ((\"resultA\" >= 0) AND (\"resultA\" <= 2)))))))"
+    },
+    {
+      "table_name": "MatchDay",
+      "conname": "MatchDay_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "MatchDay",
+      "conname": "MatchDay_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "MatchDay",
+      "conname": "MatchDay_status_check",
+      "contype": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['OPEN'::text, 'CLOSED'::text, 'SCORED'::text])))"
+    },
+    {
+      "table_name": "MatchDay",
+      "conname": "volleybet_matchday_pool_trigger",
+      "contype": "t",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "table_name": "Notification",
+      "conname": "Notification_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "Notification",
+      "conname": "Notification_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Notification",
+      "conname": "Notification_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "SecurityRateLimit",
+      "conname": "SecurityRateLimit_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (key)"
+    },
+    {
+      "table_name": "Session",
+      "conname": "Session_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Session",
+      "conname": "Session_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "Team",
+      "conname": "Team_leagueId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"leagueId\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "Team",
+      "conname": "Team_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "User",
+      "conname": "User_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "_LeagueMembers",
+      "conname": "_LeagueMembers_A_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"A\") REFERENCES \"League\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "_LeagueMembers",
+      "conname": "_LeagueMembers_B_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"B\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "Account",
+      "indexname": "Account_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Account_pkey\" ON public.\"Account\" USING btree (id)"
+    },
+    {
+      "tablename": "Account",
+      "indexname": "Account_provider_providerAccountId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Account_provider_providerAccountId_key\" ON public.\"Account\" USING btree (provider, \"providerAccountId\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_leagueId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_leagueId_createdAt_idx\" ON public.\"AuditLog\" USING btree (\"leagueId\", \"createdAt\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AuditLog_pkey\" ON public.\"AuditLog\" USING btree (id)"
+    },
+    {
+      "tablename": "Bet",
+      "indexname": "Bet_matchId_idx",
+      "indexdef": "CREATE INDEX \"Bet_matchId_idx\" ON public.\"Bet\" USING btree (\"matchId\")"
+    },
+    {
+      "tablename": "Bet",
+      "indexname": "Bet_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Bet_pkey\" ON public.\"Bet\" USING btree (id)"
+    },
+    {
+      "tablename": "Bet",
+      "indexname": "Bet_userId_matchId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Bet_userId_matchId_key\" ON public.\"Bet\" USING btree (\"userId\", \"matchId\")"
+    },
+    {
+      "tablename": "League",
+      "indexname": "League_inviteCode_key",
+      "indexdef": "CREATE UNIQUE INDEX \"League_inviteCode_key\" ON public.\"League\" USING btree (\"inviteCode\")"
+    },
+    {
+      "tablename": "League",
+      "indexname": "League_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"League_pkey\" ON public.\"League\" USING btree (id)"
+    },
+    {
+      "tablename": "LeagueMember",
+      "indexname": "LeagueMember_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"LeagueMember_pkey\" ON public.\"LeagueMember\" USING btree (id)"
+    },
+    {
+      "tablename": "LeagueMember",
+      "indexname": "LeagueMember_userId_leagueId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"LeagueMember_userId_leagueId_key\" ON public.\"LeagueMember\" USING btree (\"userId\", \"leagueId\")"
+    },
+    {
+      "tablename": "Ledger",
+      "indexname": "Ledger_leagueId_matchDayId_idx",
+      "indexdef": "CREATE INDEX \"Ledger_leagueId_matchDayId_idx\" ON public.\"Ledger\" USING btree (\"leagueId\", \"matchDayId\")"
+    },
+    {
+      "tablename": "Ledger",
+      "indexname": "Ledger_one_entry_fee_per_day",
+      "indexdef": "CREATE UNIQUE INDEX \"Ledger_one_entry_fee_per_day\" ON public.\"Ledger\" USING btree (\"userId\", \"matchDayId\") WHERE (kind = 'ENTRY_FEE'::text)"
+    },
+    {
+      "tablename": "Ledger",
+      "indexname": "Ledger_one_settlement_per_kind",
+      "indexdef": "CREATE UNIQUE INDEX \"Ledger_one_settlement_per_kind\" ON public.\"Ledger\" USING btree (\"userId\", \"matchDayId\", kind) WHERE (kind = ANY (ARRAY['PAYOUT'::text, 'REFUND'::text]))"
+    },
+    {
+      "tablename": "Ledger",
+      "indexname": "Ledger_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Ledger_pkey\" ON public.\"Ledger\" USING btree (id)"
+    },
+    {
+      "tablename": "Ledger",
+      "indexname": "Ledger_userId_leagueId_idx",
+      "indexdef": "CREATE INDEX \"Ledger_userId_leagueId_idx\" ON public.\"Ledger\" USING btree (\"userId\", \"leagueId\")"
+    },
+    {
+      "tablename": "Match",
+      "indexname": "Match_matchDayId_idx",
+      "indexdef": "CREATE INDEX \"Match_matchDayId_idx\" ON public.\"Match\" USING btree (\"matchDayId\")"
+    },
+    {
+      "tablename": "Match",
+      "indexname": "Match_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Match_pkey\" ON public.\"Match\" USING btree (id)"
+    },
+    {
+      "tablename": "MatchDay",
+      "indexname": "MatchDay_leagueId_number_key",
+      "indexdef": "CREATE UNIQUE INDEX \"MatchDay_leagueId_number_key\" ON public.\"MatchDay\" USING btree (\"leagueId\", number)"
+    },
+    {
+      "tablename": "MatchDay",
+      "indexname": "MatchDay_leagueId_status_deadline_idx",
+      "indexdef": "CREATE INDEX \"MatchDay_leagueId_status_deadline_idx\" ON public.\"MatchDay\" USING btree (\"leagueId\", status, deadline)"
+    },
+    {
+      "tablename": "MatchDay",
+      "indexname": "MatchDay_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"MatchDay_pkey\" ON public.\"MatchDay\" USING btree (id)"
+    },
+    {
+      "tablename": "Notification",
+      "indexname": "Notification_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Notification_pkey\" ON public.\"Notification\" USING btree (id)"
+    },
+    {
+      "tablename": "Notification",
+      "indexname": "Notification_userId_leagueId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"Notification_userId_leagueId_createdAt_idx\" ON public.\"Notification\" USING btree (\"userId\", \"leagueId\", \"createdAt\")"
+    },
+    {
+      "tablename": "Notification",
+      "indexname": "Notification_userId_leagueId_isRead_idx",
+      "indexdef": "CREATE INDEX \"Notification_userId_leagueId_isRead_idx\" ON public.\"Notification\" USING btree (\"userId\", \"leagueId\", \"isRead\")"
+    },
+    {
+      "tablename": "SecurityRateLimit",
+      "indexname": "SecurityRateLimit_expiresAt_idx",
+      "indexdef": "CREATE INDEX \"SecurityRateLimit_expiresAt_idx\" ON public.\"SecurityRateLimit\" USING btree (\"expiresAt\")"
+    },
+    {
+      "tablename": "SecurityRateLimit",
+      "indexname": "SecurityRateLimit_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"SecurityRateLimit_pkey\" ON public.\"SecurityRateLimit\" USING btree (key)"
+    },
+    {
+      "tablename": "Session",
+      "indexname": "Session_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Session_pkey\" ON public.\"Session\" USING btree (id)"
+    },
+    {
+      "tablename": "Session",
+      "indexname": "Session_sessionToken_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Session_sessionToken_key\" ON public.\"Session\" USING btree (\"sessionToken\")"
+    },
+    {
+      "tablename": "Team",
+      "indexname": "Team_leagueId_name_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Team_leagueId_name_key\" ON public.\"Team\" USING btree (\"leagueId\", name)"
+    },
+    {
+      "tablename": "Team",
+      "indexname": "Team_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Team_pkey\" ON public.\"Team\" USING btree (id)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_email_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)"
+    },
+    {
+      "tablename": "VerificationToken",
+      "indexname": "VerificationToken_identifier_token_key",
+      "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_identifier_token_key\" ON public.\"VerificationToken\" USING btree (identifier, token)"
+    },
+    {
+      "tablename": "VerificationToken",
+      "indexname": "VerificationToken_token_key",
+      "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_token_key\" ON public.\"VerificationToken\" USING btree (token)"
+    },
+    {
+      "tablename": "_LeagueMembers",
+      "indexname": "_LeagueMembers_AB_unique",
+      "indexdef": "CREATE UNIQUE INDEX \"_LeagueMembers_AB_unique\" ON public.\"_LeagueMembers\" USING btree (\"A\", \"B\")"
+    },
+    {
+      "tablename": "_LeagueMembers",
+      "indexname": "_LeagueMembers_B_index",
+      "indexdef": "CREATE INDEX \"_LeagueMembers_B_index\" ON public.\"_LeagueMembers\" USING btree (\"B\")"
+    }
+  ],
+  "tls": [
+    {
+      "ssl": false,
+      "version": null
+    }
+  ],
+  "publicFunctions": [
+    {
+      "proname": "volleybet_ledger_validate",
+      "security_definer": false,
+      "anon_can_execute": false,
+      "authenticated_can_execute": false
+    },
+    {
+      "proname": "volleybet_pool_validate",
+      "security_definer": false,
+      "anon_can_execute": false,
+      "authenticated_can_execute": false
+    }
+  ],
+  "publicViews": [],
+  "checks": {
+    "fractional_movements": 0,
+    "cross_league_ledger_links": 0,
+    "invalid_scored_results": 0,
+    "invalid_predictions": 0,
+    "own_team_predictions": 0,
+    "scored_days_without_seed": 11,
+    "scored_days": 13,
+    "weak_invites": 0,
+    "rate_limit_rows": 117,
+    "expired_rate_limit_rows": 116,
+    "mismatched_points": 0,
+    "duplicated_entry_fees": 0,
+    "duplicate_day_numbers": 0,
+    "scored_days_unbalanced": 0
+  }
+}

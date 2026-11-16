@@ -15,22 +15,22 @@ export default function BrutalAlertProvider() {
         <div className="flex justify-end gap-4 pt-2">
           {type === "confirm" ? (
             <>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   if (onCancel) onCancel();
                   closeAlert();
-                }} 
+                }}
                 className="flex-1 text-base sm:text-xl h-12 sm:h-14 uppercase font-black tracking-wider border-[3px] border-black px-2"
               >
                 Annulla
               </Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={() => {
                   if (onConfirm) onConfirm();
                   closeAlert();
-                }} 
+                }}
                 className="flex-1 text-base sm:text-xl h-12 sm:h-14 uppercase font-black tracking-wider bg-red-500 text-white hover:bg-red-600 px-2"
               >
                 Conferma

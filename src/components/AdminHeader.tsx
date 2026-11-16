@@ -14,9 +14,9 @@ interface AdminHeaderProps {
   hasEmptyMatchDays: boolean
 }
 
-export default function AdminHeader({ 
-  leagueId, 
-  leagueName, 
+export default function AdminHeader({
+  leagueId,
+  leagueName,
   coinName
 }: AdminHeaderProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -27,9 +27,9 @@ export default function AdminHeader({
         <h1 className="text-base md:text-lg font-black uppercase tracking-tight bg-white border-[3px] border-black shadow-brutal px-3 py-1.5 inline-block -rotate-1 truncate max-w-[calc(100%-60px)]">
           Admin - {leagueName}
         </h1>
-        
+
         <div className="flex gap-3 items-center">
-          <button 
+          <button
             onClick={() => setShowSettingsModal(true)}
             className="bg-yellow-300 hover:bg-yellow-400 text-black border-[3px] border-black p-1.5 font-bold uppercase text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center rounded-brutal"
             title="Impostazioni Campionato"
@@ -42,7 +42,7 @@ export default function AdminHeader({
       {showSettingsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white border-[4px] border-black shadow-brutal p-6 max-w-md w-full space-y-6 transform -rotate-1 relative">
-            <button 
+            <button
               onClick={() => setShowSettingsModal(false)}
               className="absolute top-2 right-2 p-1 border-[2px] border-black bg-red-400 text-white font-bold hover:bg-red-500 rounded-brutal shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
             >
@@ -56,7 +56,7 @@ export default function AdminHeader({
               <UpdateLeagueNameForm leagueId={leagueId} defaultName={leagueName} />
               <UpdateCoinForm leagueId={leagueId} defaultName={coinName} />
               <form action={rotateInviteCode.bind(null, leagueId)}>
-                <p className="text-sm mb-2">Rigenerando l?invito, il codice precedente smette di funzionare.</p>
+                <p className="text-sm mb-2">Rigenerando l’invito, il codice precedente smette di funzionare.</p>
                 <SubmitButton defaultText="Rigenera codice invito" loadingText="AGGIORNAMENTO..." />
               </form>
             </div>

@@ -1,17 +1,16 @@
 import Link from "next/link"
 import { Bell } from "lucide-react"
 
-export default function NotificationBell({ 
-  leagueId, 
-  notifications 
-}: { 
-  leagueId: string, 
-  notifications: any[] 
+export default function NotificationBell({
+  leagueId,
+  unreadCount
+}: {
+  leagueId: string,
+  unreadCount: number
 }) {
-  const unreadCount = notifications.filter(n => !n.isRead).length
 
   return (
-    <Link 
+    <Link
       href={`/league/${leagueId}/notifications`}
       className="relative font-bold border-[2px] border-black bg-white shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-gray-100 p-2 transition-all flex items-center justify-center"
     >

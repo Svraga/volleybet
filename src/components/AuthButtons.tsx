@@ -3,12 +3,12 @@
 import { signIn, signOut } from "next-auth/react"
 import { Button } from "./ui/Button"
 
-export function LoginButton() {
+export function LoginButton({ callbackUrl = "/" }: { callbackUrl?: string }) {
   return (
     <div className="flex flex-col gap-4 w-full max-w-sm">
-      <Button 
-        variant="default" 
-        onClick={() => signIn("google", { callbackUrl: "/" })} 
+      <Button
+        variant="default"
+        onClick={() => signIn("google", { callbackUrl })}
         className="w-full text-lg h-14 bg-white hover:bg-gray-50 text-black border-[3px] border-black shadow-brutal flex items-center justify-center gap-3 transition-all cursor-pointer font-bold"
       >
         <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">

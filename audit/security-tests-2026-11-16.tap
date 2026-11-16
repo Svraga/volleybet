@@ -1,0 +1,244 @@
+TAP version 13
+# Subtest: S04: rejects huge, nonfinite and malformed match counts before entering a transaction
+ok 1 - S04: rejects huge, nonfinite and malformed match counts before entering a transaction
+  ---
+  duration_ms: 1718.7123
+  type: 'test'
+  ...
+# Subtest: match configuration accepts bounded valid input and rejects unknown or duplicate teams
+ok 2 - match configuration accepts bounded valid input and rejects unknown or duplicate teams
+  ---
+  duration_ms: 511.6039
+  type: 'test'
+  ...
+# Subtest: S05: existing membership cannot change team, including after leave and rejoin
+ok 3 - S05: existing membership cannot change team, including after leave and rejoin
+  ---
+  duration_ms: 170.5049
+  type: 'test'
+  ...
+# Subtest: S05: own-team bets and rejoining without a recoverable historical team are rejected
+ok 4 - S05: own-team bets and rejoining without a recoverable historical team are rejected
+  ---
+  duration_ms: 292.3068
+  type: 'test'
+  ...
+# Subtest: S06: concurrent scoring and rescore replace payouts without duplicating money
+ok 5 - S06: concurrent scoring and rescore replace payouts without duplicating money
+  ---
+  duration_ms: 408.2726
+  type: 'test'
+  ...
+# Subtest: scoring a populated day fits the transaction budget with simulated 100ms database round trips
+ok 6 - scoring a populated day fits the transaction budget with simulated 100ms database round trips
+  ---
+  duration_ms: 466.975
+  type: 'test'
+  ...
+# Subtest: failed batch payouts roll back results, points and previous payouts together
+ok 7 - failed batch payouts roll back results, points and previous payouts together
+  ---
+  duration_ms: 318.7974
+  type: 'test'
+  ...
+# Subtest: 8 coins split between 5 tied winners give three payouts of 2 and two of 1, stable on rescore
+ok 8 - 8 coins split between 5 tied winners give three payouts of 2 and two of 1, stable on rescore
+  ---
+  duration_ms: 267.56
+  type: 'test'
+  ...
+# Subtest: one winner and four seconds distribute 8 whole coins as 5 plus three prizes of 1
+ok 9 - one winner and four seconds distribute 8 whole coins as 5 plus three prizes of 1
+  ---
+  duration_ms: 265.8988
+  type: 'test'
+  ...
+# Subtest: integer split conserves every pool, treats ties within one coin and ignores query order
+ok 10 - integer split conserves every pool, treats ties within one coin and ignores query order
+  ---
+  duration_ms: 979.7454
+  type: 'test'
+  ...
+# Subtest: S07: betting observes scoring, membership and deadline changes after acquiring the lock
+ok 11 - S07: betting observes scoring, membership and deadline changes after acquiring the lock
+  ---
+  duration_ms: 321.4199
+  type: 'test'
+  ...
+# Subtest: S07: a deadline crossed during save rolls back both bet and fee
+ok 12 - S07: a deadline crossed during save rolls back both bet and fee
+  ---
+  duration_ms: 111.1504
+  type: 'test'
+  ...
+# Subtest: expired and closed days can be reopened by admin, scored days stay locked; deletion remains blocked
+ok 13 - expired and closed days can be reopened by admin, scored days stay locked; deletion remains blocked
+  ---
+  duration_ms: 518.6319
+  type: 'test'
+  ...
+# Subtest: scoring before the deadline and scoring by a nonadmin fail without modifying ledgers
+ok 14 - scoring before the deadline and scoring by a nonadmin fail without modifying ledgers
+  ---
+  duration_ms: 544.212
+  type: 'test'
+  ...
+# Subtest: S10: admin proxy cannot overwrite an existing personal prediction
+ok 15 - S10: admin proxy cannot overwrite an existing personal prediction
+  ---
+  duration_ms: 120.7381
+  type: 'test'
+  ...
+# Subtest: admin proxy bypasses opening and deadline while ordinary members remain constrained
+ok 16 - admin proxy bypasses opening and deadline while ordinary members remain constrained
+  ---
+  duration_ms: 316.2845
+  type: 'test'
+  ...
+# Subtest: saved results block proxy bets and deadline changes, including results committed while waiting for lock
+ok 17 - saved results block proxy bets and deadline changes, including results committed while waiting for lock
+  ---
+  duration_ms: 487.9591
+  type: 'test'
+  ...
+# Subtest: partial preview scores exact results and winners, preserves official state and matches final scoring
+ok 18 - partial preview scores exact results and winners, preserves official state and matches final scoring
+  ---
+  duration_ms: 240.4935
+  type: 'test'
+  ...
+# Subtest: preview rejects nonadmins, open days, missing results and invalid results
+ok 19 - preview rejects nonadmins, open days, missing results and invalid results
+  ---
+  duration_ms: 233.769
+  type: 'test'
+  ...
+# Subtest: S11: concurrent proxy and personal bets charge a single entry fee
+ok 20 - S11: concurrent proxy and personal bets charge a single entry fee
+  ---
+  duration_ms: 106.4139
+  type: 'test'
+  ...
+# Subtest: S11: historical proxy fees are recognized regardless of reason text
+ok 21 - S11: historical proxy fees are recognized regardless of reason text
+  ---
+  duration_ms: 117.8107
+  type: 'test'
+  ...
+# Subtest: S12: match replacement is rejected after a prediction or historical fee
+ok 22 - S12: match replacement is rejected after a prediction or historical fee
+  ---
+  duration_ms: 268.9214
+  type: 'test'
+  ...
+# Subtest: legacy fees without predictions and zero-score duplicated fees are refunded exactly once
+ok 23 - legacy fees without predictions and zero-score duplicated fees are refunded exactly once
+  ---
+  duration_ms: 405.8519
+  type: 'test'
+  ...
+# Subtest: S13: invitation preview requires authentication and enforces a durable per-user limit
+ok 24 - S13: invitation preview requires authentication and enforces a durable per-user limit
+  ---
+  duration_ms: 107.5773
+  type: 'test'
+  ...
+# Subtest: S13: invite rotation is admin-only and invalidates the previous capability
+ok 25 - S13: invite rotation is admin-only and invalidates the previous capability
+  ---
+  duration_ms: 99.236
+  type: 'test'
+  ...
+# Subtest: R01: direct stats, predictions and betting page calls reject an outsider before reading league data
+ok 26 - R01: direct stats, predictions and betting page calls reject an outsider before reading league data
+  ---
+  duration_ms: 661.4383
+  type: 'test'
+  ...
+# Subtest: round standings show net coins below points, including fractional prizes and nonparticipants
+ok 27 - round standings show net coins below points, including fractional prizes and nonparticipants
+  ---
+  duration_ms: 138.4122
+  type: 'test'
+  ...
+# Subtest: scheduled creation validates future instants, order and explicit timezone
+ok 28 - scheduled creation validates future instants, order and explicit timezone
+  ---
+  duration_ms: 1181.5959
+  type: 'test'
+  ...
+# Subtest: scheduled days reject personal bets, including after waiting for the league lock
+ok 29 - scheduled days reject personal bets, including after waiting for the league lock
+  ---
+  duration_ms: 150.9679
+  type: 'test'
+  ...
+# Subtest: scheduled days open automatically at the exact instant and close at the deadline
+ok 30 - scheduled days open automatically at the exact instant and close at the deadline
+  ---
+  duration_ms: 95.8111
+  type: 'test'
+  ...
+# Subtest: page refresh timer re-arms for the deadline after the scheduled opening
+ok 31 - page refresh timer re-arms for the deadline after the scheduled opening
+  ---
+  duration_ms: 21.6604
+  type: 'test'
+  ...
+# Subtest: admin can configure scheduled fixtures and open early; members and expired days cannot
+ok 32 - admin can configure scheduled fixtures and open early; members and expired days cannot
+  ---
+  duration_ms: 112.7924
+  type: 'test'
+  ...
+# Subtest: scheduled deadline cannot precede opening and early opening requires fixtures
+ok 33 - scheduled deadline cannot precede opening and early opening requires fixtures
+  ---
+  duration_ms: 110.7236
+  type: 'test'
+  ...
+# Subtest: prediction page excludes open days at the database boundary and returns minimal closed-day props
+ok 34 - prediction page excludes open days at the database boundary and returns minimal closed-day props
+  ---
+  duration_ms: 384.386
+  type: 'test'
+  ...
+# Subtest: S09/S14: admin client props contain neither prediction values nor private user fields
+ok 35 - S09/S14: admin client props contain neither prediction values nor private user fields
+  ---
+  duration_ms: 210.2593
+  type: 'test'
+  ...
+# Subtest: S16: payout test entrypoint contains no database connection or destructive operations
+ok 36 - S16: payout test entrypoint contains no database connection or destructive operations
+  ---
+  duration_ms: 9.4574
+  type: 'test'
+  ...
+# Subtest: S17: development MCP is explicitly disabled and action bodies are bounded
+ok 37 - S17: development MCP is explicitly disabled and action bodies are bounded
+  ---
+  duration_ms: 21.4276
+  type: 'test'
+  ...
+# Subtest: braces mitigation preserves normal globs and rejects nested strings and supplied ASTs
+ok 38 - braces mitigation preserves normal globs and rejects nested strings and supplied ASTs
+  ---
+  duration_ms: 730.1642
+  type: 'test'
+  ...
+# Subtest: S15: malformed percent-encoded Bearer tokens fail closed without an uncaught URIError
+ok 39 - S15: malformed percent-encoded Bearer tokens fail closed without an uncaught URIError
+  ---
+  duration_ms: 1745.8255
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16437.5952

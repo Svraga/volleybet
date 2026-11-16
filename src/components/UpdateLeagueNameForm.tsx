@@ -1,5 +1,7 @@
 "use client"
 
+import { errorMessage } from "@/lib/forms"
+
 import { Input } from "@/components/ui/Input"
 import { brutalAlert } from "@/store/alertStore"
 import { updateLeagueName } from "@/actions/league"
@@ -25,8 +27,8 @@ export default function UpdateLeagueNameForm({ leagueId, defaultName }: { league
     try {
       await updateLeagueName(leagueId, formData)
       brutalAlert("Nome del campionato aggiornato con successo!")
-    } catch (e: any) {
-      brutalAlert(e.message || "Errore durante l'aggiornamento.")
+    } catch (error: unknown) {
+      brutalAlert(errorMessage(error))
     }
   }
 

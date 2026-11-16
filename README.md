@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VolleyBet
 
-## Getting Started
+Leghe di pronostici di pallavolo con Next.js 16, NextAuth e PostgreSQL/Prisma.
 
-First, run the development server:
+## Sviluppo
 
-```bash
+```sh
+npm ci
+npm run db:generate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Configura gli URL PostgreSQL e Google OAuth nei file `.env.local` esclusi da Git. Mantieni stabile `NEXTAUTH_SECRET` tra i rilasci per conservare le sessioni.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Per un database nuovo: `npm run db:deploy`. Per un database già esistente, l'upgrade e l'adozione della baseline sono protetti da copie precedenti e verifica dello schema: consulta [la procedura operativa](audit/SECURITY-FIXES-2026-11-16.md).
 
-## Learn More
+Le vecchie migrazioni SQLite sono archiviate, senza cancellazioni di dati. Non usare reset per aggiornare un database esistente. La CA pubblica del pooler Supabase ? inclusa in `prisma/certs/database-ca.pem`; TLS e verifica dell'identit? del server sono obbligatori nelle connessioni remote.
 
-To learn more about Next.js, take a look at the following resources:
+## Verifiche
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sh
+npm run lint
+npx tsc --noEmit
+npm run test:security
+npm run build
+npm audit
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+La CI esegue i controlli con Node 24. Lo script `scripts/test-postgresql-baseline.cjs` verifica anche migrazioni e vincoli in uno schema temporaneo, annullato integralmente a fine prova.
 
-## Deploy on Vercel
+## Manutenzione
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`npm run db:prune-rate-limits` elimina soltanto contatori di abuso scaduti da oltre sette giorni. Su Vercel ? disponibile anche un job giornaliero protetto dalla variabile separata `CRON_SECRET`; vedi la procedura operativa per il deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Sicurezza e impatto utenti
+
+[Audit originale](audit/SECURITY-AUDIT-2026-11-16.md) · [Correzioni e compatibilit? utenti](audit/SECURITY-FIXES-2026-11-16.md) · [Premi in coin interi](audit/WHOLE-COIN-PAYOUTS.md).

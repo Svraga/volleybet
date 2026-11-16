@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession } from "next-auth"
+import type { DefaultSession } from "next-auth"
 
 declare module "next-auth" {
   interface Session {
@@ -6,4 +6,8 @@ declare module "next-auth" {
       id: string
     } & DefaultSession["user"]
   }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT { sessionVersion?: number }
 }

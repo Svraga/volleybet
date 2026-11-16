@@ -25,7 +25,7 @@ export default function BottomNav({ leagueId }: { leagueId?: string }) {
           </Link>
         )
       })}
-      
+
     </div>
   )
 }

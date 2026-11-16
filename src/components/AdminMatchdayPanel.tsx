@@ -1,5 +1,7 @@
 "use client"
 
+import { italianDateTime } from "@/lib/dates"
+
 import { useEffect, useRef, useState } from "react"
 import type { Match, MatchDay, Team } from "@prisma/client"
 import { Button } from "@/components/ui/Button"
@@ -9,8 +11,8 @@ import { hasPublishedResults } from "@/lib/matchday"
 import { proxyPlaceBets } from "@/actions/proxyBet"
 import SubmitButton from "@/components/SubmitButton"
 
-export default function AdminMatchdayPanel({ 
-  leagueId, 
+export default function AdminMatchdayPanel({
+  leagueId,
   homeTeam,
   matchDay,
   initiallyClosed,
@@ -18,15 +20,15 @@ export default function AdminMatchdayPanel({
   teams,
   hasOddTeams,
   users
-}: { 
-  leagueId: string, 
+}: {
+  leagueId: string,
   homeTeam: string,
   matchDay: MatchDay & { matches: Match[] },
   initiallyClosed: boolean,
   initiallyScheduled: boolean,
   teams: Pick<Team, "id" | "name">[],
   hasOddTeams: boolean,
-  users: { id: string; name: string | null; teamName: string; hasBets: boolean }[]
+  users: { id: string; name: string | null; teamName: string; hasBets: boolean; betMatchIds: string[] }[]
 }) {
   const [activeTab, setActiveTab] = useState<"matches" | "results" | "proxy">("matches")
   const isMatchDayEmpty = matchDay.matches.length === 0
@@ -46,7 +48,7 @@ export default function AdminMatchdayPanel({
   // SECTION 1: Match Management
   const initialRows = Math.floor(teams.length / 2)
   const numFixedRows = initialRows
-  
+
   // Pre-populate if editing existing matches
   const initialSelectedTeams = () => {
     if (matchDay.matches.length > 0) {
@@ -62,7 +64,7 @@ export default function AdminMatchdayPanel({
 
   const [selectedTeams, setSelectedTeams] = useState<string[]>(initialSelectedTeams)
   const [restingTeam, setRestingTeam] = useState<string>(matchDay.restingTeam || "")
-  
+
   const handleTeamChange = (index: number, val: string) => {
     const newSelected = [...selectedTeams]
     newSelected[index] = val
@@ -74,8 +76,9 @@ export default function AdminMatchdayPanel({
   const boundProxyPlaceBets = proxyPlaceBets.bind(null, leagueId, matchDay.id)
 
   const usersWhoBet = users.filter(u => u.hasBets)
-  const usersMissing = users.filter(u => !u.hasBets && u.teamName)
+  const usersMissing = users.filter(u => u.teamName && matchDay.matches.some(m => m.teamA !== u.teamName && m.teamB !== u.teamName && !u.betMatchIds.includes(m.id)))
   const [selectedProxyUser, setSelectedProxyUser] = useState("")
+  const activeProxyUser = usersMissing.some(user => user.id === selectedProxyUser) ? selectedProxyUser : ""
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewMatchDay>> | null>(null)
   const [draftResults, setDraftResults] = useState<Record<string, string>>({})
   const resultsRevision = useRef(0)
@@ -85,7 +88,7 @@ export default function AdminMatchdayPanel({
     <div className="space-y-4">
       {isScheduled && !isClosed && <div className="border-[3px] border-black bg-yellow-100 p-3 space-y-3 shadow-brutal-sm">
         <p className="font-black uppercase text-sm">Apertura programmata</p>
-        <p className="text-sm font-bold">{new Date(matchDay.opensAt!).toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })} (ora italiana)</p>
+        <p className="text-sm font-bold">{italianDateTime(matchDay.opensAt!)} (ora italiana)</p>
         <p className="text-xs font-bold">Puoi preparare gli accoppiamenti prima dell’apertura.</p>
         <form action={openMatchDayNow.bind(null, leagueId, matchDay.id)}>
           <SubmitButton variant="primary" className="w-full text-sm" disabled={isMatchDayEmpty} defaultText="Apri subito" loadingText="APERTURA..." />
@@ -94,7 +97,7 @@ export default function AdminMatchdayPanel({
       </div>}
       <div className="flex flex-col gap-2 w-full">
         <div className="grid grid-cols-2 gap-2 w-full">
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab("matches")}
             className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${isMatchDayEmpty ? 'col-span-2' : ''} ${activeTab === "matches" ? 'bg-yellow-300' : 'bg-white hover:bg-gray-100'}`}
@@ -102,7 +105,7 @@ export default function AdminMatchdayPanel({
             Gestione Partite
           </button>
           {!isMatchDayEmpty && (
-            <button 
+            <button
               type="button"
               onClick={() => setActiveTab("results")}
               className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all ${activeTab === "results" ? 'bg-green-400' : 'bg-white hover:bg-gray-100'}`}
@@ -112,7 +115,7 @@ export default function AdminMatchdayPanel({
           )}
         </div>
         {!isMatchDayEmpty && (
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab("proxy")}
             className={`border-[3px] border-black font-bold uppercase text-xs sm:text-sm py-2 px-1 transition-all w-full ${activeTab === "proxy" ? 'bg-purple-400 text-white' : 'bg-white text-black hover:bg-gray-100'}`}
@@ -130,9 +133,9 @@ export default function AdminMatchdayPanel({
               1. Gestione Partite
             </h3>
             {!isMatchDayEmpty && !isClosed && !hasEntries && (
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setIsEditingMatches(!isEditingMatches)}
                 className="text-xs h-8 px-2 border-[2px] border-black"
               >
@@ -140,7 +143,7 @@ export default function AdminMatchdayPanel({
               </Button>
             )}
           </div>
-          
+
           {!isClosed && !hasEntries && (isMatchDayEmpty || isEditingMatches) ? (
             <form action={boundSetMatches} className="space-y-4">
               {isEditingMatches && (
@@ -152,9 +155,9 @@ export default function AdminMatchdayPanel({
                 <div key={`row_${i}`} className="flex flex-col gap-2 border-[2px] border-gray-300 p-2 shadow-brutal-sm bg-gray-50 min-w-0 w-full">
                   <div className="w-full min-w-0">
                     <label className="text-[10px] uppercase font-black text-gray-500">Squadra Casa</label>
-                    <select 
-                      name={`teamA_${i}`} 
-                      required 
+                    <select
+                      name={`teamA_${i}`}
+                      required
                       value={selectedTeams[i * 2]}
                       onChange={(e) => handleTeamChange(i * 2, e.target.value)}
                       className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm truncate"
@@ -169,9 +172,9 @@ export default function AdminMatchdayPanel({
                   </div>
                   <div className="w-full min-w-0">
                     <label className="text-[10px] uppercase font-black text-gray-500">Squadra Ospite</label>
-                    <select 
-                      name={`teamB_${i}`} 
-                      required 
+                    <select
+                      name={`teamB_${i}`}
+                      required
                       value={selectedTeams[i * 2 + 1]}
                       onChange={(e) => handleTeamChange(i * 2 + 1, e.target.value)}
                       className="w-full border-[2px] border-black px-2 py-1 bg-white focus:shadow-brutal-sm outline-none font-bold text-sm truncate"
@@ -189,9 +192,9 @@ export default function AdminMatchdayPanel({
               {hasOddTeams && (
                 <div className="flex flex-col gap-2 border-[2px] border-black p-2 bg-gray-100 shadow-brutal-sm mt-4 min-w-0 w-full">
                   <label className="text-sm font-bold">Squadra che RIPOSA</label>
-                  <select 
-                    name="restingTeam" 
-                    required 
+                  <select
+                    name="restingTeam"
+                    required
                     value={restingTeam}
                     onChange={(e) => setRestingTeam(e.target.value)}
                     className="w-full border-[2px] border-black px-2 py-1 focus:shadow-brutal-sm outline-none font-bold truncate"
@@ -241,7 +244,7 @@ export default function AdminMatchdayPanel({
           <h3 className="text-xl font-bold uppercase mb-4 bg-green-400 inline-block px-2 border-[2px] border-black -rotate-1">
             2. {isScored ? "Modifica Risultati (Re-Scoring)" : "Inserimento Risultati"}
           </h3>
-          
+
           {isScored && (
             <div className="mb-4 bg-yellow-100 border-[3px] border-black p-3 text-xs sm:text-sm font-bold shadow-brutal-sm">
               ⚠️ <strong>Risultati già calcolati.</strong> Se modifichi i risultati e salvi, la classifica verrà ricalcolata automaticamente e i premi precedenti verranno corretti.
@@ -258,12 +261,12 @@ export default function AdminMatchdayPanel({
                     <span className="text-[9px] uppercase font-black tracking-wider text-gray-500 my-0.5">vs</span>
                     <span className="truncate w-full block text-[11px] sm:text-xs font-bold" title={m.teamB}>{m.teamB}</span>
                   </div>
-                  <select 
-                    name={`result_${m.id}`} 
+                  <select
+                    name={`result_${m.id}`}
                     value={draftResults[m.id] ?? existingValue}
                     onChange={e => setDraftResults(previous => ({ ...previous, [m.id]: e.target.value }))}
                     required
-                    className="h-8 border-[2px] border-black bg-white px-2 py-0 text-xs font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0" 
+                    className="h-8 border-[2px] border-black bg-white px-2 py-0 text-xs font-bold focus:outline-none focus:shadow-brutal-sm flex-shrink-0"
                   >
                     <option value="" className="text-gray-400">Da giocare</option>
                     <option value="3-0">3 - 0</option>
@@ -303,11 +306,11 @@ export default function AdminMatchdayPanel({
                 </li>)}
               </ol>
             </div>)}
-            <SubmitButton 
-              variant="primary" 
-              className="w-full mt-4 uppercase font-black" 
-              defaultText={isScored ? "Ricalcola e Aggiorna Risultati" : "Termina e Calcola"} 
-              loadingText={isScored ? "RICALCOLO IN CORSO..." : "CALCOLANDO..."} 
+            <SubmitButton
+              variant="primary"
+              className="w-full mt-4 uppercase font-black"
+              defaultText={isScored ? "Ricalcola e Aggiorna Risultati" : "Termina e Calcola"}
+              loadingText={isScored ? "RICALCOLO IN CORSO..." : "CALCOLANDO..."}
             />
           </form>
         </div>
@@ -317,7 +320,7 @@ export default function AdminMatchdayPanel({
       {activeTab === "proxy" && !isMatchDayEmpty && (
         <div className="border-[4px] border-black p-4 shadow-brutal bg-white">
           <h3 className="text-xl font-bold uppercase mb-4 bg-purple-400 text-white inline-block px-2 border-[2px] border-black -rotate-1">3. Logistica & Proxy-Bet</h3>
-          
+
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="border-[2px] border-black p-2 bg-gray-50">
               <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Hanno Scommesso</h4>
@@ -332,7 +335,7 @@ export default function AdminMatchdayPanel({
               </ul>
             </div>
             <div className="border-[2px] border-black p-2 bg-gray-50">
-              <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Mancanti</h4>
+              <h4 className="font-bold text-sm border-b-[2px] border-black pb-1 mb-2">Da completare</h4>
               <ul className="text-sm font-bold text-red-700 space-y-1">
                 {usersMissing.length === 0 && <li className="text-gray-400">Nessuno</li>}
                 {usersMissing.map(u => (
@@ -351,15 +354,15 @@ export default function AdminMatchdayPanel({
               <h4 className="font-bold mb-2 uppercase">Scommetti per altri</h4>
               <p className="mb-3 text-xs font-bold">L’admin può inserire pronostici anche oltre la deadline, finché i risultati non sono pubblicati.</p>
               <form action={async (formData) => {
-                if (!selectedProxyUser) return;
-                formData.append("userId", selectedProxyUser);
+                if (!activeProxyUser) return;
+                formData.append("userId", activeProxyUser);
                 await boundProxyPlaceBets(formData);
                 setSelectedProxyUser("");
               }} className="space-y-4">
-                <select 
-                  className="w-full border-[3px] border-black p-2 font-bold truncate" 
+                <select
+                  className="w-full border-[3px] border-black p-2 font-bold truncate"
                   required
-                  value={selectedProxyUser}
+                  value={activeProxyUser}
                   onChange={e => setSelectedProxyUser(e.target.value)}
                 >
                   <option value="" disabled>Seleziona Utente</option>
@@ -370,8 +373,8 @@ export default function AdminMatchdayPanel({
                   ))}
                 </select>
 
-                {selectedProxyUser && (() => {
-                  const targetUser = users.find(u => u.id === selectedProxyUser);
+                {activeProxyUser && (() => {
+                  const targetUser = users.find(u => u.id === activeProxyUser);
                   const targetUserTeam = targetUser?.teamName || homeTeam;
 
                   return (
@@ -382,7 +385,7 @@ export default function AdminMatchdayPanel({
                       </div>
                       {matchDay.matches.map((m) => {
                         const isTargetTeam = m.teamA === targetUserTeam || m.teamB === targetUserTeam;
-                        if (isTargetTeam) return null; // Target user's team match is excluded
+                        if (isTargetTeam || targetUser?.betMatchIds.includes(m.id)) return null; // Target user's team match is excluded
                         return (
                           <div key={`proxy_m_${m.id}`} className="flex justify-between items-center text-sm font-bold gap-4 min-w-0 border-[2px] border-black p-3 bg-white shadow-brutal-sm">
                             <div className="flex flex-col items-center flex-1 min-w-0 text-center leading-tight">

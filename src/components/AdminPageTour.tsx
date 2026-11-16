@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { driver } from "driver.js"
+import { driver, type DriveStep } from "driver.js"
 import "driver.js/dist/driver.css"
 import { useAlertStore } from "@/store/alertStore"
 
@@ -13,14 +13,10 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
     const isDashboardDone = localStorage.getItem("volleybet_admin_tour_done") === "true"
     const isPageTourDone = localStorage.getItem("volleybet_admin_page_tour_done") === "true"
     const forceTour = localStorage.getItem("volleybet_force_tour") === "true"
-    
+
     if (!isDashboardDone) return
     if (isPageTourDone && !forceTour) return
-
-    if (!hasMatchdays) {
-      setShowDummy(true)
-    }
-
+    const dummyTimer = !hasMatchdays ? setTimeout(() => setShowDummy(true), 0) : undefined
     const tourDriver = driver({
       showProgress: true,
       animate: true,
@@ -44,7 +40,7 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
       }
     })
 
-    const steps: any[] = [
+    const steps: DriveStep[] = [
       { element: '#tour-admin-new-matchday', popover: { title: 'Crea Giornata', description: 'Qui generi un nuovo blocco di scommesse, indicando il numero della giornata e la scadenza.', side: "bottom", align: 'start' } },
       { element: '#tour-admin-matchday-list', popover: { title: 'Gestione Turni', description: 'Qui vedi tutte le giornate. Clicca su una giornata per espanderla e rivelare i 3 pannelli di amministrazione.', side: "top", align: 'start' } },
       { popover: { title: 'Tutto Pronto!', description: 'Ricorda che una volta compilati i risultati, le scommesse verranno calcolate in automatico!' } }
@@ -56,6 +52,7 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
     }, 500)
 
     return () => {
+      clearTimeout(dummyTimer)
       clearTimeout(timeoutId)
       tourDriver.destroy()
     }
@@ -67,9 +64,9 @@ export default function AdminPageTour({ hasMatchdays }: { hasMatchdays?: boolean
     <div className="fixed inset-0 z-50 bg-secondary overflow-y-auto p-6 flex flex-col items-center pt-12">
       <div className="w-full max-w-4xl mb-8 text-center bg-white border-[4px] border-black shadow-brutal p-4 -rotate-1">
         <h1 className="text-3xl font-black uppercase">Ambiente di Prova (Tutorial)</h1>
-        <p className="font-bold text-gray-600">Essendo la tua prima volta (e non avendo turni creati), ecco un'anteprima di come sarà la Dashboard Admin!</p>
+        <p className="font-bold text-gray-600">Essendo la tua prima volta (e non avendo turni creati), ecco un’anteprima di come sarà la Dashboard Admin!</p>
       </div>
-      
+
       <div className="grid md:grid-cols-3 gap-8 w-full max-w-4xl">
         <div id="tour-admin-new-matchday" className="md:col-span-1 space-y-8">
           <div className="bg-white overflow-hidden border-[3px] border-black shadow-brutal">

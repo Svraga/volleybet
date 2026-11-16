@@ -1,0 +1,49 @@
+[
+  {
+    "id": "A01",
+    "reproduced": true,
+    "partialProxySaved": true,
+    "missingEligibleMatches": 1,
+    "cannotCompleteAfterDeadline": true
+  },
+  {
+    "id": "A02",
+    "reproduced": true,
+    "unrestrictedWrites": 100,
+    "durableRateLimitsUsed": 0,
+    "fileInputThrowsTypeError": true
+  },
+  {
+    "id": "B01",
+    "reproduced": true,
+    "expectedFormErrorThrowsInsteadOfReturningState": true
+  },
+  {
+    "id": "B02",
+    "reproduced": true,
+    "twoTeamLeagueHasNoEligiblePredictionsForMembers": true
+  },
+  {
+    "id": "A03",
+    "reproduced": true,
+    "leagueWriteLockAcquiredBeforeAuthorization": true,
+    "denialOfServiceLoadNotAttempted": true
+  },
+  {
+    "id": "B03",
+    "reproduced": true,
+    "serverUtc": "16/11/26, 20:00",
+    "intendedRome": "16/11/26, 21:00"
+  },
+  {
+    "id": "B04",
+    "reproduced": true,
+    "explicitDisabledFalseOverridesPendingState": true
+  },
+  {
+    "id": "B05",
+    "reproduced": true,
+    "oneCorrectAndOnePendingDisplayedAccuracy": "50%",
+    "accuracyAmongSettledBets": "100%"
+  }
+]

@@ -1,3 +1,4 @@
+import { italianDateTime } from "@/lib/dates"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
@@ -44,7 +45,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
   const userTeam = member.teamName
 
   const isDeadlinePassed = new Date().getTime() >= matchDay.deadline.getTime()
-  
+
   const boundPlaceBets = placeBets.bind(null, league.id, matchDay.id)
 
   return (
@@ -61,7 +62,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
               Scadenza
             </p>
             <p className="font-bold text-lg leading-tight">
-              {new Date(matchDay.deadline).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
+              {italianDateTime(matchDay.deadline)}
             </p>
           </div>
         </div>
@@ -89,7 +90,7 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
               const existingBet = m.bets.find(b => b.userId === session.user.id)
               const existingValue = existingBet ? `${existingBet.predictedA}-${existingBet.predictedB}` : ""
-              
+
               return (
                 <div key={m.id} className="p-3 border-[3px] border-black shadow-brutal bg-white transition-all hover:-translate-y-1">
                   <div className="flex flex-col sm:flex-row justify-between items-center font-bold text-sm sm:text-base mb-3 gap-2 min-w-0">
@@ -97,10 +98,10 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
                     <span className="flex-none bg-black text-white px-2 py-0.5 text-xs rotate-2">VS</span>
                     <span className="text-center sm:text-right flex-1 break-words line-clamp-2 w-full min-w-0">{m.teamB}</span>
                   </div>
-                  
+
                   <div className="mt-4 flex flex-col md:flex-row md:justify-end md:items-center gap-2">
-                    <select 
-                      name={`bet_${m.id}`} 
+                    <select
+                      name={`bet_${m.id}`}
                       className={`h-10 rounded-brutal border-[3px] border-black bg-white px-3 font-black focus:outline-none focus:bg-yellow-100 ${isDeadlinePassed ? 'opacity-50 cursor-not-allowed bg-gray-200' : ''}`}
                       defaultValue={existingValue}
                       disabled={isDeadlinePassed}
@@ -120,9 +121,9 @@ export default async function BettingPage({ params }: { params: Promise<{ id: st
 
             {!isDeadlinePassed && (
               <div className="pt-6">
-                <SubmitButton 
-                  variant="primary" 
-                  className="w-full text-xl h-16" 
+                <SubmitButton
+                  variant="primary"
+                  className="w-full text-xl h-16"
                   defaultText="Conferma Scommesse"
                   loadingText="SALVATAGGIO..."
                 />

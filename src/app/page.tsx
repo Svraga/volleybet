@@ -7,29 +7,32 @@ import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
+import Image from "next/image"
+import { safeCallbackPath } from "@/lib/redirects"
 import { UserRound, ArrowRight } from "lucide-react"
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<{ all?: string; view?: string }>
+  searchParams?: Promise<{ all?: string; view?: string; callbackUrl?: string }>
 }) {
   const session = await getServerSession(authOptions)
+  const sp = searchParams ? await searchParams : {}
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-primary">
-        
+
         <Card className="w-full max-w-md bg-white p-8">
           <div className="flex flex-col items-center space-y-8">
             <div className="space-y-2 text-center flex flex-col items-center">
-              <img src="/volleybet_logo.png" alt="VolleyBet Logo" className="w-32 h-32 mb-4 border-[4px] border-black shadow-brutal rounded-full object-cover" />
+              <Image width={128} height={128} src="/volleybet_logo.png" alt="VolleyBet Logo" className="w-32 h-32 mb-4 border-[4px] border-black shadow-brutal rounded-full object-cover" />
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-none bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-2">
                 VolleyBet
               </h1>
             </div>
-            
-            <LoginButton />
+
+            <LoginButton callbackUrl={safeCallbackPath(sp.callbackUrl)} />
           </div>
         </Card>
       </main>
@@ -47,14 +50,13 @@ export default async function Home({
     redirect("/api/auth/signout")
   }
 
-  const sp = searchParams ? await searchParams : {}
   const showAll = sp.all === "true" || sp.view === "all"
 
   if (!showAll && user?.leagues && user.leagues.length > 0) {
     const cookieStore = await cookies()
     const lastLeagueId = cookieStore.get("lastLeagueId")?.value
     const belongsToLastLeague = lastLeagueId && user.leagues.some(l => l.id === lastLeagueId)
-    
+
     if (belongsToLastLeague) {
       redirect(`/league/${lastLeagueId}`)
     } else {

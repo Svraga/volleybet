@@ -1,3 +1,4 @@
+import { italianDateTime } from "@/lib/dates"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
@@ -12,6 +13,7 @@ import NotificationBell from "@/components/NotificationBell"
 import LeagueRules from "@/components/LeagueRules"
 import MatchdayRefresh from "@/components/MatchdayRefresh"
 import { isDayOpen, isDayScheduled } from "@/lib/matchday"
+import { leagueRankings } from "@/lib/rankings"
 import { Medal, TriangleAlert, CircleDollarSign } from "lucide-react"
 
 export default async function LeagueDashboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,14 +23,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: {
-      ledgers: { where: { leagueId: id } },
-      notifications: { 
-        where: { leagueId: id },
-        orderBy: { createdAt: "desc" },
-        take: 10
-      }
-    }
+
   })
 
   const league = await prisma.league.findUnique({
@@ -41,9 +36,13 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
   }
 
   const isAdmin = league.adminId === user.id
-  
+
   // Calculate total coins from ledger
-  const currentCoins = user.ledgers.reduce((acc, ledger) => acc + ledger.amount, 0)
+  const [balance, unreadCount] = await Promise.all([
+    prisma.ledger.aggregate({ where: { userId: user.id, leagueId: id }, _sum: { amount: true } }),
+    prisma.notification.count({ where: { userId: user.id, leagueId: id, isRead: false } }),
+  ])
+  const currentCoins = balance._sum.amount || 0
 
   // Fetch all matchdays
   const matchDays = await prisma.matchDay.findMany({
@@ -54,20 +53,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
   const openMatchDays = matchDays.filter(md => isDayOpen(md))
   const scheduledMatchDays = matchDays.filter(md => isDayScheduled(md))
 
-  // Fetch top 3 users by points
-  const leagueUsers = await prisma.user.findMany({
-    where: { leagues: { some: { id: league.id } } },
-    include: {
-      bets: {
-        where: { match: { matchDay: { leagueId: league.id, status: "SCORED" } } }
-      }
-    }
-  })
-
-  const top3 = leagueUsers.map(u => ({
-    user: u,
-    points: u.bets.reduce((acc, b) => acc + (b.pointsEarned || 0), 0)
-  })).sort((a, b) => b.points - a.points).slice(0, 3)
+  const top3 = (await leagueRankings(league.id)).sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 3)
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-primary pt-12 relative">
@@ -78,9 +64,9 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
           <h1 className="min-w-0 truncate text-xl md:text-2xl font-bold uppercase bg-white border-[4px] border-black shadow-brutal px-4 py-2 inline-block -rotate-1">{league.name}</h1>
           <LeagueRules coinName={league.coinName} />
         </div>
-        
+
         <div className="flex gap-4 items-center">
-          <NotificationBell leagueId={league.id} notifications={user.notifications} />
+          <NotificationBell leagueId={league.id} unreadCount={unreadCount} />
           {isAdmin && (
             <AdminButtonClient leagueId={league.id} />
           )}
@@ -114,7 +100,7 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
                         <h4 className="text-lg sm:text-xl font-bold leading-none">Giornata {md.number}</h4>
                         <div className="mt-2 inline-flex flex-col bg-yellow-300 border-[2px] border-black px-1 sm:px-2 py-1 -rotate-2 shadow-[2px_2px_0_rgba(0,0,0,1)] text-[10px] sm:text-xs font-black uppercase">
                           <span className="flex items-center gap-1"><TriangleAlert className="w-3 h-3 sm:w-4 sm:h-4" strokeWidth={2.5} /> Scadenza:</span>
-                          <span>{new Date(md.deadline).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}</span>
+                          <span>{italianDateTime(md.deadline)}</span>
                         </div>
                       </div>
                       <Link href={`/league/${league.id}/matchday/${md.id}`} className="shrink-0">
@@ -132,8 +118,8 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
             <CardContent className="space-y-3">
               {scheduledMatchDays.map(md => <div key={md.id} className="border-[2px] border-black bg-yellow-100 p-3 shadow-brutal-sm">
                 <p className="font-black">Giornata {md.number}</p>
-                <p className="mt-1 text-xs font-bold">Apertura: {md.opensAt!.toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })}</p>
-                <p className="text-xs font-bold">Scadenza: {md.deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" })}</p>
+                <p className="mt-1 text-xs font-bold">Apertura: {italianDateTime(md.opensAt!)}</p>
+                <p className="text-xs font-bold">Scadenza: {italianDateTime(md.deadline)}</p>
               </div>)}
             </CardContent>
           </Card>}
@@ -164,13 +150,13 @@ export default async function LeagueDashboardPage({ params }: { params: Promise<
                     <li key={s.user.id} className="flex justify-between items-center font-bold">
                       <div className="flex items-center gap-3">
                         <span className="w-8 flex justify-center">
-                          {idx === 0 ? <Medal className="w-6 h-6 text-yellow-500 fill-yellow-500" /> : 
-                           idx === 1 ? <Medal className="w-6 h-6 text-gray-400 fill-gray-400" /> : 
+                          {idx === 0 ? <Medal className="w-6 h-6 text-yellow-500 fill-yellow-500" /> :
+                           idx === 1 ? <Medal className="w-6 h-6 text-gray-400 fill-gray-400" /> :
                            <Medal className="w-6 h-6 text-amber-700 fill-amber-700" />}
                         </span>
                         <span className="text-lg truncate max-w-[150px] sm:max-w-[200px]">{s.user.name}</span>
                       </div>
-                      <span className="text-xl">{s.points} pt</span>
+                      <span className="text-xl">{s.totalPoints} pt</span>
                     </li>
                   ))}
                 </ul>

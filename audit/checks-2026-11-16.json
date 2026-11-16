@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Europe/Rome",
+  "baseCommit": "429071c",
+  "build": {
+    "passed": true,
+    "next": "16.3.8",
+    "fontDownloadRequiredNetwork": true
+  },
+  "typescript": {
+    "passed": true
+  },
+  "securityTests": {
+    "total": 39,
+    "passed": 39,
+    "failed": 0
+  },
+  "additionalReproductions": 8,
+  "httpChecks": 13,
+  "lint": {
+    "errors": 52,
+    "warnings": 11
+  },
+  "productionDatabaseWritesDuringAudit": false,
+  "applicationCodeChangesDuringAudit": false
+}

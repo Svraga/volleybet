@@ -17,7 +17,7 @@ export default async function LeagueLayout({
   if (!session?.user?.id) {
     redirect("/")
   }
-  
+
   const league = await prisma.league.findUnique({
     where: { id },
     include: {
@@ -31,7 +31,7 @@ export default async function LeagueLayout({
   if (!league || league.users.length === 0) {
     redirect("/")
   }
-  
+
   return (
     <>
       <LastLeagueTracker leagueId={id} />

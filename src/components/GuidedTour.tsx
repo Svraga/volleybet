@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { driver } from "driver.js"
+import { driver, type DriveStep } from "driver.js"
 import "driver.js/dist/driver.css"
 import { useTourStore } from "@/store/tour"
 import { useAlertStore } from "@/store/alertStore"
@@ -13,7 +13,7 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
     const forceTour = localStorage.getItem("volleybet_force_tour") === "true"
     const adminKey = "volleybet_admin_tour_done"
     const playerKey = "volleybet_player_tour_done"
-    
+
     const isDone = isAdmin ? localStorage.getItem(adminKey) : localStorage.getItem(playerKey)
 
     if (isDone && !forceTour) return
@@ -42,14 +42,14 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
       }
     });
 
-    const playerSteps: any[] = [
+    const playerSteps: DriveStep[] = [
       { element: '#tour-welcome', popover: { title: 'Benvenuto!', description: 'Benvenuto su VolleyBet! Ecco come sfidare la tua squadra.', side: "bottom", align: 'start' } },
       { element: '#tour-coin', popover: { title: 'I tuoi gettoni', description: 'Questo è il tuo wallet. Ogni giornata costa 1 Coin. Scommetti su tutti i match che vuoi, il costo non cambia!', side: "bottom", align: 'start' } },
       { element: '#tour-open-matchdays', popover: { title: 'Scommesse', description: 'Qui trovi i turni pronti per i tuoi pronostici. La partita in cui gioca la tua squadra reale è nascosta per correttezza.', side: "top", align: 'start' } },
       { element: '#tour-stats', popover: { title: 'Classifiche', description: 'Da qui tieni d\'occhio i punti e i coin guadagnati round-by-round.', side: "top", align: 'start' } }
     ]
 
-    const adminSteps: any[] = [
+    const adminSteps: DriveStep[] = [
       { element: '#tour-welcome', popover: { title: 'Benvenuto Admin!', description: 'Benvenuto nel tuo pannello di controllo. Qui gestisci tutta la lega.', side: "bottom", align: 'start' } },
       { element: '#tour-invite', popover: { title: 'Codice Invito', description: 'Questo è il codice del campionato. Copialo e passalo alla squadra per farli iscrivere.', side: "top", align: 'start' } },
       { element: '#tour-admin-button', popover: { title: 'Pannello Admin', description: 'Da qui crei le giornate. Clicca su \'Pannello Admin\' per accedere ai 3 pannelli di controllo: Gestione Partite, Inserimento Risultati e Logistica.', side: "bottom", align: 'start' } },
@@ -57,7 +57,7 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
     ]
 
     tourDriver.setSteps(isAdmin ? adminSteps : playerSteps);
-    
+
     // Slight delay to ensure elements are mounted
     const timeoutId = setTimeout(() => {
       setTourActive(true);
@@ -69,7 +69,7 @@ export default function GuidedTour({ isAdmin }: { isAdmin: boolean }) {
       tourDriver.destroy()
       setTourActive(false);
     }
-  }, [isAdmin])
+  }, [isAdmin, setTourActive])
 
   return null
 }

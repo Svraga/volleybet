@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input"
 import Link from "next/link"
-import { leaveLeague, deleteLeague, updateCoinName } from "@/actions/league"
-import { CircleDollarSign, Trophy } from "lucide-react"
+import { leaveLeague } from "@/actions/league"
+import RevokeSessionsButton from "@/components/RevokeSessionsButton"
+import { CircleDollarSign } from "lucide-react"
 import DeleteLeagueForm from "@/components/DeleteLeagueForm"
 import BottomNav from "@/components/BottomNav"
 import UpdateNicknameForm from "@/components/UpdateNicknameForm"
@@ -22,8 +22,6 @@ export default async function ProfilePage() {
     include: {
       leagues: true,
       memberships: true,
-      ledgers: true,
-      bets: true
     }
   })
 
@@ -35,24 +33,17 @@ export default async function ProfilePage() {
   const lastLeagueId = cookieStore.get("lastLeagueId")?.value
   const activeLeague = user.leagues.find(l => l.id === lastLeagueId) || user.leagues[0]
 
-  let balanceCoins = 0
-  let balanceName = "Monete"
-  if (activeLeague) {
-    balanceCoins = user.ledgers
-      .filter(l => l.leagueId === activeLeague.id)
-      .reduce((acc, l) => acc + l.amount, 0)
-    balanceName = activeLeague.coinName
-  } else {
-    balanceCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
-  }
-
-  const totalPoints = user.bets.reduce((acc, b) => acc + (b.pointsEarned || 0), 0)
-  const exactHits = user.bets.filter(b => b.pointsEarned === 3).length
-  const winnerHits = user.bets.filter(b => (b.pointsEarned || 0) >= 1).length
-  const totalBets = user.bets.length
-  const accuracy = totalBets > 0 ? Math.round((exactHits / totalBets) * 100) : 0
-  const winnerAccuracy = totalBets > 0 ? Math.round((winnerHits / totalBets) * 100) : 0
-  const globalCoins = user.ledgers.reduce((acc, l) => acc + l.amount, 0)
+  const [points, exactHits, winnerHits, totalBets, balance] = await Promise.all([
+    prisma.bet.aggregate({ where: { userId: user.id, pointsEarned: { not: null } }, _sum: { pointsEarned: true } }),
+    prisma.bet.count({ where: { userId: user.id, pointsEarned: 3 } }),
+    prisma.bet.count({ where: { userId: user.id, pointsEarned: { gt: 0 } } }),
+    prisma.bet.count({ where: { userId: user.id, pointsEarned: { not: null } } }),
+    prisma.ledger.aggregate({ where: { userId: user.id }, _sum: { amount: true } }),
+  ])
+  const totalPoints = points._sum.pointsEarned || 0
+  const globalCoins = balance._sum.amount || 0
+  const accuracy = totalBets ? Math.round(exactHits / totalBets * 100) : 0
+  const winnerAccuracy = totalBets ? Math.round(winnerHits / totalBets * 100) : 0
 
   return (
     <div className="pb-20 md:pb-0 min-h-screen bg-primary w-full overflow-x-hidden">
@@ -99,6 +90,7 @@ export default async function ProfilePage() {
             </CardHeader>
             <CardContent>
               <UpdateNicknameForm defaultName={user.name || ""} />
+              <RevokeSessionsButton />
             </CardContent>
           </Card>
 
@@ -127,12 +119,12 @@ export default async function ProfilePage() {
                           <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Squadra:</span>
                           <span className="text-xs font-black bg-white px-2 py-0.5 border-[2px] border-black uppercase truncate max-w-[240px]">{teamName}</span>
                         </div>
-                        
+
                         <div className="flex flex-col gap-2">
                           <Link href={`/league/${league.id}`}>
                             <Button variant="primary" className="w-full">Vai al Campionato</Button>
                           </Link>
-                          
+
                           {isAdmin ? (
                             <div className="space-y-4 mt-4 border-t-[2px] border-dashed border-gray-300 pt-4">
                               <DeleteLeagueForm leagueId={league.id} leagueName={league.name} />
@@ -171,14 +163,14 @@ export default async function ProfilePage() {
 
           <div className="bg-white border-[4px] border-black p-6 shadow-[4px_4px_0_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center space-y-4 mt-8">
             <h2 className="text-2xl font-black uppercase tracking-widest bg-yellow-300 px-2 border-[2px] border-black -rotate-2 inline-block">Assistenza</h2>
-            <p className="font-bold text-gray-700">Hai riscontrato un problema tecnico, un bug o hai un suggerimento per migliorare l'app?</p>
+            <p className="font-bold text-gray-700">Hai riscontrato un problema tecnico, un bug o hai un suggerimento per migliorare l’app?</p>
             <p className="font-bold text-lg">
-              Scrivi un'email: <a href={`mailto:${adminEmail}`} className="underline decoration-[3px] hover:text-primary transition-colors">{adminEmail}</a>
+              Scrivi un’email: <a href={`mailto:${adminEmail}`} className="underline decoration-[3px] hover:text-primary transition-colors">{adminEmail}</a>
             </p>
           </div>
         </div>
       </main>
-      <BottomNav leagueId={user.leagues.length > 0 ? user.leagues[0].id : undefined} />
+      <BottomNav leagueId={activeLeague?.id} />
     </div>
   )
 }

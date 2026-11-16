@@ -1,0 +1,40 @@
+[
+  {
+    "check": "legacy-format JWT accepted after schema upgrade",
+    "passed": true
+  },
+  {
+    "check": "Le tue Statistiche Globali",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "Scommesse Aperte",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "Classifica Punti Pronostici",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "Nuova Giornata",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "Registro Trasparenza",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "Pronostici della lega",
+    "passed": true,
+    "cspNonceMatchesAllScripts": true
+  },
+  {
+    "check": "maintenance rejects anonymous requests",
+    "passed": true
+  }
+]

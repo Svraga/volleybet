@@ -1,3 +1,4 @@
+import { italianDateTime } from "@/lib/dates"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
@@ -48,7 +49,7 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
               <div key={n.id} className={`p-4 ${!n.isRead ? 'bg-yellow-100' : 'bg-white'}`}>
                 <p className="font-bold text-lg">{n.message}</p>
                 <p className="text-sm text-gray-500 mt-2 font-bold">
-                  {new Date(n.createdAt).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
+                  {italianDateTime(n.createdAt)}
                 </p>
               </div>
             ))

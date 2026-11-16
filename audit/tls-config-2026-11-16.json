@@ -1,0 +1,46 @@
+{
+  "localConfiguration": [
+    {
+      "file": ".env.local",
+      "key": "DATABASE_URL",
+      "viaPooler": true,
+      "sslmode": null,
+      "sslaccept": null
+    },
+    {
+      "file": ".env.local",
+      "key": "DIRECT_URL",
+      "viaPooler": true,
+      "sslmode": null,
+      "sslaccept": null
+    },
+    {
+      "file": ".env",
+      "key": "DATABASE_URL",
+      "viaPooler": true,
+      "sslmode": null,
+      "sslaccept": null
+    },
+    {
+      "file": ".env",
+      "key": "DIRECT_URL",
+      "viaPooler": true,
+      "sslmode": null,
+      "sslaccept": null
+    }
+  ],
+  "probes": [
+    {
+      "sslmode": "require",
+      "sslaccept": "accept_invalid_certs",
+      "connected": true
+    },
+    {
+      "sslmode": "require",
+      "sslaccept": "strict",
+      "connected": false,
+      "error": "PrismaClientInitializationError",
+      "reason": "TLS_ERROR"
+    }
+  ]
+}

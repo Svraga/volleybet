@@ -1,3 +1,4 @@
+import { pageNumber } from "@/lib/pagination"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
@@ -6,32 +7,17 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
+import { leagueRankings } from "@/lib/rankings"
 
 
-export default async function StatsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ round?: string }> }) {
+export default async function StatsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ round?: string; page?: string }> }) {
   const { id } = await params;
-  const { round } = await searchParams;
+  const { round, page: rawPage } = await searchParams;
+  const page = pageNumber(rawPage)
+  const offset = (page - 1) * 50
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/")
   const league = await requireLeagueMember(id, session.user.id)
-
-  const leagueUsers = await prisma.user.findMany({
-    where: {
-      OR: [
-        { leagues: { some: { id } } },
-        { ledgers: { some: { leagueId: id } } },
-        { bets: { some: { match: { matchDay: { leagueId: id } } } } }
-      ]
-    },
-    include: {
-      memberships: { where: { leagueId: id } },
-      ledgers: { where: { leagueId: id, ...(round ? { matchDayId: round } : {}) } },
-      bets: {
-        where: { match: { matchDay: { leagueId: id, status: "SCORED", ...(round ? { id: round } : {}) } } }
-      }
-    }
-  })
-
 
   const matchDays = await prisma.matchDay.findMany({
     where: { leagueId: id, status: "SCORED" },
@@ -40,30 +26,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
 
   if (!league) redirect("/")
 
-  // Compute rankings
-  const stats = leagueUsers.map(u => {
-    const totalCoins = u.ledgers.reduce((acc, l) => acc + l.amount, 0)
-    const totalPoints = u.bets.reduce((acc, b) => acc + (b.pointsEarned || 0), 0)
-    
-    const exactHits = u.bets.filter(b => b.pointsEarned === 3).length
-    const winnerHits = u.bets.filter(b => (b.pointsEarned || 0) >= 1).length
-    const totalBetsScored = u.bets.length
-    const accuracy = totalBetsScored > 0 ? Math.round((exactHits / totalBetsScored) * 100) : 0
-    const winnerAccuracy = totalBetsScored > 0 ? Math.round((winnerHits / totalBetsScored) * 100) : 0
-    const userTeam = u.memberships[0]?.teamName || league.homeTeam
-
-    return {
-      user: u,
-      userTeam,
-      totalCoins,
-      totalPoints,
-      exactHits,
-      winnerHits,
-      totalBetsScored,
-      accuracy,
-      winnerAccuracy
-    }
-  })
+  const stats = await leagueRankings(id, round)
 
   const coinRanking = [...stats].sort((a, b) => b.totalCoins - a.totalCoins)
   const pointsRanking = [...stats].sort((a, b) => b.totalPoints - a.totalPoints)
@@ -89,6 +52,7 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
         ))}
       </div>
 
+      <nav className="mb-4 flex w-full max-w-4xl justify-between font-bold">{page > 1 && <Link href={`?${round ? `round=${round}&` : ""}page=${page - 1}`}>← Precedenti</Link>}{stats.length > offset + 50 && <Link href={`?${round ? `round=${round}&` : ""}page=${page + 1}`}>Successive →</Link>}</nav>
       <div className={`grid ${round ? "" : "md:grid-cols-2"} gap-8 w-full max-w-4xl`}>
         <Card className="bg-white">
           <CardHeader>
@@ -96,14 +60,14 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
           </CardHeader>
           <CardContent className="overflow-x-auto max-w-full">
             <ul className="space-y-4">
-              {pointsRanking.map((s, idx) => (
+              {pointsRanking.slice(offset, offset + 50).map((s, idx) => (
                 <li key={s.user.id} className="flex flex-col border-b-[3px] border-black pb-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       <span className="text-2xl font-bold w-8 text-gray-400 shrink-0">{idx + 1}°</span>
                       <div className="flex flex-col min-w-0">
                         <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
-                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam}</span>
+                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam || league.homeTeam}</span>
                       </div>
                     </div>
                     <span className="text-2xl font-bold shrink-0">{s.totalPoints} pt</span>
@@ -127,13 +91,13 @@ export default async function StatsPage({ params, searchParams }: { params: Prom
             <CardContent className="overflow-x-auto max-w-full">
               {round && <p className="mb-4 text-sm font-bold text-gray-600">Saldo netto della giornata: premi e rimborsi meno quota di partecipazione.</p>}
               <ul className="space-y-4">
-                {coinRanking.map((s, idx) => (
+                {coinRanking.slice(offset, offset + 50).map((s, idx) => (
                   <li key={s.user.id} className="flex justify-between items-center border-b-[3px] border-black pb-2">
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       <span className="text-2xl font-bold w-8 shrink-0">{idx + 1}°</span>
                       <div className="flex flex-col min-w-0">
                         <span className="font-bold text-lg truncate min-w-0">{s.user.name}</span>
-                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam}</span>
+                        <span className="text-xs font-semibold text-gray-500 uppercase truncate">{s.userTeam || league.homeTeam}</span>
                       </div>
                     </div>
                     <span className={`text-2xl font-bold shrink-0 ${s.totalCoins >= 0 ? 'text-green-600' : 'text-red-600'}`}>

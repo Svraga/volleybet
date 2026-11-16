@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import UpdateNicknameForm from "@/components/UpdateNicknameForm"
+import { safeCallbackPath } from "@/lib/redirects"
 
-export default async function WelcomePage() {
+export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/")
 
@@ -14,6 +15,7 @@ export default async function WelcomePage() {
   })
 
   if (!user) redirect("/")
+  const destination = safeCallbackPath((await searchParams).callbackUrl, process.env.NEXTAUTH_URL)
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-primary">
@@ -28,7 +30,7 @@ export default async function WelcomePage() {
             Prima di iniziare, scegli un Nickname con cui farti riconoscere nella tua Lega!
           </p>
           <div className="bg-yellow-100 border-[3px] border-black p-4 -rotate-1 shadow-brutal-sm">
-            <UpdateNicknameForm defaultName={user.name || ""} redirectTo="/" />
+            <UpdateNicknameForm defaultName={user.name || ""} redirectTo={destination} />
           </div>
         </CardContent>
       </Card>

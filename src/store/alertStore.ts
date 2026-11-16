@@ -16,7 +16,7 @@ export const useAlertStore = create<AlertState>((set) => ({
   message: "",
   type: "alert",
   showAlert: (msg: string) => set({ isOpen: true, message: msg, type: "alert" }),
-  showConfirm: (msg: string, onConfirm: () => void, onCancel?: () => void) => 
+  showConfirm: (msg: string, onConfirm: () => void, onCancel?: () => void) =>
     set({ isOpen: true, message: msg, type: "confirm", onConfirm, onCancel }),
   closeAlert: () => set({ isOpen: false, message: "", type: "alert" }),
 }))

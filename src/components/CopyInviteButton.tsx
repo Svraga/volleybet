@@ -5,18 +5,18 @@ import { Copy } from "lucide-react"
 import { brutalAlert } from "@/store/alertStore"
 
 export default function CopyInviteButton({ code }: { code: string }) {
-  const handleCopy = () => {
+  const handleCopy = async () => {
     const shareUrl = `${window.location.origin}/league/join?code=${code}`
     const shareText = `Unisciti al mio campionato su VolleyBet! Usa il codice: ${code}`
 
     if (navigator.share) {
-      navigator.share({
+      await navigator.share({
         title: "VolleyBet - Nuovo Campionato",
         text: shareText,
         url: shareUrl
-      }).catch(console.error)
+      }).catch(() => {})
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareText + "\n" + shareUrl)
+      await navigator.clipboard.writeText(shareText + "\n" + shareUrl)
       brutalAlert("Link copiato negli appunti!")
     }
   }

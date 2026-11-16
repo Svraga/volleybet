@@ -47,6 +47,11 @@ export async function withLeagueTransaction<T>(
 ): Promise<T> {
   requireId(leagueId)
   await consumeRateLimit(userId, "league-writes", 60, 60000)
+  // Reject outsiders before contending with legitimate writes; recheck under lock.
+  const preliminary = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!preliminary) throw new Error("Campionato non trovato")
+  if (access === "admin" && preliminary.adminId !== userId) throw new Error("Unauthorized")
+  if (access === "member") await requireLeagueMember(leagueId, userId)
   return prisma.$transaction(async tx => {
     const locked = await tx.league.updateMany({ where: { id: leagueId }, data: { updatedAt: new Date() } })
     if (locked.count !== 1) throw new Error("Campionato non trovato")

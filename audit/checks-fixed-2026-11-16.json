@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-16",
+  "next": "16.4.6",
+  "tests": {
+    "passed": 49,
+    "failed": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "typescript": true,
+  "productionBuild": true,
+  "npmAudit": {
+    "runtime": 0,
+    "all": 0
+  },
+  "legacyJwtHttpCompatibility": true,
+  "authenticatedHttpChecks": 8,
+  "postgresqlBaselineValidated": true,
+  "migrationHistoryUpToDate": true,
+  "originalDataPreserved": true,
+  "forcedSessionRevocations": 0,
+  "certificateIncludedInRoutes": 19,
+  "codePublished": false
+}

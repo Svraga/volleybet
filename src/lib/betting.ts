@@ -1,3 +1,4 @@
+import { recordAudit } from "@/lib/audit"
 import "server-only"
 import type { Prisma } from "@prisma/client"
 import { assertBettingOpen, formText, requireId, withLeagueTransaction } from "@/lib/security"
@@ -17,13 +18,13 @@ export async function saveBets(actorId: string, leagueId: string, dayId: string,
     if (!day) throw new Error("Giornata non appartenente a questo campionato")
     if (hasPublishedResults(day)) throw new Error("I risultati sono già inseriti: non puoi aggiungere pronostici")
     if (!proxy) assertBettingOpen(day)
-    if (proxy && await tx.bet.count({ where: { userId: targetId, match: { matchDayId: dayId } } })) {
-      throw new Error("Il giocatore ha già inserito i propri pronostici")
-    }
+    const existing = proxy ? await tx.bet.findMany({ where: { userId: targetId, match: { matchDayId: dayId } }, select: { matchId: true } }) : []
+    const existingIds = new Set(existing.map(b => b.matchId))
     const bets: { matchId: string; predictedA: number; predictedB: number }[] = []
     for (const match of day.matches) {
       const value = formText(form, `bet_${match.id}`, 3, false)
       if (!value) continue
+      if (proxy && existingIds.has(match.id)) throw new Error("Il giocatore ha già inserito questo pronostico: puoi completare solo quelli mancanti")
       if (match.teamA === member.teamName || match.teamB === member.teamName) {
         throw new Error("Non puoi scommettere sulla squadra di appartenenza")
       }
@@ -41,7 +42,7 @@ export async function saveBets(actorId: string, leagueId: string, dayId: string,
     }
     await ensureEntryFee(tx, targetId, leagueId, day.id, day.number)
     if (proxy) {
-      await tx.auditLog.create({ data: {
+      await recordAudit(tx, { data: {
         leagueId, userId: actorId, action: "Scommessa Proxy",
         // Do not disclose secret predictions in a log readable by other members.
         details: `Inseriti pronostici per ${target.name || "Utente"}, giornata ${day.number}.`,
@@ -59,8 +60,8 @@ export async function saveBets(actorId: string, leagueId: string, dayId: string,
 
 async function ensureEntryFee(tx: Prisma.TransactionClient, userId: string, leagueId: string, matchDayId: string, number: number) {
   // Also recognizes historical proxy fees; descriptions are not record identities.
-  const existing = await tx.ledger.findFirst({ where: { userId, leagueId, matchDayId, amount: { lt: 0 } } })
+  const existing = await tx.ledger.findFirst({ where: { userId, leagueId, matchDayId, amount: { lt: 0 }, kind: { not: "ADJUSTMENT" } } })
   if (!existing) await tx.ledger.create({ data: {
-    userId, leagueId, matchDayId, amount: -1, reason: `MatchDay ${number} Entry Fee`,
+    userId, leagueId, matchDayId, amount: -1, kind: "ENTRY_FEE", reason: `MatchDay ${number} Entry Fee`,
   } })
 }

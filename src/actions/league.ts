@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { randomBytes } from "crypto"
+import { FormError } from "@/lib/forms"
+import { recordAudit } from "@/lib/audit"
 import { consumeRateLimit, formText, MAX_TEAMS, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
 
 function inviteCode(raw: unknown) {
@@ -20,7 +22,7 @@ export async function createLeague(formData: FormData) {
   const homeTeam = formText(formData, "homeTeam", 20)
   const coinName = formText(formData, "coinName", 15, false) || "Coin"
   const entries = formData.getAll("teams[]")
-  if (entries.length < 2 || entries.length > MAX_TEAMS) throw new Error("Numero di squadre non valido")
+  if (entries.length < 4 || entries.length > MAX_TEAMS) throw new Error("Numero di squadre non valido")
   if (entries.some(t => typeof t !== "string" || !t.trim() || t.length > 20)) throw new Error("Squadra non valida")
   const teams = entries.map(t => (t as string).trim())
   if (new Set(teams).size !== teams.length || !teams.includes(homeTeam)) throw new Error("Squadre duplicate o squadra di appartenenza non valida")
@@ -55,24 +57,33 @@ export async function getLeaguePreview(inviteCodeRaw: string) {
 export async function joinLeague(_prevState: unknown, formData: FormData): Promise<{ error: string | null }> {
   const userId = await requireUserId()
   await consumeRateLimit(userId, "invites", 10, 600000)
-  const code = inviteCode(formText(formData, "inviteCode", 64))
-  const teamName = formText(formData, "teamName", 20)
+  let code: string
+  let teamName: string
+  try {
+    code = inviteCode(formText(formData, "inviteCode", 64))
+    teamName = formText(formData, "teamName", 20)
+  } catch { return { error: "Codice invito o squadra non validi." } }
   const preview = await prisma.league.findUnique({ where: { inviteCode: code }, select: { id: true } })
   if (!preview) return { error: "Campionato non trovato o codice errato." }
+  try {
   await withLeagueTransaction(preview.id, userId, "join", async (tx, league) => {
-    if (league.inviteCode !== code) throw new Error("Codice invito non più valido")
+    if (league.inviteCode !== code) throw new FormError("Codice invito non più valido")
     const team = await tx.team.findFirst({ where: { leagueId: league.id, name: teamName } })
-    if (!team) throw new Error("La squadra non appartiene al campionato")
+    if (!team) throw new FormError("La squadra non appartiene al campionato")
     const existing = await tx.leagueMember.findUnique({ where: { userId_leagueId: { userId, leagueId: league.id } } })
-    if (existing && existing.teamName !== teamName) throw new Error("La squadra di appartenenza non può essere cambiata")
+    if (existing && existing.teamName !== teamName) throw new FormError("La squadra di appartenenza non può essere cambiata")
     if (!existing) {
       const historical = await tx.ledger.count({ where: { userId, leagueId: league.id } })
       const historicalBets = await tx.bet.count({ where: { userId, match: { matchDay: { leagueId: league.id } } } })
-      if (historical || historicalBets) throw new Error("Iscrizione storica senza squadra: contatta l'amministratore")
+      if (historical || historicalBets) throw new FormError("Iscrizione storica senza squadra: contatta l'amministratore")
       await tx.leagueMember.create({ data: { userId, leagueId: league.id, teamName } })
     }
     await tx.league.update({ where: { id: league.id }, data: { users: { connect: { id: userId } } } })
   })
+  } catch (error) {
+    if (error instanceof FormError) return { error: error.message }
+    throw error
+  }
   revalidatePath("/")
   revalidatePath(`/league/${preview.id}`)
   redirect(`/league/${preview.id}`)
@@ -109,8 +120,9 @@ export async function deleteLeague(leagueId: string) {
 export async function updateCoinName(leagueId: string, formData: FormData) {
   const userId = await requireUserId()
   const coinName = formText(formData, "coinName", 15)
-  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+  await withLeagueTransaction(leagueId, userId, "admin", async (tx, league) => {
     await tx.league.update({ where: { id: leagueId }, data: { coinName } })
+    await recordAudit(tx, { leagueId, userId, action: "Modificata Valuta", details: `Valuta: ${league.coinName} → ${coinName}.`, payload: { before: league.coinName, after: coinName } })
   })
   revalidatePath("/profile")
   revalidatePath(`/league/${leagueId}`)
@@ -119,8 +131,9 @@ export async function updateCoinName(leagueId: string, formData: FormData) {
 export async function updateLeagueName(leagueId: string, formData: FormData) {
   const userId = await requireUserId()
   const name = formText(formData, "leagueName", 15)
-  await withLeagueTransaction(leagueId, userId, "admin", async tx => {
+  await withLeagueTransaction(leagueId, userId, "admin", async (tx, league) => {
     await tx.league.update({ where: { id: leagueId }, data: { name } })
+    await recordAudit(tx, { leagueId, userId, action: "Modificato Campionato", details: `Nome: ${league.name} → ${name}.`, payload: { before: league.name, after: name } })
   })
   revalidatePath("/profile")
   revalidatePath(`/league/${leagueId}`)
@@ -131,7 +144,7 @@ export async function rotateInviteCode(leagueId: string) {
   requireId(leagueId)
   await withLeagueTransaction(leagueId, userId, "admin", async tx => {
     await tx.league.update({ where: { id: leagueId }, data: { inviteCode: "VOLLEY-" + randomBytes(16).toString("hex").toUpperCase() } })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Invito rigenerato", details: "Il precedente codice invito non è più valido." } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Invito rigenerato", details: "Il precedente codice invito non è più valido." } })
   })
   revalidatePath(`/league/${leagueId}`)
 }

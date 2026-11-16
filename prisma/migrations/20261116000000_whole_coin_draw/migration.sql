@@ -1,0 +1,1 @@
+ALTER TABLE "MatchDay" ADD COLUMN IF NOT EXISTS "coinDrawSeed" TEXT;

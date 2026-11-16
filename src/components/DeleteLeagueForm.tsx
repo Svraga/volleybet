@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { deleteLeague } from "@/actions/league"
 
-export default function DeleteLeagueForm({ leagueId, leagueName }: { leagueId: string, leagueName: string }) {
+export default function DeleteLeagueForm({ leagueId }: { leagueId: string, leagueName: string }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const isConfirmed = confirmText === "Conferma"
 
   if (!isExpanded) {
     return (
-      <Button 
-        variant="destructive" 
-        onClick={() => setIsExpanded(true)} 
+      <Button
+        variant="destructive"
+        onClick={() => setIsExpanded(true)}
         className="w-full text-sm mt-4 border-[2px] border-black bg-red-100 text-red-600 shadow-brutal-sm hover:bg-red-200"
       >
         Elimina Campionato
@@ -28,11 +28,11 @@ export default function DeleteLeagueForm({ leagueId, leagueName }: { leagueId: s
         <p className="text-sm font-bold text-red-600">Elimina questo campionato definitivamente. (Azione irreversibile!)</p>
         <button onClick={() => setIsExpanded(false)} className="text-red-500 font-bold px-2 py-1 border-[2px] border-red-500 hover:bg-red-100">X</button>
       </div>
-      <label className="text-xs font-bold">Digita "Conferma" per sbloccare il bottone:</label>
-      <Input 
-        value={confirmText} 
-        onChange={(e) => setConfirmText(e.target.value)} 
-        placeholder="Conferma" 
+      <label className="text-xs font-bold">Digita &quot;Conferma&quot; per sbloccare il bottone:</label>
+      <Input
+        value={confirmText}
+        onChange={(e) => setConfirmText(e.target.value)}
+        placeholder="Conferma"
         className="h-8 text-sm"
       />
       <form action={async () => {

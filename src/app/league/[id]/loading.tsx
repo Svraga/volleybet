@@ -1,7 +1,7 @@
 export default function LeagueDashboardLoading() {
   return (
     <main className="flex min-h-screen flex-col items-center p-6 pb-28 md:pb-12 bg-primary pt-12 relative overflow-hidden">
-      
+
       {/* HEADER SKELETON */}
       <div className="w-full max-w-4xl flex justify-between items-center mb-8 gap-4 flex-wrap">
         <div className="h-16 w-64 bg-gray-200 border-[4px] border-black shadow-brutal -rotate-1 animate-brutal-pulse"></div>

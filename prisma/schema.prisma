@@ -43,6 +43,7 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
+  sessionVersion Int       @default(0)
   emailVerified DateTime?
   image         String?
   
@@ -96,8 +97,12 @@ model AuditLog {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   action    String
+  actorName String?
+  payload   Json?
   details   String?
   createdAt DateTime @default(now())
+  @@index([leagueId, createdAt])
+
 }
 
 model MatchDay {
@@ -109,12 +114,16 @@ model MatchDay {
   opensAt       DateTime? // null: immediately open (also preserves historical days)
   status        String    @default("OPEN") // OPEN, CLOSED, SCORED
   restingTeam   String?
+  coinDrawSeed  String?   // Random seed reused for every payout recalculation
   
   matches       Match[]
   ledgers       Ledger[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  @@unique([leagueId, number])
+  @@index([leagueId, status, deadline])
+
 }
 
 model Match {
@@ -127,6 +136,8 @@ model Match {
   resultB       Int?      // Sets won by team B (0, 1, 2, 3)
   
   bets          Bet[]
+  @@index([matchDayId])
+
 }
 
 model Bet {
@@ -140,6 +151,8 @@ model Bet {
   pointsEarned  Int?      // 3, 1, 0
   
   @@unique([userId, matchId])
+  @@index([matchId])
+
 }
 
 model Ledger {
@@ -148,11 +161,15 @@ model Ledger {
   user          User      @relation(fields: [userId], references: [id])
   leagueId      String
   league        League    @relation(fields: [leagueId], references: [id])
-  amount        Float       // + or -
+  amount        Int         // whole virtual coins
+  kind          String      @default("LEGACY")
   reason        String    // e.g. "Bet placed", "Payout MatchDay X"
   matchDayId    String?   // optional link to match day
   matchDay      MatchDay? @relation(fields: [matchDayId], references: [id])
   createdAt     DateTime  @default(now())
+  @@index([leagueId, matchDayId])
+  @@index([userId, leagueId])
+
 }
 
 model Team {
@@ -160,6 +177,8 @@ model Team {
   leagueId  String
   league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   name      String
+  @@unique([leagueId, name])
+
 }
 
 model Notification {
@@ -172,6 +191,9 @@ model Notification {
   isRead    Boolean  @default(false)
   type      String   // e.g. "MATCHDAY_CREATED", "SCORED", "PROXY_BET", "DEADLINE_CHANGED"
   createdAt DateTime @default(now())
+  @@index([userId, leagueId, isRead])
+  @@index([userId, leagueId, createdAt])
+
 }
 
 model LeagueMember {

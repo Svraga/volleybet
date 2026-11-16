@@ -1,0 +1,94 @@
+[
+  {
+    "route": "/profile",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/stats",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/predictions",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/admin",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/audit",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/notifications",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/test/matchday/test",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/create",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/league/join",
+    "status": 307,
+    "anonymousAccessDenied": true,
+    "streamRedirect": false,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/welcome",
+    "status": 200,
+    "anonymousAccessDenied": true,
+    "streamRedirect": true,
+    "malformedBearerHandled": true
+  },
+  {
+    "route": "/api/auth/session",
+    "status": 200,
+    "anonymousSession": true
+  },
+  {
+    "route": "/_next/image (local SVG)",
+    "status": 400,
+    "defaultSvgOptimizationRejected": true
+  },
+  {
+    "route": "/privacy",
+    "status": 200,
+    "headers": {
+      "xFrameOptions": "DENY",
+      "xContentTypeOptions": "nosniff",
+      "referrerPolicy": "strict-origin-when-cross-origin",
+      "contentSecurityPolicy": null,
+      "permissionsPolicy": null,
+      "strictTransportSecurity": null
+    }
+  }
+]

@@ -1,5 +1,7 @@
 "use client"
 
+import { errorMessage } from "@/lib/forms"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/Button"
 import { deleteMatchDay } from "@/actions/matchday"
@@ -22,16 +24,9 @@ export default function DeleteMatchDayButton({ leagueId, matchDayId }: { leagueI
   const handleAction = async () => {
     try {
       await deleteMatchDay(leagueId, matchDayId)
-    } catch (e: any) {
-      if (
-        e?.message?.includes("NEXT_REDIRECT") || 
-        e?.digest?.includes("NEXT_REDIRECT") || 
-        e?.message?.includes("redirect") ||
-        e?.digest?.includes("redirect")
-      ) {
-        throw e;
-      }
-      showAlert(e.message || "Errore durante l'eliminazione.")
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+      showAlert(errorMessage(error))
       setIsConfirming(false)
     }
   }

@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+!prisma/certs/database-ca.pem
 
 # debug
 npm-debug.log*
@@ -45,3 +46,4 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+/.local-backups/

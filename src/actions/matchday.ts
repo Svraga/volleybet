@@ -1,5 +1,9 @@
 "use server"
 
+import { italianDateTime } from "@/lib/dates"
+
+import { recordAudit } from "@/lib/audit"
+
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { consumeRateLimit, formText, requireId, requireUserId, withLeagueTransaction } from "@/lib/security"
@@ -45,13 +49,13 @@ export async function createMatchDay(leagueId: string, formData: FormData) {
     if (await tx.matchDay.findFirst({ where: { leagueId, number } })) throw new Error("Questa giornata esiste già")
     if (await tx.matchDay.count({ where: { leagueId } }) >= 1000) throw new Error("Limite di giornate raggiunto")
     await tx.matchDay.create({ data: { leagueId, number, deadline, opensAt } })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Creata Giornata", details: `Giornata ${number} creata.` } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Creata Giornata", details: `Giornata ${number} creata.` } })
     const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
     await tx.notification.createMany({ data: users.map(u => ({
       userId: u.id, leagueId, type: "MATCHDAY_CREATED",
       message: opensAt
-        ? `Giornata ${number} programmata: apertura ${opensAt.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}. Scadenza: ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`
-        : `È stata aperta la Giornata ${number}. Scadenza: ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`,
+        ? `Giornata ${number} programmata: apertura ${italianDateTime(opensAt)}. Scadenza: ${italianDateTime(deadline)}.`
+        : `È stata aperta la Giornata ${number}. Scadenza: ${italianDateTime(deadline)}.`,
     })) })
     if (Date.now() >= deadline.getTime()) throw new ScheduleError("Scadenza superata. Scegli un orario futuro.")
     if (opensAt && opensAt.getTime() <= Date.now()) throw new ScheduleError("L'orario di apertura è già passato. Scegli un orario futuro oppure Apri subito.")
@@ -87,7 +91,7 @@ export async function setMatches(leagueId: string, matchDayId: string, formData:
     await tx.match.deleteMany({ where: { matchDayId } })
     await tx.matchDay.update({ where: { id: matchDayId }, data: { restingTeam } })
     await tx.match.createMany({ data: matches })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Modificate Partite", details: `Giornata ${day.number}: impostate ${numRows} partite.` } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Modificate Partite", details: `Giornata ${day.number}: impostate ${numRows} partite.` } })
     assertDayEditable(day)
   })
   refresh(leagueId)
@@ -106,7 +110,7 @@ export async function addMatch(leagueId: string, matchDayId: string, formData: F
     if (!teams.some(t => t.name === teamA) || !teams.some(t => t.name === teamB) || day.restingTeam === teamA || day.restingTeam === teamB) throw new Error("Squadra non valida")
     if (await tx.match.count({ where: { matchDayId, OR: [{ teamA: { in: [teamA, teamB] } }, { teamB: { in: [teamA, teamB] } }] } })) throw new Error("Squadra già impegnata")
     await tx.match.create({ data: { matchDayId, teamA, teamB } })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Aggiunta Partita", details: `Giornata ${day.number}: ${teamA} - ${teamB}.` } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Aggiunta Partita", details: `Giornata ${day.number}: ${teamA} - ${teamB}.` } })
     assertDayEditable(day)
   })
   refresh(leagueId)
@@ -121,7 +125,7 @@ export async function deleteMatchDay(leagueId: string, matchDayId: string) {
     await tx.ledger.deleteMany({ where: { leagueId, matchDayId } })
     await tx.match.deleteMany({ where: { matchDayId } })
     await tx.matchDay.delete({ where: { id: matchDayId } })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Eliminata Giornata", details: `Giornata ${day.number} eliminata e quote annullate.` } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Eliminata Giornata", details: `Giornata ${day.number} eliminata e quote annullate.` } })
     assertDayEditable(day)
   })
   refresh(leagueId)
@@ -136,14 +140,14 @@ export async function updateDeadline(leagueId: string, matchDayId: string, formD
     if (hasPublishedResults(day)) throw new ScheduleError("Non puoi cambiare la scadenza dopo l'inserimento dei risultati.")
     if (day.opensAt && deadline <= day.opensAt) throw new ScheduleError("La scadenza deve essere successiva all'apertura.")
     await tx.matchDay.update({ where: { id: matchDayId }, data: { deadline, status: "OPEN" } })
-    await tx.auditLog.create({ data: {
+    await recordAudit(tx, { data: {
       leagueId, userId, action: "Modificata Scadenza",
       details: `Giornata ${day.number}: da ${day.deadline.toISOString()} a ${deadline.toISOString()}.`,
     } })
     const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
     await tx.notification.createMany({ data: users.map(u => ({
       userId: u.id, leagueId, type: "DEADLINE_CHANGED",
-      message: `La scadenza della Giornata ${day.number} è stata modificata al ${deadline.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}.`,
+      message: `La scadenza della Giornata ${day.number} è stata modificata al ${italianDateTime(deadline)}.`,
     })) })
     if (Date.now() >= deadline.getTime()) throw new ScheduleError("Scadenza superata. Scegli un orario futuro.")
   })
@@ -158,7 +162,7 @@ export async function openMatchDayNow(leagueId: string, matchDayId: string) {
     if (!isDayScheduled(day)) throw new Error("La giornata è già aperta")
     if (!await tx.match.count({ where: { matchDayId } })) throw new Error("Imposta prima gli accoppiamenti")
     await tx.matchDay.update({ where: { id: day.id }, data: { opensAt: null } })
-    await tx.auditLog.create({ data: { leagueId, userId, action: "Aperta Giornata", details: `Giornata ${day.number}: apertura anticipata dall'amministratore.` } })
+    await recordAudit(tx, { data: { leagueId, userId, action: "Aperta Giornata", details: `Giornata ${day.number}: apertura anticipata dall'amministratore.` } })
     const users = await tx.user.findMany({ where: { leagues: { some: { id: leagueId } } }, select: { id: true } })
     await tx.notification.createMany({ data: users.map(u => ({ userId: u.id, leagueId, type: "MATCHDAY_CREATED", message: `La Giornata ${day.number} è ora aperta!` })) })
     assertDayEditable(day)

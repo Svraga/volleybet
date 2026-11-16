@@ -11,7 +11,7 @@ const Card = React.forwardRef<
     secondary: "bg-secondary",
     plain: "bg-transparent border-transparent shadow-none"
   }
-  
+
   const isPlain = variant === "plain"
 
   return (

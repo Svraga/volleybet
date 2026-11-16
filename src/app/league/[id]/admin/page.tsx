@@ -1,3 +1,4 @@
+import { pageNumber } from "@/lib/pagination"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
@@ -11,10 +12,12 @@ import AdminMatchdayPanel from "@/components/AdminMatchdayPanel"
 import DeleteMatchDayButton from "@/components/DeleteMatchDayButton"
 import ChangeDeadlineButton from "@/components/ChangeDeadlineButton"
 import AdminHeader from "@/components/AdminHeader"
+import Link from "next/link"
 import AdminPageTour from "@/components/AdminPageTour"
 
-export default async function AdminPanelPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminPanelPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ page?: string }> }) {
   const { id } = await params;
+  const page = pageNumber((await searchParams).page)
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/")
 
@@ -28,9 +31,13 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
 
   const matchDays = await prisma.matchDay.findMany({
     where: { leagueId: league.id },
-    include: { matches: true }
+    include: { matches: true },
+    orderBy: [{ status: "asc" }, { number: "desc" }], take: 21, skip: (page - 1) * 20
   })
-  
+
+  const hasMore = matchDays.length > 20
+  matchDays.splice(20)
+  const latest = await prisma.matchDay.aggregate({ where: { leagueId: league.id }, _max: { number: true } })
   const teams = await prisma.team.findMany({
     where: { leagueId: league.id },
     orderBy: { name: "asc" }
@@ -40,7 +47,7 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
     where: { leagues: { some: { id: league.id } } },
     select: {
       id: true, name: true,
-      bets: { where: { match: { matchDay: { leagueId: league.id } } }, select: { matchId: true } },
+      bets: { where: { match: { matchDayId: { in: matchDays.map(day => day.id) } } }, select: { matchId: true } },
       memberships: { where: { leagueId: league.id }, select: { teamName: true } }
     }
   })
@@ -74,13 +81,14 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                 <span className="transition group-open:rotate-180">▼</span>
               </summary>
               <div className="p-4 border-t-[3px] border-black bg-white">
-                <MatchdayDateForm action={boundCreateMatchDay} number={Math.max(0, ...matchDays.map(md => md.number)) + 1} />
+                <MatchdayDateForm action={boundCreateMatchDay} number={(latest._max.number || 0) + 1} />
               </div>
             </details>
           </Card>
         </div>
 
         <div id="tour-admin-matchday-list" className="md:col-span-2 space-y-8 min-w-0">
+          <nav className="flex justify-between font-bold">{page > 1 && <Link href={`?page=${page - 1}`}>← Precedenti</Link>}{hasMore && <Link href={`?page=${page + 1}`}>Successive →</Link>}</nav>
           {matchDays.map(md => (
             <Card key={md.id} className="bg-white overflow-hidden">
               <details className="group" open={md.status === 'OPEN'}>
@@ -96,19 +104,20 @@ export default async function AdminPanelPage({ params }: { params: Promise<{ id:
                   </div>
                 </summary>
                 <CardContent className="space-y-6 pt-3 mt-1">
-                  <AdminMatchdayPanel 
-                    leagueId={league.id} 
+                  <AdminMatchdayPanel
+                    leagueId={league.id}
                     homeTeam={league.homeTeam}
                     matchDay={md}
                     initiallyClosed={md.status !== "OPEN" || new Date().getTime() >= md.deadline.getTime()}
                     initiallyScheduled={isDayScheduled(md)}
                     teams={teams}
                     hasOddTeams={league.hasOddTeams}
-                    users={users.map(u => ({ 
+                    users={users.map(u => ({
                       id: u.id,
                       name: u.name,
                       teamName: u.memberships[0]?.teamName || "",
-                      hasBets: u.bets.some(b => md.matches.some(m => m.id === b.matchId))
+                      hasBets: u.bets.some(b => md.matches.some(m => m.id === b.matchId)),
+                      betMatchIds: u.bets.filter(b => md.matches.some(m => m.id === b.matchId)).map(b => b.matchId)
                     }))}
                   />
                   <div className="flex flex-col items-center gap-3 pt-4 border-t-[4px] border-black border-dashed mt-4">

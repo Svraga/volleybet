@@ -9,11 +9,8 @@ export default function GlobalFooter() {
   const [lang, setLang] = useState<"it" | "en">("it")
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (navigator.language.startsWith("en")) {
-        setLang("en")
-      }
-    }
+    const timer = setTimeout(() => { if (navigator.language.startsWith("en")) setLang("en") }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   if (pathname?.startsWith("/league")) {

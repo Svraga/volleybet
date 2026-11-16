@@ -9,18 +9,19 @@ interface SubmitButtonProps extends ButtonProps {
   defaultText: string;
 }
 
-export default function SubmitButton({ 
-  loadingText = "CARICAMENTO...", 
-  defaultText, 
+export default function SubmitButton({
+  loadingText = "CARICAMENTO...",
+  defaultText,
   className,
-  ...props 
+  disabled,
+  ...props
 }: SubmitButtonProps) {
   const { pending } = useFormStatus()
 
   return (
-    <Button 
-      type="submit" 
-      disabled={pending || props.disabled} 
+    <Button
+      type="submit"
+      disabled={pending || disabled}
       className={`relative ${className || ""}`}
       {...props}
     >

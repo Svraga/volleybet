@@ -31,7 +31,7 @@ function load(file, world) {
     esModuleInterop: true,
   } }).outputText;
   const context = {
-    module, exports: module.exports, console, Date: world.Clock || Date, FormData,
+    module, exports: module.exports, console, Date: world.Clock || Date, FormData, URL, process: { env: {} },
     // Skip only the anti-bruteforce delay; production uses a real 2-second timer.
     setTimeout: world.setTimeout || (fn => { fn(); return 0; }),
     clearTimeout: world.clearTimeout || clearTimeout,
@@ -81,6 +81,7 @@ function world() {
       if ('gt' in value) return row[key] > value.gt;
       if ('contains' in value) return String(row[key]).includes(value.contains);
       if ('in' in value) return value.in.includes(row[key]);
+      if ('not' in value) return row[key] !== value.not;
     }
     return row[key] === value;
   });
@@ -193,10 +194,14 @@ function hardenWorld(w, clone, snapshot, add, matchWhere) {
   w.db.matchDay.findFirst = readDay;
   w.db.matchDay.findUnique = readDay;
   w.db.matchDay.count = async () => 1;
+  w.db.matchDay.aggregate = async () => ({ _max: { number: w.md.number } });
   w.db.matchDay.create = async ({ data }) => { w.createdDay = data; return data; };
   w.db.matchDay.delete = async () => { w.deletedDay = true; };
   w.db.match.count = async ({ where }) => w.matches.filter(m => (!where.matchDayId || m.matchDayId === where.matchDayId) && (!where.OR || where.OR.some(cond => matchWhere(m, cond)))).length;
   w.db.match.create = async ({ data }) => add(w.matches, data);
+  w.db.bet.findMany = async ({ where }) => w.bets.filter(b => (!where.userId || b.userId === where.userId) && (!where.match?.matchDayId || w.matches.some(m => m.id === b.matchId && m.matchDayId === where.match.matchDayId)));
+  w.db.bet.groupBy = async () => [];
+  w.db.ledger.groupBy = async () => [];
   w.db.bet.create = async ({ data }) => add(w.bets, data);
   w.db.bet.count = async ({ where }) => w.bets.filter(b => {
     if (where.userId && b.userId !== where.userId) return false;
@@ -253,11 +258,11 @@ test('match configuration accepts bounded valid input and rejects unknown or dup
 test('S05: existing membership cannot change team, including after leave and rejoin', async () => {
   const w = world(), actions = load('src/actions/league.ts', w);
   const joining = teamName => form({ inviteCode: w.league.inviteCode, teamName });
-  await assert.rejects(() => actions.joinLeague(null, joining('C')), /squadra/);
+  assert.match((await actions.joinLeague(null, joining('C'))).error, /squadra/);
   await call(actions.leaveLeague, 'league');
   assert.equal(w.active.has('player'), false);
   assert.equal(w.memberships.get('player'), 'A');
-  await assert.rejects(() => actions.joinLeague(null, joining('C')), /squadra/);
+  assert.match((await actions.joinLeague(null, joining('C'))).error, /squadra/);
   await call(actions.joinLeague, null, joining('A'));
   assert.equal(w.active.has('player'), true);
 });
@@ -266,7 +271,7 @@ test('S05: own-team bets and rejoining without a recoverable historical team are
   await assert.rejects(() => load('src/lib/betting.ts', w).saveBets('player', 'league', 'day', form({ bet_m1: '3-0' })), /squadra/);
   w.memberships.delete('player'); w.active.delete('player');
   w.ledgers.push({ userId: 'player', leagueId: 'league', amount: -1 });
-  await assert.rejects(() => load('src/actions/league.ts', w).joinLeague(null, form({ inviteCode: w.league.inviteCode, teamName: 'C' })), /storica/);
+  assert.match((await load('src/actions/league.ts', w).joinLeague(null, form({ inviteCode: w.league.inviteCode, teamName: 'C' }))).error, /storica/);
 });
 test('S06: concurrent scoring and rescore replace payouts without duplicating money', async () => {
   const w = world(); seedScoring(w);
@@ -328,6 +333,65 @@ test('failed batch payouts roll back results, points and previous payouts togeth
   const f = resultsForm(); f.set('result_m2', '0-3');
   await assert.rejects(() => call(score, 'league', 'day', f), /Database write failed/);
   for (const [key, value] of Object.entries(before)) assert.deepEqual(w[key], value);
+});
+
+test('8 coins split between 5 tied winners give three payouts of 2 and two of 1, stable on rescore', async () => {
+  const w = world(); seedScoring(w); w.bets = []; w.ledgers = [];
+  for (let i = 0; i < 8; i++) {
+    const userId = `player${i}`;
+    w.bets.push({ id: `bet${i}`, userId, matchId: 'm2', predictedA: i < 5 ? 3 : 0, predictedB: i < 5 ? 0 : 3 });
+    w.ledgers.push({ userId, leagueId: 'league', matchDayId: 'day', amount: -1 });
+  }
+  const score = load('src/actions/score.ts', w).scoreMatchDay;
+  // A historical day can be converted by rescore without leaving fractional credits.
+  w.md.status = 'SCORED';
+  for (let i = 0; i < 5; i++) w.ledgers.push({ id: `old-credit-${i}`, userId: `player${i}`, leagueId: 'league', matchDayId: 'day', amount: 1.6, reason: 'Payout MatchDay 1' });
+  await call(score, 'league', 'day', resultsForm());
+  const payouts = () => Object.fromEntries(w.ledgers.filter(l => l.amount > 0).map(l => [l.userId, l.amount]));
+  const original = payouts(), seed = w.md.coinDrawSeed;
+  assert.match(seed, /^[0-9a-f]{64}$/);
+  assert.deepEqual(Object.values(original).sort(), [1, 1, 2, 2, 2]);
+  assert.equal(positiveTotal(w), 8);
+  assert.equal(w.ledgers.filter(l => l.reason?.includes('Sorteggio resto +1')).length, 3);
+  assert.ok(w.logs.some(l => l.action === 'Sorteggio Coin' && l.details.includes(seed)));
+  w.bets.reverse(); w.matches.reverse();
+  await call(score, 'league', 'day', resultsForm());
+  assert.equal(w.md.coinDrawSeed, seed); assert.deepEqual(payouts(), original);
+  // Correcting a result and then restoring it must not reroll the original tie.
+  const corrected = resultsForm(); corrected.set('result_m2', '0-3');
+  await call(score, 'league', 'day', corrected);
+  await call(score, 'league', 'day', resultsForm());
+  assert.deepEqual(payouts(), original); assert.equal(positiveTotal(w), 8);
+});
+
+test('one winner and four seconds distribute 8 whole coins as 5 plus three prizes of 1', async () => {
+  const w = world(); seedScoring(w); w.bets = []; w.ledgers = [];
+  for (let i = 0; i < 8; i++) {
+    const userId = `player${i}`;
+    w.bets.push({ id: `bet${i}`, userId, matchId: 'm2', predictedA: i < 5 ? 3 : 0, predictedB: i === 0 ? 0 : i < 5 ? 1 : 3 });
+    w.ledgers.push({ userId, leagueId: 'league', matchDayId: 'day', amount: -1 });
+  }
+  const score = load('src/actions/score.ts', w).scoreMatchDay;
+  await call(score, 'league', 'day', resultsForm());
+  const paid = w.ledgers.filter(l => l.amount > 0);
+  assert.equal(paid.find(l => l.userId === 'player0').amount, 5);
+  assert.equal(paid.filter(l => l.userId !== 'player0' && l.amount === 1).length, 3);
+  assert.ok(paid.every(l => Number.isInteger(l.amount))); assert.equal(positiveTotal(w), 8);
+});
+
+test('integer split conserves every pool, treats ties within one coin and ignores query order', () => {
+  const { splitWholeCoins } = load('src/lib/payouts.ts', world());
+  for (let count = 1; count <= 20; count++) for (let pool = 0; pool <= 80; pool++) {
+    const users = Array.from({ length: count }, (_, i) => `u${i}`);
+    const split = splitWholeCoins(pool, users, 'fixed-test-seed', 'first');
+    const amounts = Object.values(split.amounts);
+    assert.equal(amounts.reduce((sum, value) => sum + value, 0), pool);
+    assert.ok(amounts.every(value => Number.isInteger(value) && value >= 0));
+    assert.ok(Math.max(...amounts) - Math.min(...amounts) <= 1);
+    assert.equal(new Set(split.extraCoinUserIds).size, pool % count);
+    assert.deepEqual(splitWholeCoins(pool, users.reverse(), 'fixed-test-seed', 'first'), split);
+  }
+  for (const pool of [-1, 1.5, NaN, Infinity]) assert.throws(() => splitWholeCoins(pool, ['u1'], 'seed', 'first'));
 });
 
 test('S07: betting observes scoring, membership and deadline changes after acquiring the lock', async () => {
@@ -482,16 +546,16 @@ test('R01: direct stats, predictions and betting page calls reject an outsider b
   }
 });
 
-test('round standings show net coins below points, including fractional prizes and nonparticipants', async () => {
+test('round standings show net coins below points, using aggregate queries and including nonparticipants', async () => {
   const w = world(); w.md.status = 'SCORED';
-  w.db.user.findMany = async ({ include }) => {
-    assert.equal(include.ledgers.where.leagueId, 'league');
-    assert.equal(include.ledgers.where.matchDayId, 'day');
-    return [
-      { id: 'player', name: 'Player', memberships: [], bets: [], ledgers: [{ amount: -1 }, { amount: 1.5 }] },
-      { id: 'admin', name: 'Admin', memberships: [], bets: [], ledgers: [{ amount: -1 }] },
-      { id: 'absent', name: 'Absent', memberships: [], bets: [], ledgers: [] },
-    ];
+  w.db.user.findMany = async () => [
+    { id: 'player', name: 'Player', memberships: [] },
+    { id: 'admin', name: 'Admin', memberships: [] },
+    { id: 'absent', name: 'Absent', memberships: [] },
+  ];
+  w.db.ledger.groupBy = async ({ where }) => {
+    assert.equal(where.leagueId, 'league'); assert.equal(where.matchDayId, 'day');
+    return [{ userId: 'player', _sum: { amount: 1 } }, { userId: 'admin', _sum: { amount: -1 } }];
   };
   const tree = await load('src/app/league/[id]/stats/page.tsx', w).default({ params: Promise.resolve({ id: 'league' }), searchParams: Promise.resolve({ round: 'day' }) });
   const cards = [];
@@ -509,7 +573,7 @@ test('round standings show net coins below points, including fractional prizes a
   walk(tree); assert.equal(cards.length, 2);
   assert.match(renderedText(cards[0]), /Punti Pronostici/);
   const coins = renderedText(cards[1]);
-  assert.match(coins, /Resoconto Coin/); assert.match(coins, /PlayerA\+0,5/);
+  assert.match(coins, /Resoconto Coin/); assert.match(coins, /PlayerA\+1/);
   assert.match(coins, /AdminA-1/); assert.match(coins, /AbsentA0/);
 });
 
@@ -648,7 +712,7 @@ test('prediction page excludes open days at the database boundary and returns mi
 });
 test('S09/S14: admin client props contain neither prediction values nor private user fields', async () => {
   const w = world(); w.actor = 'admin'; w.bets.push({ userId: 'player', matchId: 'm2', predictedA: 3, predictedB: 1 });
-  const tree = await load('src/app/league/[id]/admin/page.tsx', w).default({ params: Promise.resolve({ id: 'league' }) });
+  const tree = await load('src/app/league/[id]/admin/page.tsx', w).default({ params: Promise.resolve({ id: 'league' }), searchParams: Promise.resolve({}) });
   const panels = [];
   function walk(node) {
     if (!node || typeof node !== 'object') return;
@@ -656,7 +720,7 @@ test('S09/S14: admin client props contain neither prediction values nor private 
     for (const val of Object.values(node)) if (Array.isArray(val)) val.forEach(walk); else if (val && typeof val === 'object') walk(val);
   }
   walk(tree); assert.equal(panels.length, 1);
-  for (const user of panels[0].props.users) assert.deepEqual(Object.keys(user).sort(), ['hasBets', 'id', 'name', 'teamName']);
+  for (const user of panels[0].props.users) assert.deepEqual(Object.keys(user).sort(), ['betMatchIds', 'hasBets', 'id', 'name', 'teamName']);
   assert.equal(panels[0].props.users.find(u => u.id === 'player').hasBets, true);
 });
 test('S16: payout test entrypoint contains no database connection or destructive operations', () => {
@@ -693,4 +757,121 @@ test('S15: malformed percent-encoded Bearer tokens fail closed without an uncaug
   const { getToken } = require('next-auth/jwt');
   const result = await getToken({ req: { headers: { authorization: 'Bearer %' }, cookies: {} }, secret: 'isolated-security-test-secret' });
   assert.equal(result, null);
+});
+
+test('audit fix: proxy completes missing bets after deadline without overwrites or another fee', async () => {
+  const w = world(); w.actor = 'admin'; w.md.deadline = new Date(0);
+  w.matches.push({ id: 'm3', matchDayId: 'day', teamA: 'E', teamB: 'F' });
+  const save = load('src/lib/betting.ts', w).saveBets;
+  await save('admin', 'league', 'day', form({ userId: 'player', bet_m2: '3-0' }), true);
+  await save('admin', 'league', 'day', form({ userId: 'player', bet_m3: '0-3' }), true);
+  assert.equal(w.bets.length, 2); assert.equal(w.ledgers.length, 1); assert.equal(w.ledgers[0].amount, -1);
+  await assert.rejects(() => save('admin', 'league', 'day', form({ userId: 'player', bet_m2: '0-3' }), true), /già inserito/);
+  assert.equal(w.bets.find(b => b.matchId === 'm2').predictedA, 3);
+});
+
+test('audit fix: nickname uses durable limits and rejects File fields without TypeError', async () => {
+  const w = world(); const action = load('src/actions/user.ts', w).updateNickname;
+  for (let i = 0; i < 5; i++) await action(form({ nickname: 'Nickname' }));
+  await assert.rejects(() => action(form({ nickname: 'Nickname' })), /Troppi/);
+  const other = world(); const f = new FormData(); f.set('nickname', new Blob(['x']), 'name.txt');
+  await assert.rejects(() => load('src/actions/user.ts', other).updateNickname(f), /Campo non valido/);
+});
+
+test('audit fix: outsider requests fail before acquiring the league write lock', async () => {
+  const w = world();
+  await assert.rejects(() => load('src/lib/security.ts', w).withLeagueTransaction('league', 'outsider', 'admin', async () => {}), /Unauthorized/);
+  assert.deepEqual(w.events, []);
+  await assert.rejects(() => load('src/lib/security.ts', w).withLeagueTransaction('league', 'outsider', 'member', async () => {}), /403/);
+  assert.deepEqual(w.events, []);
+});
+
+test('audit fix: pending submit stays disabled even with explicit disabled=false', () => {
+  const w = world(); w.modules = { 'react-dom': { useFormStatus: () => ({ pending: true }) } };
+  assert.equal(load('src/components/SubmitButton.tsx', w).default({ defaultText: 'Save', disabled: false }).props.disabled, true);
+});
+
+test('audit fix: login preserves invite paths but rejects external and encoded redirects', () => {
+  const { safeCallbackPath } = load('src/lib/redirects.ts', world());
+  const invite = '/league/join?code=VOLLEY-' + 'A'.repeat(32);
+  assert.equal(safeCallbackPath(invite), invite);
+  assert.equal(safeCallbackPath('https://volley.example' + invite, 'https://volley.example'), invite);
+  assert.equal(safeCallbackPath('https://evil.example' + invite, 'https://volley.example'), '/');
+  for (const value of ['https://evil.example', '//evil.example', '/\\evil.example', '/%2f%2fevil.example', 'javascript:alert(1)', '/league/join?code=bad']) assert.equal(safeCallbackPath(value), '/');
+});
+
+test('audit fix: legacy JWTs remain valid until explicitly revoked; new logins use the new version', async () => {
+  const w = world(); let version = 0;
+  w.modules = {
+    '@next-auth/prisma-adapter': { PrismaAdapter: () => ({}) },
+    'next-auth/providers/google': { __esModule: true, default: options => options },
+  };
+  w.db.user.findUnique = async () => ({ id: 'player', sessionVersion: version });
+  const { jwt } = load('src/lib/auth.ts', w).authOptions.callbacks;
+  const legacy = await jwt({ token: { id: 'player' } });
+  assert.equal(legacy.id, 'player');
+  version = 1;
+  const revoked = await jwt({ token: { id: 'player' } });
+  assert.equal(revoked.id, undefined);
+  const fresh = await jwt({ token: {}, user: { id: 'player' } });
+  assert.equal(fresh.id, 'player'); assert.equal(fresh.sessionVersion, 1);
+  assert.equal((await jwt({ token: fresh })).id, 'player');
+});
+
+test('audit fix: rescore preserves manual adjustments and records result and credit snapshots', async () => {
+  const w = world(); seedScoring(w);
+  w.ledgers.push({ id: 'adjustment', userId: 'player', leagueId: 'league', matchDayId: 'day', amount: 7, kind: 'ADJUSTMENT', reason: 'Manual adjustment' });
+  w.ledgers.push({ id: 'negative-adjustment', userId: 'player', leagueId: 'league', matchDayId: 'day', amount: -2, kind: 'ADJUSTMENT', reason: 'Manual negative adjustment' });
+  const score = load('src/actions/score.ts', w).scoreMatchDay;
+  await call(score, 'league', 'day', resultsForm());
+  const f = resultsForm(); f.set('result_m2', '0-3');
+  await call(score, 'league', 'day', f);
+  assert.equal(w.ledgers.find(l => l.id === 'adjustment').amount, 7);
+  assert.equal(w.ledgers.find(l => l.id === 'negative-adjustment').amount, -2);
+  assert.equal(w.ledgers.filter(l => l.kind === 'PAYOUT' || l.kind === 'REFUND').reduce((sum, l) => sum + l.amount, 0), 1);
+  const log = w.logs.findLast(l => l.action === 'Risultati Modificati');
+  assert.equal(log.actorName, 'admin');
+  assert.equal(log.payload.before.results.find(m => m.id === 'm2').resultA, 3);
+  assert.equal(log.payload.after.results.find(m => m.id === 'm2').resultA, 0);
+  assert.ok(log.payload.after.credits.some(l => l.kind === 'ADJUSTMENT' && l.amount === 7));
+});
+
+test('audit fix: Italian timestamps use Rome regardless of the server timezone', () => {
+  const { italianDateTime } = load('src/lib/dates.ts', world());
+  assert.match(italianDateTime('2026-11-16T20:00:00Z'), /21:00/);
+});
+
+test('audit fix: profile accuracy excludes pending predictions', async () => {
+  const w = world();
+  const predictions = [{ pointsEarned: 3 }, { pointsEarned: null }];
+  w.modules = { 'next/headers': { cookies: async () => ({ get: () => undefined }) } };
+  w.db.user.findUnique = async () => ({ id: 'player', name: 'Player', leagues: [], memberships: [], ledgers: [], bets: predictions });
+  w.db.bet.aggregate = async () => ({ _sum: { pointsEarned: 3 } });
+  w.db.ledger.aggregate = async () => ({ _sum: { amount: 0 } });
+  w.db.bet.count = async ({ where }) => predictions.filter(b => typeof where.pointsEarned === 'number' ? b.pointsEarned === where.pointsEarned :
+    'gt' in where.pointsEarned ? b.pointsEarned > where.pointsEarned.gt : b.pointsEarned !== null).length;
+  const tree = await load('src/app/profile/page.tsx', w).default();
+  function rendered(node) {
+    if (node == null || typeof node === 'boolean') return '';
+    if (typeof node !== 'object') return String(node);
+    if (Array.isArray(node)) return node.map(rendered).join('');
+    return rendered(node.props?.children);
+  }
+  assert.ok(rendered(tree).includes('1/1 (100%)'));
+});
+
+test('audit fix: dashboard notification badge uses the full unread count', async () => {
+  const w = world();
+  w.db.user.findUnique = async () => ({ id: 'player', name: 'Player', ledgers: [], notifications: Array(10).fill({ isRead: false }) });
+  w.db.league.findUnique = async () => ({ ...w.league, users: [{ id: 'player' }] });
+  w.db.ledger.aggregate = async () => ({ _sum: { amount: 0 } });
+  w.db.notification.count = async () => 25;
+  const tree = await load('src/app/league/[id]/page.tsx', w).default({ params: Promise.resolve({ id: 'league' }) });
+  const bells = [];
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'NotificationBell') bells.push(node);
+    for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(walk); else if (value && typeof value === 'object') walk(value);
+  }
+  walk(tree); assert.equal(bells[0].props.unreadCount, 25);
 });

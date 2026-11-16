@@ -1,5 +1,7 @@
 "use client"
 
+import { errorMessage } from "@/lib/forms"
+
 import { Input } from "@/components/ui/Input"
 import { brutalAlert } from "@/store/alertStore"
 import { updateCoinName } from "@/actions/league"
@@ -25,8 +27,8 @@ export default function UpdateCoinForm({ leagueId, defaultName }: { leagueId: st
     try {
       await updateCoinName(leagueId, formData)
       brutalAlert("Valuta aggiornata con successo!")
-    } catch (e: any) {
-      brutalAlert(e.message || "Errore durante l'aggiornamento.")
+    } catch (error: unknown) {
+      brutalAlert(errorMessage(error))
     }
   }
 

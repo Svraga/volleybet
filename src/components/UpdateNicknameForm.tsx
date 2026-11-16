@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { errorMessage } from "@/lib/forms"
+
 import { Input } from "@/components/ui/Input"
 import SubmitButton from "@/components/SubmitButton"
 import { updateNickname } from "@/actions/user"
@@ -19,7 +20,7 @@ export default function UpdateNicknameForm({ defaultName, redirectTo }: { defaul
       showAlert("Il nickname non può superare i 15 caratteri. Sii più conciso!")
       return
     }
-    
+
     try {
       await updateNickname(formData)
       if (redirectTo) {
@@ -27,9 +28,9 @@ export default function UpdateNicknameForm({ defaultName, redirectTo }: { defaul
       } else {
         showAlert("Nickname aggiornato con successo!")
       }
-    } catch (e: any) {
-      if (e.message === "NEXT_REDIRECT" || e.message?.includes("NEXT_REDIRECT") || e.digest === "NEXT_REDIRECT") throw e;
-      showAlert(e.message || "Errore durante l'aggiornamento.")
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;
+      showAlert(errorMessage(error))
     }
   }
 

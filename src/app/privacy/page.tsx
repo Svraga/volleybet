@@ -8,11 +8,8 @@ export default function PrivacyPage() {
   const [lang, setLang] = useState<"it" | "en">("it")
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (navigator.language.startsWith("en")) {
-        setLang("en")
-      }
-    }
+    const timer = setTimeout(() => { if (navigator.language.startsWith("en")) setLang("en") }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   return (
@@ -23,14 +20,14 @@ export default function PrivacyPage() {
             <Button variant="outline" className="font-bold">← Home</Button>
           </Link>
           <div className="flex gap-2">
-            <Button 
-              variant={lang === "it" ? "primary" : "outline"} 
+            <Button
+              variant={lang === "it" ? "primary" : "outline"}
               onClick={() => setLang("it")}
             >
               IT
             </Button>
-            <Button 
-              variant={lang === "en" ? "primary" : "outline"} 
+            <Button
+              variant={lang === "en" ? "primary" : "outline"}
               onClick={() => setLang("en")}
             >
               EN
@@ -46,7 +43,7 @@ export default function PrivacyPage() {
           {lang === "it" ? (
             <div className="space-y-6 text-lg font-medium text-gray-800">
               <p>Ultimo aggiornamento: Giugno 2026</p>
-              
+
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Titolare del Trattamento</h2>
                 <p><strong>Amministratore di VolleyBet</strong> (Email per richieste privacy: svraga.channel.bs@gmail.com)</p>
@@ -56,7 +53,7 @@ export default function PrivacyPage() {
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Dati Raccolti</h2>
                 <ul className="list-disc pl-6 space-y-1">
                   <li><strong>Dati di registrazione:</strong> Nome, Cognome, Email e immagine del profilo trasmessi tramite Google OAuth.</li>
-                  <li><strong>Dati generati dall'utente:</strong> Storico delle scommesse/pronostici effettuati, leghe a cui si è iscritti e bilancio dei gettoni virtuali.</li>
+                  <li><strong>Dati generati dall’utente:</strong> Storico delle scommesse/pronostici effettuati, leghe a cui si è iscritti e bilancio dei gettoni virtuali.</li>
                 </ul>
                 <p className="text-sm mt-2"><em>Nota: Il sito utilizza esclusivamente gettoni virtuali gratuiti senza alcun valore economico. Non ci sono transazioni con denaro reale.</em></p>
               </section>
@@ -65,15 +62,15 @@ export default function PrivacyPage() {
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Finalità e Base Giuridica</h2>
                 <p>I dati vengono trattati esclusivamente per:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>Garantire l'autenticazione e la sicurezza dell'account.</li>
+                  <li>Garantire l’autenticazione e la sicurezza dell’account.</li>
                   <li>Permettere la partecipazione alle leghe e il calcolo dei punteggi.</li>
                 </ul>
-                <p className="mt-2"><strong>Base giuridica:</strong> Esecuzione del contratto/termini di servizio per l'utilizzo della piattaforma.</p>
+                <p className="mt-2"><strong>Base giuridica:</strong> Esecuzione del contratto/termini di servizio per l’utilizzo della piattaforma.</p>
               </section>
 
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Cookie e Local Storage</h2>
-                <p>Questo sito non utilizza cookie di profilazione, Google Analytics o altri strumenti di tracciamento terzi. Utilizziamo esclusivamente cookie tecnici strettamente necessari al funzionamento dell'applicazione.</p>
+                <p>Questo sito non utilizza cookie di profilazione, Google Analytics o altri strumenti di tracciamento terzi. Utilizziamo esclusivamente cookie tecnici strettamente necessari al funzionamento dell’applicazione.</p>
                 <ul className="list-disc pl-6 space-y-1 mt-2">
                   <li><strong>Cookie tecnici:</strong> Utilizzati esclusivamente da NextAuth per mantenere la sessione di login attiva e garantire la sicurezza.</li>
                   <li><strong>Local Storage:</strong> Utilizzato dal browser per memorizzare le preferenze di interfaccia (es. completamento del tutorial iniziale).</li>
@@ -82,25 +79,25 @@ export default function PrivacyPage() {
 
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Conservazione dei Dati</h2>
-                <p>I dati personali vengono conservati per tutto il tempo in cui l'account rimane attivo. In caso di richiesta di cancellazione, tutti i dati associati all'utente (inclusi pronostici e storico) verranno rimossi in modo permanente dai nostri server.</p>
+                <p>I dati personali vengono conservati per tutto il tempo in cui l’account rimane attivo. In caso di richiesta di cancellazione, tutti i dati associati all’utente (inclusi pronostici e storico) verranno rimossi in modo permanente dai nostri server.</p>
               </section>
 
               <section className="space-y-2">
-                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Diritti dell'Utente</h2>
+                <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Diritti dell’Utente</h2>
                 <p>Secondo il GDPR, hai il diritto di:</p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>Accedere ai tuoi dati personali.</li>
                   <li>Chiedere la rettifica di dati inesatti.</li>
-                  <li>Richiedere la cancellazione completa del tuo account e dei tuoi dati (Diritto all'oblio).</li>
+                  <li>Richiedere la cancellazione completa del tuo account e dei tuoi dati (Diritto all’oblio).</li>
                   <li>Richiedere la portabilità dei dati.</li>
                 </ul>
-                <p className="mt-2">Per esercitare i tuoi diritti, contattaci all'email indicata sopra.</p>
+                <p className="mt-2">Per esercitare i tuoi diritti, contattaci all’email indicata sopra.</p>
               </section>
             </div>
           ) : (
             <div className="space-y-6 text-lg font-medium text-gray-800">
               <p>Last updated: June 2026</p>
-              
+
               <section className="space-y-2">
                 <h2 className="text-2xl font-bold uppercase border-b-[3px] border-black inline-block">Data Controller</h2>
                 <p><strong>VolleyBet Administrator</strong> (Privacy requests Email: svraga.channel.bs@gmail.com)</p>
