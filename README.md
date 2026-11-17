@@ -34,7 +34,11 @@ npm run build
 npm audit
 ```
 
-La CI esegue i controlli con Node 24. Lo script `scripts/test-postgresql-baseline.cjs` verifica anche migrazioni e vincoli in uno schema temporaneo, annullato integralmente a fine prova.
+La CI esegue i controlli con Node 24.22.3 e npm 11.19.1. Per aggiornare il
+lockfile usa la stessa versione npm, ad esempio
+`npx npm@11.19.1 install --package-lock-only`, e verifica `npm ci` in una
+cartella pulita includendo `.npmrc` e `vendor/braces`.
+Lo script `scripts/test-postgresql-baseline.cjs` verifica anche migrazioni e vincoli in uno schema temporaneo, annullato integralmente a fine prova.
 
 Dopo la build, `node scripts/test-bet-form-post.cjs` verifica un vero invio HTTP
 del modulo scommesse, con account fittizi in uno schema PostgreSQL temporaneo
