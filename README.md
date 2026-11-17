@@ -20,6 +20,12 @@ Le vecchie migrazioni SQLite sono archiviate, senza cancellazioni di dati. Non u
 
 ## Verifiche
 
+`npm run build` rigenera sempre Prisma Client prima di compilare Next.js. Anche
+Vercel usa questo comando tramite `vercel.json`: la cache delle dipendenze non
+deve mantenere un client generato con tipi del database precedenti (per esempio
+`Ledger.amount` decimale dopo il passaggio ai coin interi). La build non applica
+migrazioni e non modifica i dati.
+
 ```sh
 npm run lint
 npx tsc --noEmit
@@ -29,6 +35,11 @@ npm audit
 ```
 
 La CI esegue i controlli con Node 24. Lo script `scripts/test-postgresql-baseline.cjs` verifica anche migrazioni e vincoli in uno schema temporaneo, annullato integralmente a fine prova.
+
+Dopo la build, `node scripts/test-bet-form-post.cjs` verifica un vero invio HTTP
+del modulo scommesse, con account fittizi in uno schema PostgreSQL temporaneo
+eliminato a fine prova. Richiede accesso al database e il permesso di creare
+schemi; non modifica i campionati esistenti.
 
 ## Manutenzione
 
